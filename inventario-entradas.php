@@ -53,6 +53,23 @@ $moduleFields = [
         'placeholder' => 'Producto ingresado',
     ],
     [
+        'name' => 'cantidad_productos',
+        'label' => 'Cantidad de productos',
+        'type' => 'number',
+        'required' => true,
+        'step' => '1',
+        'placeholder' => '0',
+        'help' => 'Total de ítems incluidos en la entrada.',
+    ],
+    [
+        'name' => 'detalle_productos',
+        'label' => 'Detalle de productos',
+        'type' => 'textarea',
+        'required' => true,
+        'rows' => 4,
+        'placeholder' => 'Ej: Producto A x 10, Producto B x 5',
+    ],
+    [
         'name' => 'cantidad',
         'label' => 'Cantidad',
         'type' => 'number',
@@ -97,7 +114,7 @@ $moduleListColumns = [
     ['key' => 'fecha', 'label' => 'Fecha'],
     ['key' => 'tipo_entrada', 'label' => 'Tipo'],
     ['key' => 'producto', 'label' => 'Producto'],
-    ['key' => 'cantidad', 'label' => 'Cantidad'],
+    ['key' => 'cantidad_productos', 'label' => 'Ítems'],
     ['key' => 'costo_total', 'label' => 'Costo total'],
     ['key' => 'bodega_destino', 'label' => 'Bodega'],
 ];

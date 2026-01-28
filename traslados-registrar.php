@@ -31,6 +31,22 @@ $moduleFields = [
         'required' => true,
     ],
     [
+        'name' => 'cantidad_productos',
+        'label' => 'Cantidad de productos',
+        'type' => 'number',
+        'required' => true,
+        'step' => '1',
+        'help' => 'Total de ítems incluidos en el traslado.',
+    ],
+    [
+        'name' => 'detalle_productos',
+        'label' => 'Detalle de productos',
+        'type' => 'textarea',
+        'required' => true,
+        'rows' => 4,
+        'placeholder' => 'Ej: Producto A x 3, Producto B x 2',
+    ],
+    [
         'name' => 'cantidad',
         'label' => 'Cantidad',
         'type' => 'number',
@@ -72,7 +88,7 @@ $moduleListColumns = [
     ['key' => 'bodega_origen', 'label' => 'Origen'],
     ['key' => 'bodega_destino', 'label' => 'Destino'],
     ['key' => 'producto', 'label' => 'Producto'],
-    ['key' => 'cantidad', 'label' => 'Cantidad'],
+    ['key' => 'cantidad_productos', 'label' => 'Ítems'],
     ['key' => 'estado', 'label' => 'Estado'],
 ];
 
