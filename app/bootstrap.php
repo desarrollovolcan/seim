@@ -115,6 +115,8 @@ function get_municipalidad(): array
 
     return [
         'nombre' => 'Go Muni',
+        'razon_social' => '',
+        'moneda' => 'CLP',
         'logo_path' => 'assets/images/logo.png',
         'logo_topbar_height' => 56,
         'logo_sidenav_height' => 48,

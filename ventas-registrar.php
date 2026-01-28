@@ -6,6 +6,11 @@ $moduleKey = 'ventas-registrar';
 $moduleTitleField = 'numero_venta';
 $moduleFields = [
     [
+        'type' => 'section',
+        'label' => 'Datos de venta',
+        'description' => 'Información general de la venta.',
+    ],
+    [
         'name' => 'fecha',
         'label' => 'Fecha',
         'type' => 'date',
@@ -25,6 +30,11 @@ $moduleFields = [
         'type' => 'text',
         'required' => false,
         'placeholder' => 'Cliente (opcional)',
+    ],
+    [
+        'type' => 'section',
+        'label' => 'Datos del producto',
+        'description' => 'Detalle del producto vendido.',
     ],
     [
         'name' => 'producto',

@@ -212,12 +212,20 @@ include('partials/html.php');
                 </div>
 
                 <div class="row">
-                    <div class="col-lg-5">
+                    <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">
-                                    <?php echo $editingRecord ? 'Editar registro' : 'Nuevo registro'; ?>
-                                </h5>
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                    <div>
+                                        <h5 class="card-title mb-0">
+                                            <?php echo $editingRecord ? 'Editar registro' : 'Nuevo registro'; ?>
+                                        </h5>
+                                        <p class="text-muted mb-0">Completa los datos solicitados en el formulario.</p>
+                                    </div>
+                                    <button type="submit" form="module-form" class="btn btn-primary">
+                                        <?php echo $editingRecord ? 'Guardar cambios' : 'Crear registro'; ?>
+                                    </button>
+                                </div>
                             </div>
                             <div class="card-body">
                                 <?php if ($successMessage !== '') : ?>
@@ -232,7 +240,7 @@ include('partials/html.php');
                                         </ul>
                                     </div>
                                 <?php endif; ?>
-                                <form method="post" action="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
+                                <form id="module-form" method="post" action="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">
                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                     <input type="hidden" name="action" value="<?php echo $editingRecord ? 'update' : 'create'; ?>">
                                     <?php if ($editingRecord) : ?>
@@ -242,9 +250,18 @@ include('partials/html.php');
                                         <?php
                                             $fieldName = $field['name'] ?? '';
                                             if ($fieldName === '') {
-                                                continue;
+                                                $fieldType = $field['type'] ?? '';
+                                                if ($fieldType === 'section') {
+                                                    $sectionTitle = $field['label'] ?? '';
+                                                    $sectionDescription = $field['description'] ?? '';
+                                                } else {
+                                                    continue;
+                                                }
+                                            } else {
+                                                $fieldType = $field['type'] ?? 'text';
+                                                $sectionTitle = '';
+                                                $sectionDescription = '';
                                             }
-                                            $fieldType = $field['type'] ?? 'text';
                                             $fieldId = 'module-' . $fieldName;
                                             $fieldLabel = $field['label'] ?? $fieldName;
                                             $fieldValue = $editingRecord[$fieldName] ?? ($field['default'] ?? '');
@@ -256,6 +273,15 @@ include('partials/html.php');
                                             $fieldOptions = $field['options'] ?? [];
                                             $fieldRows = $field['rows'] ?? 4;
                                         ?>
+                                        <?php if ($fieldType === 'section') : ?>
+                                            <div class="border rounded-3 bg-light-subtle px-3 py-2 mb-3">
+                                                <div class="fw-semibold"><?php echo htmlspecialchars($sectionTitle, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php if ($sectionDescription !== '') : ?>
+                                                    <div class="text-muted small"><?php echo htmlspecialchars($sectionDescription, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <?php continue; ?>
+                                        <?php endif; ?>
                                         <div class="mb-3">
                                             <label class="form-label" for="<?php echo htmlspecialchars($fieldId, ENT_QUOTES, 'UTF-8'); ?>">
                                                 <?php echo htmlspecialchars($fieldLabel, ENT_QUOTES, 'UTF-8'); ?>
@@ -283,17 +309,14 @@ include('partials/html.php');
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button type="submit" class="btn btn-primary"><?php echo $editingRecord ? 'Guardar cambios' : 'Crear registro'; ?></button>
-                                        <?php if ($editingRecord) : ?>
-                                            <a class="btn btn-light" href="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">Cancelar</a>
-                                        <?php endif; ?>
-                                    </div>
+                                    <?php if ($editingRecord) : ?>
+                                        <a class="btn btn-light" href="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>">Cancelar</a>
+                                    <?php endif; ?>
                                 </form>
                             </div>
                         </div>
                     </div>
-                    <div class="col-lg-7">
+                    <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <h5 class="card-title mb-0">Registros disponibles</h5>
