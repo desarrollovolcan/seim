@@ -407,3 +407,333 @@ VALUES
   ('adjuntos', 'subir', 'Subir adjuntos'),
   ('adjuntos', 'eliminar', 'Eliminar adjuntos'),
   ('adjuntos', 'descargar', 'Descargar adjuntos');
+
+-- === Inventario y ventas ===
+CREATE TABLE `empresas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `razon_social` VARCHAR(180) DEFAULT NULL,
+  `ruc` VARCHAR(30) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `bodegas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `ciudad` VARCHAR(100) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `estado` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `bodegas_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `formas_pago` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(120) NOT NULL,
+  `descripcion` VARCHAR(200) DEFAULT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `formas_pago_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `impuestos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(120) NOT NULL,
+  `porcentaje` DECIMAL(6, 2) NOT NULL DEFAULT 0,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `impuestos_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `parametros_inventario` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `stock_minimo_default` INT UNSIGNED NOT NULL DEFAULT 0,
+  `stock_maximo_default` INT UNSIGNED NOT NULL DEFAULT 0,
+  `metodo_costeo` ENUM('promedio', 'fifo', 'lifo') NOT NULL DEFAULT 'promedio',
+  `permite_stock_negativo` TINYINT(1) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `categorias_productos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `descripcion` VARCHAR(200) DEFAULT NULL,
+  `estado` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `categorias_productos_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `unidades_medida` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(100) NOT NULL,
+  `abreviatura` VARCHAR(20) NOT NULL,
+  `descripcion` VARCHAR(200) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unidades_medida_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `estados_producto` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(100) NOT NULL,
+  `descripcion` VARCHAR(200) DEFAULT NULL,
+  `activo` TINYINT(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `estados_producto_nombre_unique` (`nombre`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `productos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `sku` VARCHAR(60) NOT NULL,
+  `nombre` VARCHAR(180) NOT NULL,
+  `descripcion` TEXT DEFAULT NULL,
+  `categoria_id` INT UNSIGNED DEFAULT NULL,
+  `unidad_medida_id` INT UNSIGNED DEFAULT NULL,
+  `estado_id` INT UNSIGNED DEFAULT NULL,
+  `impuesto_id` INT UNSIGNED DEFAULT NULL,
+  `costo_promedio` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `precio_base` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `stock_minimo` INT UNSIGNED NOT NULL DEFAULT 0,
+  `stock_maximo` INT UNSIGNED NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `productos_sku_unique` (`sku`),
+  CONSTRAINT `productos_categoria_fk` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_productos` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `productos_unidad_fk` FOREIGN KEY (`unidad_medida_id`) REFERENCES `unidades_medida` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `productos_estado_fk` FOREIGN KEY (`estado_id`) REFERENCES `estados_producto` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `productos_impuesto_fk` FOREIGN KEY (`impuesto_id`) REFERENCES `impuestos` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `producto_precios_costos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `precio_venta` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `vigente_desde` DATE NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `producto_precios_costos_producto_idx` (`producto_id`),
+  CONSTRAINT `producto_precios_costos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `stock_actual` (
+  `producto_id` INT UNSIGNED NOT NULL,
+  `bodega_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL DEFAULT 0,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`producto_id`, `bodega_id`),
+  CONSTRAINT `stock_actual_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `stock_actual_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `inventario_entradas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `referencia` VARCHAR(120) DEFAULT NULL,
+  `proveedor` VARCHAR(150) DEFAULT NULL,
+  `bodega_id` INT UNSIGNED NOT NULL,
+  `fecha` DATE NOT NULL,
+  `observacion` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `inventario_entradas_bodega_idx` (`bodega_id`),
+  CONSTRAINT `inventario_entradas_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `inventario_entrada_detalles` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `entrada_id` INT UNSIGNED NOT NULL,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL,
+  `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `inventario_entrada_detalles_entrada_idx` (`entrada_id`),
+  KEY `inventario_entrada_detalles_producto_idx` (`producto_id`),
+  CONSTRAINT `inventario_entrada_detalles_entrada_fk` FOREIGN KEY (`entrada_id`) REFERENCES `inventario_entradas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventario_entrada_detalles_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `inventario_ajustes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `bodega_id` INT UNSIGNED NOT NULL,
+  `motivo` VARCHAR(150) NOT NULL,
+  `fecha` DATE NOT NULL,
+  `observacion` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `inventario_ajustes_bodega_idx` (`bodega_id`),
+  CONSTRAINT `inventario_ajustes_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `inventario_ajuste_detalles` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `ajuste_id` INT UNSIGNED NOT NULL,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL,
+  `tipo` ENUM('incremento', 'decremento') NOT NULL,
+  `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `inventario_ajuste_detalles_ajuste_idx` (`ajuste_id`),
+  KEY `inventario_ajuste_detalles_producto_idx` (`producto_id`),
+  CONSTRAINT `inventario_ajuste_detalles_ajuste_fk` FOREIGN KEY (`ajuste_id`) REFERENCES `inventario_ajustes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `inventario_ajuste_detalles_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `inventario_movimientos` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `bodega_id` INT UNSIGNED NOT NULL,
+  `tipo` ENUM('entrada', 'salida', 'ajuste', 'traslado') NOT NULL,
+  `referencia` VARCHAR(150) DEFAULT NULL,
+  `cantidad` INT NOT NULL,
+  `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `saldo_cantidad` INT NOT NULL DEFAULT 0,
+  `saldo_costo` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `inventario_movimientos_producto_idx` (`producto_id`),
+  KEY `inventario_movimientos_bodega_idx` (`bodega_id`),
+  CONSTRAINT `inventario_movimientos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `inventario_movimientos_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `traslados` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `origen_bodega_id` INT UNSIGNED NOT NULL,
+  `destino_bodega_id` INT UNSIGNED NOT NULL,
+  `estado` ENUM('pendiente', 'enviado', 'recibido', 'cancelado') NOT NULL DEFAULT 'pendiente',
+  `fecha_solicitud` DATE NOT NULL,
+  `fecha_envio` DATE DEFAULT NULL,
+  `fecha_recepcion` DATE DEFAULT NULL,
+  `observacion` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `traslados_origen_idx` (`origen_bodega_id`),
+  KEY `traslados_destino_idx` (`destino_bodega_id`),
+  CONSTRAINT `traslados_origen_fk` FOREIGN KEY (`origen_bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `traslados_destino_fk` FOREIGN KEY (`destino_bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `traslado_detalles` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `traslado_id` INT UNSIGNED NOT NULL,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL,
+  PRIMARY KEY (`id`),
+  KEY `traslado_detalles_traslado_idx` (`traslado_id`),
+  KEY `traslado_detalles_producto_idx` (`producto_id`),
+  CONSTRAINT `traslado_detalles_traslado_fk` FOREIGN KEY (`traslado_id`) REFERENCES `traslados` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `traslado_detalles_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `clientes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `documento` VARCHAR(60) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `estado` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `ventas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `cliente_id` INT UNSIGNED DEFAULT NULL,
+  `bodega_id` INT UNSIGNED NOT NULL,
+  `fecha` DATE NOT NULL,
+  `estado` ENUM('registrada', 'anulada') NOT NULL DEFAULT 'registrada',
+  `subtotal` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `impuesto_total` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `descuento_total` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `total` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `forma_pago_id` INT UNSIGNED DEFAULT NULL,
+  `observacion` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ventas_cliente_idx` (`cliente_id`),
+  KEY `ventas_bodega_idx` (`bodega_id`),
+  CONSTRAINT `ventas_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `ventas_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `ventas_forma_pago_fk` FOREIGN KEY (`forma_pago_id`) REFERENCES `formas_pago` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `venta_detalles` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `venta_id` INT UNSIGNED NOT NULL,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL,
+  `precio_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `impuesto_id` INT UNSIGNED DEFAULT NULL,
+  `subtotal` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `venta_detalles_venta_idx` (`venta_id`),
+  KEY `venta_detalles_producto_idx` (`producto_id`),
+  CONSTRAINT `venta_detalles_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `venta_detalles_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `venta_detalles_impuesto_fk` FOREIGN KEY (`impuesto_id`) REFERENCES `impuestos` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `devoluciones` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `venta_id` INT UNSIGNED NOT NULL,
+  `fecha` DATE NOT NULL,
+  `motivo` VARCHAR(200) DEFAULT NULL,
+  `total_devuelto` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `devoluciones_venta_idx` (`venta_id`),
+  CONSTRAINT `devoluciones_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `devolucion_detalles` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `devolucion_id` INT UNSIGNED NOT NULL,
+  `producto_id` INT UNSIGNED NOT NULL,
+  `cantidad` INT NOT NULL,
+  `monto` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `devolucion_detalles_devolucion_idx` (`devolucion_id`),
+  KEY `devolucion_detalles_producto_idx` (`producto_id`),
+  CONSTRAINT `devolucion_detalles_devolucion_fk` FOREIGN KEY (`devolucion_id`) REFERENCES `devoluciones` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `devolucion_detalles_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `cuentas_por_cobrar` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `cliente_id` INT UNSIGNED NOT NULL,
+  `venta_id` INT UNSIGNED DEFAULT NULL,
+  `monto` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `saldo` DECIMAL(12, 2) NOT NULL DEFAULT 0,
+  `fecha_vencimiento` DATE DEFAULT NULL,
+  `estado` ENUM('pendiente', 'pagado', 'vencido') NOT NULL DEFAULT 'pendiente',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `cuentas_por_cobrar_cliente_idx` (`cliente_id`),
+  KEY `cuentas_por_cobrar_venta_idx` (`venta_id`),
+  CONSTRAINT `cuentas_por_cobrar_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cuentas_por_cobrar_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `respaldos_sistema` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `archivo` VARCHAR(200) NOT NULL,
+  `tamano` BIGINT UNSIGNED DEFAULT NULL,
+  `generado_por` INT UNSIGNED DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `respaldos_sistema_usuario_idx` (`generado_por`),
+  CONSTRAINT `respaldos_sistema_usuario_fk` FOREIGN KEY (`generado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
