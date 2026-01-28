@@ -1,3 +1,17 @@
+CREATE TABLE `empresas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `razon_social` VARCHAR(200) DEFAULT NULL,
+  `ruc` VARCHAR(30) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `empresas_nombre_unique` (`nombre`),
+  UNIQUE KEY `empresas_ruc_unique` (`ruc`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `empresa_id` INT UNSIGNED DEFAULT NULL,
@@ -411,53 +425,6 @@ CREATE TABLE `approval_steps` (
   PRIMARY KEY (`id`),
   CONSTRAINT `approval_steps_flow_id_fk` FOREIGN KEY (`flow_id`) REFERENCES `approval_flows` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-INSERT INTO `empresas` (`nombre`, `razon_social`, `ruc`, `telefono`, `correo`, `direccion`)
-VALUES ('Empresa Demo', 'Empresa Demo S.A.', '99999999-9', '+56 9 6000 0000', 'contacto@empresa-demo.cl', 'Av. Principal 123');
-
-INSERT INTO `users` (
-  `empresa_id`,
-  `rut`,
-  `nombre`,
-  `apellido`,
-  `correo`,
-  `telefono`,
-  `direccion`,
-  `username`,
-  `rol`,
-  `password_hash`,
-  `password_locked`,
-  `is_superadmin`,
-  `estado`
-) VALUES (
-  1,
-  '9.999.999-9',
-  'Super',
-  'User',
-  'admin@muni.cl',
-  '+56 9 1234 5678',
-  'Municipalidad Central',
-  'superuser',
-  'SuperAdmin',
-  '$2y$12$nNyFQLLuFHy7yjLILUTlIO3NQ96Vw5rS90YCDml1ZKINCPv7Lvshe',
-  1,
-  1,
-  1
-);
-
-INSERT INTO `roles` (`empresa_id`, `nombre`, `descripcion`, `estado`)
-VALUES
-  (1, 'SuperAdmin', 'Control total del sistema', 1),
-  (1, 'Admin', 'Administración general', 1),
-  (1, 'EncargadoEventos', 'Gestión de eventos', 1),
-  (1, 'Auditor', 'Revisión y auditoría', 1),
-  (1, 'Consulta', 'Acceso de solo lectura', 1);
-
--- Datos QA para pruebas de flujo -- Sección: unidades
-INSERT INTO `unidades` (`empresa_id`, `nombre`, `descripcion`)
-VALUES
-  (1, 'Administración', 'Gestión administrativa municipal'),
-  (1, 'Finanzas', 'Gestión presupuestaria y contable'),
   (1, 'Recursos Humanos', 'Gestión de personal y bienestar'),
   (1, 'DIDECO', 'Desarrollo comunitario'),
   (1, 'SECPLAN', 'Planificación comunal'),
@@ -470,45 +437,6 @@ VALUES
   (1, 'Deportes', 'Programas deportivos'),
   (1, 'Seguridad', 'Prevención y seguridad pública'),
   (1, 'Turismo', 'Promoción turística'),
-  (1, 'Vivienda', 'Programas habitacionales'),
-  (1, 'Fomento Productivo', 'Apoyo a emprendedores'),
-  (1, 'Adulto Mayor', 'Programas para personas mayores'),
-  (1, 'Infancia', 'Programas de infancia'),
-  (1, 'Juventud', 'Programas juveniles'),
-  (1, 'Participación Ciudadana', 'Vinculación con la comunidad');
-
-INSERT INTO `municipalidad` (`empresa_id`, `nombre`, `rut`, `direccion`, `telefono`, `correo`, `logo_path`, `color_primary`, `color_secondary`)
-VALUES (1, 'Go Muni', NULL, NULL, NULL, NULL, 'assets/images/logo.png', '#6658dd', '#4a81d4');
-
-INSERT INTO `notificacion_correos` (`empresa_id`, `correo_imap`, `password_imap`, `host_imap`, `puerto_imap`, `seguridad_imap`, `from_nombre`, `from_correo`)
-VALUES (1, 'notificaciones@municipalidad.cl', 'cambiar_password', 'imap.municipalidad.cl', 993, 'ssl', 'Sistema Municipal', 'notificaciones@municipalidad.cl');
-
-INSERT INTO `notification_settings` (`canal_email`, `canal_sms`, `canal_app`, `frecuencia`)
-VALUES (1, 0, 1, 'diario');
-
-INSERT INTO `permissions` (`modulo`, `accion`, `descripcion`)
-VALUES
-  ('usuarios', 'ver', 'Ver usuarios'),
-  ('usuarios', 'crear', 'Crear usuarios'),
-  ('usuarios', 'editar', 'Editar usuarios'),
-  ('usuarios', 'eliminar', 'Deshabilitar usuarios'),
-  ('roles', 'ver', 'Ver roles'),
-  ('roles', 'crear', 'Crear roles'),
-  ('roles', 'editar', 'Editar roles'),
-  ('roles', 'eliminar', 'Deshabilitar roles'),
-  ('eventos', 'ver', 'Ver eventos'),
-  ('eventos', 'crear', 'Crear eventos'),
-  ('eventos', 'editar', 'Editar eventos'),
-  ('eventos', 'eliminar', 'Deshabilitar eventos'),
-  ('eventos', 'publicar', 'Publicar eventos'),
-  ('autoridades', 'ver', 'Ver autoridades'),
-  ('autoridades', 'crear', 'Crear autoridades'),
-  ('autoridades', 'editar', 'Editar autoridades'),
-  ('autoridades', 'eliminar', 'Deshabilitar autoridades'),
-  ('adjuntos', 'subir', 'Subir adjuntos'),
-  ('adjuntos', 'eliminar', 'Eliminar adjuntos'),
-  ('adjuntos', 'descargar', 'Descargar adjuntos');
-
 -- === Inventario y ventas ===
 CREATE TABLE `bodegas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
