@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-require __DIR__ . '/../app/bootstrap.php';
+require_once __DIR__ . '/../app/bootstrap.php';
 
 $moduleKey = $moduleKey ?? pathinfo(basename($_SERVER['SCRIPT_NAME'] ?? ''), PATHINFO_FILENAME);
 $pageTitle = $pageTitle ?? 'Módulo';
@@ -391,6 +391,9 @@ include('partials/html.php');
     <?php include('partials/customizer.php'); ?>
 
     <?php include('partials/footer-scripts.php'); ?>
+    <?php if (!empty($pageInlineScript)) : ?>
+        <?php echo $pageInlineScript; ?>
+    <?php endif; ?>
 
 </body>
 
