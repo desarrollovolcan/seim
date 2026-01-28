@@ -10,24 +10,24 @@ if (isset($_SESSION['user'])) {
 }
 
 $errors = [];
-$rut = '';
+$correo = '';
 $municipalidad = get_municipalidad();
 $logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $rut = trim((string) ($_POST['rut'] ?? ''));
+    $correo = trim((string) ($_POST['correo'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
 
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
     }
 
-    if ($rut === '' || $password === '') {
-        $errors[] = 'Debes ingresar RUT y contraseña.';
+    if ($correo === '' || $password === '') {
+        $errors[] = 'Debes ingresar correo y contraseña.';
     }
 
     if (!$errors) {
-        $user = User::findByRut(db(), $rut);
+        $user = User::findByCorreo(db(), $correo);
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $errors[] = 'Credenciales inválidas.';
         } elseif ((int) ($user['estado'] ?? 0) !== 1) {
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'id' => $user['id'],
                 'nombre' => $user['nombre'],
                 'apellido' => $user['apellido'],
-                'rut' => $user['rut'],
+                'correo' => $user['correo'],
                 'cargo' => $user['cargo'],
                 'rol' => $user['rol'],
                 'avatar_path' => $user['avatar_path'] ?? null,
@@ -114,7 +114,7 @@ include('partials/html.php');
                         </div>
 
                         <div class="mt-auto">
-                            <p class="text-muted text-center auth-sub-text mx-auto">Ingresa con tu RUT y contraseña para continuar.</p>
+                            <p class="text-muted text-center auth-sub-text mx-auto">Ingresa con tu correo y contraseña para continuar.</p>
 
                             <?php if ($errors) { ?>
                                 <div class="alert alert-danger" role="alert">
@@ -129,9 +129,9 @@ include('partials/html.php');
                             <form class="mt-4" method="post" action="auth-2-sign-in.php">
                                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                 <div class="mb-3">
-                                    <label for="userRut" class="form-label">RUT <span class="text-danger">*</span></label>
+                                    <label for="userEmail" class="form-label">Correo <span class="text-danger">*</span></label>
                                     <div class="app-search">
-                                        <input type="text" class="form-control" id="userRut" name="rut" placeholder="12.345.678-9" value="<?php echo htmlspecialchars($rut, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <input type="email" class="form-control" id="userEmail" name="correo" placeholder="usuario@municipalidad.cl" value="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>" required>
                                         <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
                                     </div>
                                 </div>
