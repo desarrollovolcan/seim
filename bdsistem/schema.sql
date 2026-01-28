@@ -425,18 +425,6 @@ CREATE TABLE `approval_steps` (
   PRIMARY KEY (`id`),
   CONSTRAINT `approval_steps_flow_id_fk` FOREIGN KEY (`flow_id`) REFERENCES `approval_flows` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-  (1, 'Recursos Humanos', 'Gestión de personal y bienestar'),
-  (1, 'DIDECO', 'Desarrollo comunitario'),
-  (1, 'SECPLAN', 'Planificación comunal'),
-  (1, 'Tránsito', 'Permisos y gestión vial'),
-  (1, 'Obras Municipales', 'Permisos y fiscalización de obras'),
-  (1, 'Salud', 'Coordinación de atención primaria'),
-  (1, 'Educación', 'Gestión educativa comunal'),
-  (1, 'Medio Ambiente', 'Programas y fiscalización ambiental'),
-  (1, 'Cultura', 'Actividades culturales'),
-  (1, 'Deportes', 'Programas deportivos'),
-  (1, 'Seguridad', 'Prevención y seguridad pública'),
-  (1, 'Turismo', 'Promoción turística'),
 -- === Inventario y ventas ===
 CREATE TABLE `bodegas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
