@@ -1,5 +1,19 @@
+CREATE TABLE `empresas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `razon_social` VARCHAR(180) DEFAULT NULL,
+  `ruc` VARCHAR(30) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 CREATE TABLE `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `rut` VARCHAR(20) NOT NULL,
   `nombre` VARCHAR(100) NOT NULL,
   `apellido` VARCHAR(100) NOT NULL,
@@ -11,32 +25,42 @@ CREATE TABLE `users` (
   `avatar_path` VARCHAR(255) DEFAULT NULL,
   `unidad_id` INT UNSIGNED DEFAULT NULL,
   `password_hash` VARCHAR(255) NOT NULL,
+  `password_locked` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_superadmin` TINYINT(1) NOT NULL DEFAULT 0,
   `estado` TINYINT(1) NOT NULL DEFAULT 1,
   `fecha_creacion` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `ultimo_acceso` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `users_rut_unique` (`rut`),
   UNIQUE KEY `users_username_unique` (`username`),
-  UNIQUE KEY `users_correo_unique` (`correo`)
+  UNIQUE KEY `users_correo_unique` (`correo`),
+  KEY `users_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `users_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `unidades` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `descripcion` VARCHAR(255) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unidades_nombre_unique` (`nombre`)
+  UNIQUE KEY `unidades_nombre_unique` (`nombre`),
+  KEY `unidades_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `unidades_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `roles` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(60) NOT NULL,
   `descripcion` VARCHAR(200) DEFAULT NULL,
   `estado` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `roles_nombre_unique` (`nombre`)
+  UNIQUE KEY `roles_nombre_unique` (`nombre`),
+  KEY `roles_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `roles_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `user_roles` (
@@ -106,6 +130,7 @@ CREATE TABLE `audit_logs` (
 
 CREATE TABLE `events` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `titulo` VARCHAR(150) NOT NULL,
   `descripcion` TEXT NOT NULL,
   `ubicacion` VARCHAR(200) NOT NULL,
@@ -122,6 +147,8 @@ CREATE TABLE `events` (
   `encargado_id` INT UNSIGNED DEFAULT NULL,
   `fecha_creacion` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  KEY `events_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `events_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `events_creado_por_fk` FOREIGN KEY (`creado_por`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `events_encargado_fk` FOREIGN KEY (`encargado_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -141,6 +168,7 @@ CREATE TABLE `event_attachments` (
 
 CREATE TABLE `authorities` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `tipo` VARCHAR(80) NOT NULL,
   `correo` VARCHAR(150) DEFAULT NULL,
@@ -152,7 +180,9 @@ CREATE TABLE `authorities` (
   `unidad_id` INT UNSIGNED DEFAULT NULL,
   `group_id` INT UNSIGNED DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `authorities_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `authorities_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `authority_groups` (
@@ -187,6 +217,7 @@ CREATE TABLE `authority_attachments` (
 
 CREATE TABLE `municipalidad` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `rut` VARCHAR(20) DEFAULT NULL,
   `direccion` VARCHAR(200) DEFAULT NULL,
@@ -196,11 +227,14 @@ CREATE TABLE `municipalidad` (
   `color_primary` VARCHAR(20) DEFAULT NULL,
   `color_secondary` VARCHAR(20) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `municipalidad_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `municipalidad_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `notificacion_correos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `correo_imap` VARCHAR(150) NOT NULL,
   `password_imap` VARCHAR(255) NOT NULL,
   `host_imap` VARCHAR(150) NOT NULL,
@@ -209,17 +243,22 @@ CREATE TABLE `notificacion_correos` (
   `from_nombre` VARCHAR(150) DEFAULT NULL,
   `from_correo` VARCHAR(150) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `notificacion_correos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `notificacion_correos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `email_templates` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `template_key` VARCHAR(120) NOT NULL,
   `subject` VARCHAR(200) NOT NULL,
   `body_html` MEDIUMTEXT NOT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `email_templates_key_unique` (`template_key`)
+  UNIQUE KEY `email_templates_key_unique` (`template_key`),
+  KEY `email_templates_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `email_templates_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `event_authority_invitations` (
@@ -338,7 +377,11 @@ CREATE TABLE `approval_steps` (
   CONSTRAINT `approval_steps_flow_id_fk` FOREIGN KEY (`flow_id`) REFERENCES `approval_flows` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+INSERT INTO `empresas` (`nombre`, `razon_social`, `ruc`, `telefono`, `correo`, `direccion`)
+VALUES ('Empresa Demo', 'Empresa Demo S.A.', '99999999-9', '+56 9 6000 0000', 'contacto@empresa-demo.cl', 'Av. Principal 123');
+
 INSERT INTO `users` (
+  `empresa_id`,
   `rut`,
   `nombre`,
   `apellido`,
@@ -348,8 +391,11 @@ INSERT INTO `users` (
   `username`,
   `rol`,
   `password_hash`,
+  `password_locked`,
+  `is_superadmin`,
   `estado`
 ) VALUES (
+  1,
   '9.999.999-9',
   'Super',
   'User',
@@ -359,28 +405,30 @@ INSERT INTO `users` (
   'superuser',
   'SuperAdmin',
   '$2y$12$nNyFQLLuFHy7yjLILUTlIO3NQ96Vw5rS90YCDml1ZKINCPv7Lvshe',
+  1,
+  1,
   1
 );
 
-INSERT INTO `roles` (`nombre`, `descripcion`, `estado`)
+INSERT INTO `roles` (`empresa_id`, `nombre`, `descripcion`, `estado`)
 VALUES
-  ('SuperAdmin', 'Control total del sistema', 1),
-  ('Admin', 'Administración general', 1),
-  ('EncargadoEventos', 'Gestión de eventos', 1),
-  ('Auditor', 'Revisión y auditoría', 1),
-  ('Consulta', 'Acceso de solo lectura', 1);
+  (1, 'SuperAdmin', 'Control total del sistema', 1),
+  (1, 'Admin', 'Administración general', 1),
+  (1, 'EncargadoEventos', 'Gestión de eventos', 1),
+  (1, 'Auditor', 'Revisión y auditoría', 1),
+  (1, 'Consulta', 'Acceso de solo lectura', 1);
 
-INSERT INTO `unidades` (`nombre`, `descripcion`)
+INSERT INTO `unidades` (`empresa_id`, `nombre`, `descripcion`)
 VALUES
-  ('Administración', 'Unidad Administrativa'),
-  ('DIDECO', 'Desarrollo Comunitario'),
-  ('SECPLAN', 'Secretaría Comunal de Planificación');
+  (1, 'Administración', 'Unidad Administrativa'),
+  (1, 'DIDECO', 'Desarrollo Comunitario'),
+  (1, 'SECPLAN', 'Secretaría Comunal de Planificación');
 
-INSERT INTO `municipalidad` (`nombre`, `rut`, `direccion`, `telefono`, `correo`, `logo_path`, `color_primary`, `color_secondary`)
-VALUES ('Go Muni', NULL, NULL, NULL, NULL, 'assets/images/logo.png', '#6658dd', '#4a81d4');
+INSERT INTO `municipalidad` (`empresa_id`, `nombre`, `rut`, `direccion`, `telefono`, `correo`, `logo_path`, `color_primary`, `color_secondary`)
+VALUES (1, 'Go Muni', NULL, NULL, NULL, NULL, 'assets/images/logo.png', '#6658dd', '#4a81d4');
 
-INSERT INTO `notificacion_correos` (`correo_imap`, `password_imap`, `host_imap`, `puerto_imap`, `seguridad_imap`, `from_nombre`, `from_correo`)
-VALUES ('notificaciones@municipalidad.cl', 'cambiar_password', 'imap.municipalidad.cl', 993, 'ssl', 'Sistema Municipal', 'notificaciones@municipalidad.cl');
+INSERT INTO `notificacion_correos` (`empresa_id`, `correo_imap`, `password_imap`, `host_imap`, `puerto_imap`, `seguridad_imap`, `from_nombre`, `from_correo`)
+VALUES (1, 'notificaciones@municipalidad.cl', 'cambiar_password', 'imap.municipalidad.cl', 993, 'ssl', 'Sistema Municipal', 'notificaciones@municipalidad.cl');
 
 INSERT INTO `notification_settings` (`canal_email`, `canal_sms`, `canal_app`, `frecuencia`)
 VALUES (1, 0, 1, 'diario');
@@ -409,21 +457,9 @@ VALUES
   ('adjuntos', 'descargar', 'Descargar adjuntos');
 
 -- === Inventario y ventas ===
-CREATE TABLE `empresas` (
-  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `nombre` VARCHAR(150) NOT NULL,
-  `razon_social` VARCHAR(180) DEFAULT NULL,
-  `ruc` VARCHAR(30) DEFAULT NULL,
-  `telefono` VARCHAR(30) DEFAULT NULL,
-  `correo` VARCHAR(150) DEFAULT NULL,
-  `direccion` VARCHAR(200) DEFAULT NULL,
-  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
 CREATE TABLE `bodegas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `direccion` VARCHAR(200) DEFAULT NULL,
   `ciudad` VARCHAR(100) DEFAULT NULL,
@@ -431,69 +467,90 @@ CREATE TABLE `bodegas` (
   `estado` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `bodegas_nombre_unique` (`nombre`)
+  UNIQUE KEY `bodegas_nombre_unique` (`nombre`),
+  KEY `bodegas_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `bodegas_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `formas_pago` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(120) NOT NULL,
   `descripcion` VARCHAR(200) DEFAULT NULL,
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `formas_pago_nombre_unique` (`nombre`)
+  UNIQUE KEY `formas_pago_nombre_unique` (`nombre`),
+  KEY `formas_pago_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `formas_pago_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `impuestos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(120) NOT NULL,
   `porcentaje` DECIMAL(6, 2) NOT NULL DEFAULT 0,
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `impuestos_nombre_unique` (`nombre`)
+  UNIQUE KEY `impuestos_nombre_unique` (`nombre`),
+  KEY `impuestos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `impuestos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `parametros_inventario` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `stock_minimo_default` INT UNSIGNED NOT NULL DEFAULT 0,
   `stock_maximo_default` INT UNSIGNED NOT NULL DEFAULT 0,
   `metodo_costeo` ENUM('promedio', 'fifo', 'lifo') NOT NULL DEFAULT 'promedio',
   `permite_stock_negativo` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `parametros_inventario_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `parametros_inventario_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `categorias_productos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `descripcion` VARCHAR(200) DEFAULT NULL,
   `estado` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `categorias_productos_nombre_unique` (`nombre`)
+  UNIQUE KEY `categorias_productos_nombre_unique` (`nombre`),
+  KEY `categorias_productos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `categorias_productos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `unidades_medida` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(100) NOT NULL,
   `abreviatura` VARCHAR(20) NOT NULL,
   `descripcion` VARCHAR(200) DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unidades_medida_nombre_unique` (`nombre`)
+  UNIQUE KEY `unidades_medida_nombre_unique` (`nombre`),
+  KEY `unidades_medida_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `unidades_medida_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `estados_producto` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(100) NOT NULL,
   `descripcion` VARCHAR(200) DEFAULT NULL,
   `activo` TINYINT(1) NOT NULL DEFAULT 1,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `estados_producto_nombre_unique` (`nombre`)
+  UNIQUE KEY `estados_producto_nombre_unique` (`nombre`),
+  KEY `estados_producto_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `estados_producto_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `productos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `sku` VARCHAR(60) NOT NULL,
   `nombre` VARCHAR(180) NOT NULL,
   `descripcion` TEXT DEFAULT NULL,
@@ -509,6 +566,8 @@ CREATE TABLE `productos` (
   `updated_at` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `productos_sku_unique` (`sku`),
+  KEY `productos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `productos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `productos_categoria_fk` FOREIGN KEY (`categoria_id`) REFERENCES `categorias_productos` (`id`) ON DELETE SET NULL,
   CONSTRAINT `productos_unidad_fk` FOREIGN KEY (`unidad_medida_id`) REFERENCES `unidades_medida` (`id`) ON DELETE SET NULL,
   CONSTRAINT `productos_estado_fk` FOREIGN KEY (`estado_id`) REFERENCES `estados_producto` (`id`) ON DELETE SET NULL,
@@ -517,6 +576,7 @@ CREATE TABLE `productos` (
 
 CREATE TABLE `producto_precios_costos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `producto_id` INT UNSIGNED NOT NULL,
   `costo_unitario` DECIMAL(12, 2) NOT NULL DEFAULT 0,
   `precio_venta` DECIMAL(12, 2) NOT NULL DEFAULT 0,
@@ -524,21 +584,27 @@ CREATE TABLE `producto_precios_costos` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `producto_precios_costos_producto_idx` (`producto_id`),
+  KEY `producto_precios_costos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `producto_precios_costos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `producto_precios_costos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `stock_actual` (
   `producto_id` INT UNSIGNED NOT NULL,
   `bodega_id` INT UNSIGNED NOT NULL,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `cantidad` INT NOT NULL DEFAULT 0,
   `updated_at` TIMESTAMP NULL DEFAULT NULL,
   PRIMARY KEY (`producto_id`, `bodega_id`),
+  KEY `stock_actual_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `stock_actual_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `stock_actual_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE CASCADE,
   CONSTRAINT `stock_actual_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `inventario_entradas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `referencia` VARCHAR(120) DEFAULT NULL,
   `proveedor` VARCHAR(150) DEFAULT NULL,
   `bodega_id` INT UNSIGNED NOT NULL,
@@ -547,6 +613,8 @@ CREATE TABLE `inventario_entradas` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `inventario_entradas_bodega_idx` (`bodega_id`),
+  KEY `inventario_entradas_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `inventario_entradas_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `inventario_entradas_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -565,6 +633,7 @@ CREATE TABLE `inventario_entrada_detalles` (
 
 CREATE TABLE `inventario_ajustes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `bodega_id` INT UNSIGNED NOT NULL,
   `motivo` VARCHAR(150) NOT NULL,
   `fecha` DATE NOT NULL,
@@ -572,6 +641,8 @@ CREATE TABLE `inventario_ajustes` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `inventario_ajustes_bodega_idx` (`bodega_id`),
+  KEY `inventario_ajustes_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `inventario_ajustes_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `inventario_ajustes_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -591,6 +662,7 @@ CREATE TABLE `inventario_ajuste_detalles` (
 
 CREATE TABLE `inventario_movimientos` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `producto_id` INT UNSIGNED NOT NULL,
   `bodega_id` INT UNSIGNED NOT NULL,
   `tipo` ENUM('entrada', 'salida', 'ajuste', 'traslado') NOT NULL,
@@ -603,12 +675,15 @@ CREATE TABLE `inventario_movimientos` (
   PRIMARY KEY (`id`),
   KEY `inventario_movimientos_producto_idx` (`producto_id`),
   KEY `inventario_movimientos_bodega_idx` (`bodega_id`),
+  KEY `inventario_movimientos_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `inventario_movimientos_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `inventario_movimientos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `productos` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `inventario_movimientos_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `traslados` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `origen_bodega_id` INT UNSIGNED NOT NULL,
   `destino_bodega_id` INT UNSIGNED NOT NULL,
   `estado` ENUM('pendiente', 'enviado', 'recibido', 'cancelado') NOT NULL DEFAULT 'pendiente',
@@ -620,6 +695,8 @@ CREATE TABLE `traslados` (
   PRIMARY KEY (`id`),
   KEY `traslados_origen_idx` (`origen_bodega_id`),
   KEY `traslados_destino_idx` (`destino_bodega_id`),
+  KEY `traslados_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `traslados_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `traslados_origen_fk` FOREIGN KEY (`origen_bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `traslados_destino_fk` FOREIGN KEY (`destino_bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
@@ -638,6 +715,7 @@ CREATE TABLE `traslado_detalles` (
 
 CREATE TABLE `clientes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
   `documento` VARCHAR(60) DEFAULT NULL,
   `telefono` VARCHAR(30) DEFAULT NULL,
@@ -645,11 +723,14 @@ CREATE TABLE `clientes` (
   `direccion` VARCHAR(200) DEFAULT NULL,
   `estado` TINYINT(1) NOT NULL DEFAULT 1,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `clientes_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `clientes_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `ventas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `cliente_id` INT UNSIGNED DEFAULT NULL,
   `bodega_id` INT UNSIGNED NOT NULL,
   `fecha` DATE NOT NULL,
@@ -664,6 +745,8 @@ CREATE TABLE `ventas` (
   PRIMARY KEY (`id`),
   KEY `ventas_cliente_idx` (`cliente_id`),
   KEY `ventas_bodega_idx` (`bodega_id`),
+  KEY `ventas_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `ventas_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `ventas_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE SET NULL,
   CONSTRAINT `ventas_bodega_fk` FOREIGN KEY (`bodega_id`) REFERENCES `bodegas` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `ventas_forma_pago_fk` FOREIGN KEY (`forma_pago_id`) REFERENCES `formas_pago` (`id`) ON DELETE SET NULL
@@ -688,6 +771,7 @@ CREATE TABLE `venta_detalles` (
 
 CREATE TABLE `devoluciones` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `venta_id` INT UNSIGNED NOT NULL,
   `fecha` DATE NOT NULL,
   `motivo` VARCHAR(200) DEFAULT NULL,
@@ -695,6 +779,8 @@ CREATE TABLE `devoluciones` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `devoluciones_venta_idx` (`venta_id`),
+  KEY `devoluciones_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `devoluciones_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `devoluciones_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -713,6 +799,7 @@ CREATE TABLE `devolucion_detalles` (
 
 CREATE TABLE `cuentas_por_cobrar` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `cliente_id` INT UNSIGNED NOT NULL,
   `venta_id` INT UNSIGNED DEFAULT NULL,
   `monto` DECIMAL(12, 2) NOT NULL DEFAULT 0,
@@ -723,17 +810,22 @@ CREATE TABLE `cuentas_por_cobrar` (
   PRIMARY KEY (`id`),
   KEY `cuentas_por_cobrar_cliente_idx` (`cliente_id`),
   KEY `cuentas_por_cobrar_venta_idx` (`venta_id`),
+  KEY `cuentas_por_cobrar_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `cuentas_por_cobrar_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `cuentas_por_cobrar_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE CASCADE,
   CONSTRAINT `cuentas_por_cobrar_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE `respaldos_sistema` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
   `archivo` VARCHAR(200) NOT NULL,
   `tamano` BIGINT UNSIGNED DEFAULT NULL,
   `generado_por` INT UNSIGNED DEFAULT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `respaldos_sistema_usuario_idx` (`generado_por`),
+  KEY `respaldos_sistema_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `respaldos_sistema_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL,
   CONSTRAINT `respaldos_sistema_usuario_fk` FOREIGN KEY (`generado_por`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
