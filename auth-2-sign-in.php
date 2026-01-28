@@ -10,24 +10,26 @@ if (isset($_SESSION['user'])) {
 }
 
 $errors = [];
-$rut = '';
+$correo = '';
+$username = '';
 $municipalidad = get_municipalidad();
 $logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $rut = trim((string) ($_POST['rut'] ?? ''));
+    $correo = trim((string) ($_POST['correo'] ?? ''));
+    $username = trim((string) ($_POST['username'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
 
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
     }
 
-    if ($rut === '' || $password === '') {
-        $errors[] = 'Debes ingresar RUT y contraseña.';
+    if ($correo === '' || $username === '' || $password === '') {
+        $errors[] = 'Debes ingresar correo, usuario y contraseña.';
     }
 
     if (!$errors) {
-        $user = User::findByRut(db(), $rut);
+        $user = User::findByCorreoAndUsername(db(), $correo, $username);
         if (!$user || !password_verify($password, $user['password_hash'])) {
             $errors[] = 'Credenciales inválidas.';
         } elseif ((int) ($user['estado'] ?? 0) !== 1) {
@@ -114,7 +116,7 @@ include('partials/html.php');
                         </div>
 
                         <div class="mt-auto">
-                            <p class="text-muted text-center auth-sub-text mx-auto">Ingresa con tu RUT y contraseña para continuar.</p>
+                            <p class="text-muted text-center auth-sub-text mx-auto">Ingresa con tu correo, usuario y contraseña para continuar.</p>
 
                             <?php if ($errors) { ?>
                                 <div class="alert alert-danger" role="alert">
@@ -129,10 +131,18 @@ include('partials/html.php');
                             <form class="mt-4" method="post" action="auth-2-sign-in.php">
                                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                 <div class="mb-3">
-                                    <label for="userRut" class="form-label">RUT <span class="text-danger">*</span></label>
+                                    <label for="userCorreo" class="form-label">Correo <span class="text-danger">*</span></label>
                                     <div class="app-search">
-                                        <input type="text" class="form-control" id="userRut" name="rut" placeholder="12.345.678-9" value="<?php echo htmlspecialchars($rut, ENT_QUOTES, 'UTF-8'); ?>" required>
-                                        <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
+                                        <input type="email" class="form-control" id="userCorreo" name="correo" placeholder="usuario@empresa.com" value="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <i data-lucide="mail" class="app-search-icon text-muted"></i>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="userUsername" class="form-label">Usuario <span class="text-danger">*</span></label>
+                                    <div class="app-search">
+                                        <input type="text" class="form-control" id="userUsername" name="username" placeholder="usuario" value="<?php echo htmlspecialchars($username, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <i data-lucide="user" class="app-search-icon text-muted"></i>
                                     </div>
                                 </div>
 

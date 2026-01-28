@@ -13,6 +13,15 @@ class User
         return $user ?: null;
     }
 
+    public static function findByCorreoAndUsername(PDO $pdo, string $correo, string $username): ?array
+    {
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE correo = :correo AND username = :username LIMIT 1');
+        $stmt->execute(['correo' => $correo, 'username' => $username]);
+        $user = $stmt->fetch();
+
+        return $user ?: null;
+    }
+
     public static function create(PDO $pdo, array $data): int
     {
         $stmt = $pdo->prepare(

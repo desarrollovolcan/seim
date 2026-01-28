@@ -35,8 +35,12 @@
                                 </div>
                                 <form>
                                     <div class="mb-3">
-                                        <label class="form-label" for="login-username">Usuario o correo</label>
-                                        <input type="text" id="login-username" class="form-control" placeholder="usuario@muni.cl">
+                                        <label class="form-label" for="login-email">Correo</label>
+                                        <input type="email" id="login-email" class="form-control" placeholder="usuario@empresa.com">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label" for="login-username">Usuario</label>
+                                        <input type="text" id="login-username" class="form-control" placeholder="usuario">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label" for="login-password">Contraseña</label>

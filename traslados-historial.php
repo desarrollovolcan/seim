@@ -1,0 +1,8 @@
+<?php
+$pageTitle = 'Historial de traslados';
+$pageSubtitle = 'Traslados';
+$pageDescription = 'Bitácora de traslados completados.';
+$crudTable = 'traslados';
+$crudReadOnly = true;
+
+include('partials/generic-page.php');
