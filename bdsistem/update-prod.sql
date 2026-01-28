@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS `empresas` (
 
 -- 2) Agregar columnas a municipalidad para empresa
 ALTER TABLE `municipalidad`
-  ADD COLUMN IF NOT EXISTS `razon_social` VARCHAR(200) DEFAULT NULL AFTER `nombre`,
+  ADD COLUMN IF NOT EXISTS `razon_social` VARCHAR(200) DEFAULT NULL AFTER `nombre`;
+
+ALTER TABLE `municipalidad`
   ADD COLUMN IF NOT EXISTS `moneda` VARCHAR(10) DEFAULT 'CLP' AFTER `rut`;
 
 -- 3) Agregar columna data a module_records
