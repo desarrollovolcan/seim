@@ -26,6 +26,28 @@ $fields = [
     'logo_auth_height' => '',
 ];
 
+function normalize_rut(string $value): string
+{
+    $clean = preg_replace('/[^0-9kK]/', '', $value);
+    return strtoupper($clean ?? '');
+}
+
+function format_rut(string $value): string
+{
+    $normalized = normalize_rut($value);
+    if ($normalized === '' || strlen($normalized) < 2) {
+        return $normalized;
+    }
+
+    $body = substr($normalized, 0, -1);
+    $dv = substr($normalized, -1);
+    $reversed = strrev($body);
+    $chunks = str_split($reversed, 3);
+    $bodyWithDots = strrev(implode('.', $chunks));
+
+    return $bodyWithDots . '-' . $dv;
+}
+
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
@@ -44,7 +66,7 @@ if (isset($_GET['edit'])) {
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
             $fields['razon_social'] = (string) ($record['razon_social'] ?? '');
-            $fields['ruc'] = (string) ($record['ruc'] ?? '');
+            $fields['ruc'] = format_rut((string) ($record['ruc'] ?? ''));
             $fields['telefono'] = (string) ($record['telefono'] ?? '');
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
@@ -83,6 +105,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fields[$key] = trim((string) ($_POST[$key] ?? $value));
                     continue;
                 }
+                if ($key === 'ruc') {
+                    $rutInput = $_POST['rut'] ?? $_POST['ruc'] ?? '';
+                    $fields[$key] = trim((string) $rutInput);
+                    continue;
+                }
                 $fields[$key] = trim((string) ($_POST[$key] ?? ''));
             }
 
@@ -90,7 +117,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'El nombre es obligatorio.';
             }
             if ($fields['ruc'] === '') {
-                $errors[] = 'El RUC es obligatorio.';
+                $errors[] = 'El RUT es obligatorio.';
+            } else {
+                $normalizedRut = normalize_rut($fields['ruc']);
+                if ($normalizedRut === '' || strlen($normalizedRut) < 2) {
+                    $errors[] = 'El RUT no es válido.';
+                } else {
+                    $fields['ruc'] = format_rut($normalizedRut);
+                }
             }
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Debes ingresar un correo válido.';
@@ -194,7 +228,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     redirect('empresa.php');
                 } catch (Exception $e) {
-                    $errors[] = 'No se pudo guardar la empresa. Revisa que el nombre o RUC no estén duplicados.';
+                    $errors[] = 'No se pudo guardar la empresa. Revisa que el nombre o RUT no estén duplicados.';
                 }
             }
         }
@@ -240,13 +274,8 @@ include('partials/html.php');
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Input Example</h5>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="text-muted small">Show Code</span>
-                                    <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="showCodeSwitchEmpresa">
-                                    </div>
-                                </div>
+                                <h5 class="card-title mb-0">Registro de empresa</h5>
+                                <span class="badge bg-primary-subtle text-primary">Gestión</span>
                             </div>
                             <div class="card-body">
                                 <?php if ($successMessage !== '') : ?>
@@ -267,7 +296,7 @@ include('partials/html.php');
                                         <h6 class="fw-semibold mb-2">Detalle de empresa</h6>
                                         <div class="row g-2">
                                             <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                                            <div class="col-md-4"><span class="text-muted">RUC:</span> <?php echo htmlspecialchars($viewRecord['ruc'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">RUT:</span> <?php echo htmlspecialchars(format_rut((string) ($viewRecord['ruc'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-8"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
@@ -299,8 +328,8 @@ include('partials/html.php');
                                             <input type="text" name="razon_social" class="form-control" value="<?php echo htmlspecialchars($fields['razon_social'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
                                         <div class="col-md-6 col-xl-3">
-                                            <label class="form-label">RUC</label>
-                                            <input type="text" name="ruc" class="form-control" value="<?php echo htmlspecialchars($fields['ruc'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <label class="form-label">RUT</label>
+                                            <input type="text" name="ruc" class="form-control" value="<?php echo htmlspecialchars($fields['ruc'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="12.345.678-9" required>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Teléfono</label>
@@ -370,7 +399,7 @@ include('partials/html.php');
                                         <thead>
                                             <tr>
                                                 <th>Nombre</th>
-                                                <th>RUC</th>
+                                                <th>RUT</th>
                                                 <th>Teléfono</th>
                                                 <th>Correo</th>
                                                 <th>Dirección</th>
@@ -387,7 +416,7 @@ include('partials/html.php');
                                                 <?php foreach ($empresas as $empresa) : ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($empresa['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($empresa['ruc'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars(format_rut((string) ($empresa['ruc'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($empresa['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($empresa['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($empresa['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
