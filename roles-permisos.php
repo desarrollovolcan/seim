@@ -23,6 +23,7 @@ $modules = [
     ['key' => 'usuarios_empresas', 'label' => 'Usuarios por empresa', 'permisos' => ['view', 'edit']],
     ['key' => 'roles', 'label' => 'Roles', 'permisos' => ['view', 'create', 'edit', 'delete']],
     ['key' => 'permisos', 'label' => 'Permisos', 'permisos' => ['view', 'edit']],
+    ['key' => 'notificaciones_imap', 'label' => 'Configuración IMAP', 'permisos' => ['view', 'edit']],
 ];
 
 $permisosDisponibles = [

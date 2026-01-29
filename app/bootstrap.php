@@ -641,6 +641,22 @@ function ensure_comercial_tables(): void
                 PRIMARY KEY (user_id, empresa_id)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
         );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS notificacion_correos (
+                id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+                correo_imap VARCHAR(160) NOT NULL,
+                password_imap TEXT NOT NULL,
+                host_imap VARCHAR(160) NOT NULL,
+                puerto_imap INT NOT NULL DEFAULT 993,
+                seguridad_imap VARCHAR(10) NOT NULL DEFAULT "ssl",
+                from_nombre VARCHAR(160) DEFAULT NULL,
+                from_correo VARCHAR(160) DEFAULT NULL,
+                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
     } catch (Exception $e) {
     } catch (Error $e) {
     }
@@ -675,6 +691,15 @@ function ensure_comercial_tables(): void
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height INT DEFAULT NULL');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height_sm INT DEFAULT NULL');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_auth_height INT DEFAULT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS correo_imap VARCHAR(160) NOT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS password_imap TEXT NOT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS host_imap VARCHAR(160) NOT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS puerto_imap INT NOT NULL DEFAULT 993');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS seguridad_imap VARCHAR(10) NOT NULL DEFAULT "ssl"');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS from_nombre VARCHAR(160) DEFAULT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS from_correo VARCHAR(160) DEFAULT NULL');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP');
+        db()->exec('ALTER TABLE notificacion_correos ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP');
     } catch (Exception $e) {
     } catch (Error $e) {
     }
