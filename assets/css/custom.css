@@ -180,7 +180,7 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .erp-page .erp-section .form-label {
   font-weight: 600;
-  color: #475569;
+  color: #1f2937;
   font-size: 0.78rem;
   margin-bottom: 0.35rem;
   text-transform: none;
@@ -222,7 +222,7 @@ html[data-menu-color="dark"] .side-nav-title {
 }
 
 .erp-page .erp-section .form-text {
-  color: #94a3b8;
+  color: #6b7280;
 }
 
 .erp-page .erp-section .btn {
@@ -486,12 +486,16 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .side-nav-title {
   font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1f2937;
 }
 
 .side-nav .side-nav-item .side-nav-link {
   border-radius: 0.75rem;
   border: 1px solid transparent;
   transition: all 0.2s ease;
+  color: #1f2937;
+  font-weight: 600;
 }
 
 .side-nav .side-nav-item .side-nav-link .menu-icon {
@@ -501,23 +505,25 @@ html[data-menu-color="dark"] .side-nav-title {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: #e2e8f0;
-  color: #475569;
+  background: #e5e7eb;
+  color: #1f2937;
   margin-right: 0.65rem;
 }
 
 .side-nav .side-nav-item .side-nav-link:hover {
-  border-color: #e2e8f0;
+  border-color: #d1d5db;
+  background: #f1f5f9;
   box-shadow: none;
+  color: #111827;
 }
 
 .side-nav .side-nav-item.active > .side-nav-link {
-  background: #e2e8f0;
-  border-color: #cbd5f5;
-  color: #0f172a;
+  background: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #111827;
 }
 
 .side-nav .side-nav-item.active > .side-nav-link .menu-icon {
-  background: #cbd5f5;
-  color: #1e293b;
+  background: #cbd5e1;
+  color: #111827;
 }
