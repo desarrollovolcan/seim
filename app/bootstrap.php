@@ -85,6 +85,36 @@ function verify_csrf(?string $token): bool
     return isset($_SESSION['csrf_token']) && is_string($token) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
+function validate_rut(string $rut): bool
+{
+    $clean = strtoupper((string) preg_replace('/[^0-9K]/', '', $rut));
+    if (strlen($clean) < 2) {
+        return false;
+    }
+
+    $body = substr($clean, 0, -1);
+    $dv = substr($clean, -1);
+    if ($body === '' || !ctype_digit($body)) {
+        return false;
+    }
+
+    $sum = 0;
+    $factor = 2;
+    for ($i = strlen($body) - 1; $i >= 0; $i--) {
+        $sum += ((int) $body[$i]) * $factor;
+        $factor = $factor === 7 ? 2 : $factor + 1;
+    }
+
+    $mod = 11 - ($sum % 11);
+    $expectedDv = match ($mod) {
+        11 => '0',
+        10 => 'K',
+        default => (string) $mod,
+    };
+
+    return $dv === $expectedDv;
+}
+
 function get_municipalidad(): array
 {
     try {
@@ -312,6 +342,21 @@ function ensure_comercial_tables(): void
                 notas VARCHAR(255) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 KEY clientes_nombre_idx (nombre)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS proveedores (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                razon_social VARCHAR(200) DEFAULT NULL,
+                rut VARCHAR(20) NOT NULL,
+                telefono VARCHAR(40) DEFAULT NULL,
+                correo VARCHAR(150) DEFAULT NULL,
+                direccion VARCHAR(200) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY proveedores_rut_unique (rut),
+                KEY proveedores_nombre_idx (nombre)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
         );
 
