@@ -133,6 +133,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'Debes ingresar un correo válido.';
             }
 
+            if ($action === 'update' && $recordId > 0 && !has_permission('empresas', 'edit')) {
+                $errors[] = 'No tienes permisos para editar empresas.';
+            }
+            if ($action !== 'update' && !has_permission('empresas', 'create')) {
+                $errors[] = 'No tienes permisos para crear empresas.';
+            }
+
+            if (!$errors) {
+                $params = [$fields['nombre'], $rutForDb];
+                $duplicateSql = 'SELECT id FROM empresas WHERE (nombre = ? OR REPLACE(REPLACE(UPPER(ruc), \'.\', \'\'), \'-\', \'\') = UPPER(?))';
+                if ($action === 'update' && $recordId > 0) {
+                    $duplicateSql .= ' AND id <> ?';
+                    $params[] = $recordId;
+                }
+                $stmt = db()->prepare($duplicateSql . ' LIMIT 1');
+                $stmt->execute($params);
+                if ($stmt->fetchColumn()) {
+                    $errors[] = 'Ya existe una empresa con el mismo nombre o RUT.';
+                }
+            }
+
             if (!$errors) {
                 $params = [$fields['nombre'], $rutForDb];
                 $duplicateSql = 'SELECT id FROM empresas WHERE (nombre = ? OR REPLACE(REPLACE(UPPER(ruc), \'.\', \'\'), \'-\', \'\') = UPPER(?))';
@@ -161,8 +182,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoAuthHeight = $logoAuthHeight > 0 ? $logoAuthHeight : null;
 
                     if ($action === 'update' && $recordId > 0) {
-                        if (!has_permission('empresas', 'edit')) {
-                            throw new RuntimeException('Sin permisos.');
+                        $stmt = db()->prepare('SELECT id FROM empresas WHERE id = ? LIMIT 1');
+                        $stmt->execute([$recordId]);
+                        if (!$stmt->fetchColumn()) {
+                            throw new RuntimeException('La empresa que intentas editar no existe.');
                         }
                         $stmt = db()->prepare('SELECT ruc FROM empresas WHERE id = ? LIMIT 1');
                         $stmt->execute([$recordId]);
@@ -190,9 +213,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $empresaId = $recordId;
                         $_SESSION['empresa_flash'] = 'Empresa actualizada correctamente.';
                     } else {
-                        if (!has_permission('empresas', 'create')) {
-                            throw new RuntimeException('Sin permisos.');
-                        }
                         $stmt = db()->prepare(
                             'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion, logo_path, logo_topbar_height, logo_sidenav_height, logo_sidenav_height_sm, logo_auth_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                         );
@@ -256,6 +276,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     } else {
                         $errors[] = 'No se pudo guardar la empresa. Intenta nuevamente.';
                     }
+                } catch (RuntimeException $e) {
+                    $errors[] = $e->getMessage();
                 } catch (Exception $e) {
                     $errors[] = 'No se pudo guardar la empresa. Intenta nuevamente.';
                 }
