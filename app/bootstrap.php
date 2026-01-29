@@ -349,6 +349,8 @@ function ensure_comercial_tables(): void
             'CREATE TABLE IF NOT EXISTS inventario_compras (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 proveedor VARCHAR(150) NOT NULL,
+                tipo_documento VARCHAR(30) DEFAULT NULL,
+                numero_documento VARCHAR(60) DEFAULT NULL,
                 fecha DATE NOT NULL,
                 total DECIMAL(12,2) NOT NULL DEFAULT 0,
                 nota VARCHAR(255) DEFAULT NULL,
@@ -377,6 +379,8 @@ function ensure_comercial_tables(): void
 
     try {
         db()->exec('ALTER TABLE inventario_productos ADD COLUMN IF NOT EXISTS subfamilia_id INT NULL');
+        db()->exec('ALTER TABLE inventario_compras ADD COLUMN IF NOT EXISTS tipo_documento VARCHAR(30) DEFAULT NULL');
+        db()->exec('ALTER TABLE inventario_compras ADD COLUMN IF NOT EXISTS numero_documento VARCHAR(60) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_id INT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha DATE NOT NULL DEFAULT "1970-01-01"');

@@ -176,6 +176,8 @@ CREATE TABLE IF NOT EXISTS `venta_items` (
 CREATE TABLE IF NOT EXISTS `inventario_compras` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `proveedor` VARCHAR(150) NOT NULL,
+  `tipo_documento` VARCHAR(30) DEFAULT NULL,
+  `numero_documento` VARCHAR(60) DEFAULT NULL,
   `fecha` DATE NOT NULL,
   `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
   `nota` VARCHAR(255) DEFAULT NULL,
