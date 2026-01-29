@@ -175,6 +175,28 @@ function validate_rut(string $rut): bool
     return $dv === $expectedDv;
 }
 
+function normalize_rut(string $rut): string
+{
+    $clean = strtoupper((string) preg_replace('/[^0-9K]/', '', $rut));
+    return $clean;
+}
+
+function format_rut(string $rut): string
+{
+    $normalized = normalize_rut($rut);
+    if ($normalized === '' || strlen($normalized) < 2) {
+        return $normalized;
+    }
+
+    $body = substr($normalized, 0, -1);
+    $dv = substr($normalized, -1);
+    $reversed = strrev($body);
+    $chunks = str_split($reversed, 3);
+    $bodyWithDots = strrev(implode('.', $chunks));
+
+    return $bodyWithDots . '-' . $dv;
+}
+
 function get_municipalidad(): array
 {
     $defaults = [
