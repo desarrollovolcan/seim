@@ -238,6 +238,19 @@
                     </div>
                 </li>
             <?php endif; ?>
+
+            <?php if ($showMantenedores) : ?>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Configuración</li>
+
+                <?php if ($canNotificacionesImap) : ?>
+                    <li class="side-nav-item">
+                        <a href="configuracion-imap.php" class="side-nav-link">
+                            <span class="menu-icon"><i data-lucide="mail"></i></span>
+                            <span class="menu-text">Configuración IMAP</span>
+                        </a>
+                    </li>
+                <?php endif; ?>
+            <?php endif; ?>
         </ul>
     </div>
 </div>
