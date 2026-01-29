@@ -1,7 +1,6 @@
--- Script de actualización para producción
+-- Script de actualización para producción (solo tablas del menú actual)
 -- Ejecutar en el orden indicado.
 
--- 1) Tabla empresas (si aún no existe)
 CREATE TABLE IF NOT EXISTS `empresas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
@@ -16,18 +15,55 @@ CREATE TABLE IF NOT EXISTS `empresas` (
   UNIQUE KEY `empresas_ruc_unique` (`ruc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 2) Agregar columnas a municipalidad para empresa
-ALTER TABLE `municipalidad`
-  ADD COLUMN IF NOT EXISTS `razon_social` VARCHAR(200) DEFAULT NULL AFTER `nombre`;
+CREATE TABLE IF NOT EXISTS `municipalidad` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `nombre` VARCHAR(150) NOT NULL,
+  `razon_social` VARCHAR(200) DEFAULT NULL,
+  `rut` VARCHAR(20) DEFAULT NULL,
+  `moneda` VARCHAR(10) DEFAULT 'CLP',
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `logo_path` VARCHAR(255) DEFAULT NULL,
+  `logo_topbar_height` INT DEFAULT 56,
+  `logo_sidenav_height` INT DEFAULT 48,
+  `logo_sidenav_height_sm` INT DEFAULT 36,
+  `logo_auth_height` INT DEFAULT 48,
+  `color_primary` VARCHAR(20) DEFAULT '#6658dd',
+  `color_secondary` VARCHAR(20) DEFAULT '#4a81d4',
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE `municipalidad`
-  ADD COLUMN IF NOT EXISTS `moneda` VARCHAR(10) DEFAULT 'CLP' AFTER `rut`;
+CREATE TABLE IF NOT EXISTS `users` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
+  `rut` VARCHAR(20) NOT NULL,
+  `nombre` VARCHAR(100) NOT NULL,
+  `apellido` VARCHAR(100) NOT NULL,
+  `cargo` VARCHAR(100) DEFAULT NULL,
+  `fecha_nacimiento` DATE DEFAULT NULL,
+  `correo` VARCHAR(150) NOT NULL,
+  `telefono` VARCHAR(30) NOT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `username` VARCHAR(60) NOT NULL,
+  `rol` VARCHAR(60) DEFAULT NULL,
+  `unidad_id` INT UNSIGNED DEFAULT NULL,
+  `avatar_path` VARCHAR(255) DEFAULT NULL,
+  `password_hash` VARCHAR(255) NOT NULL,
+  `password_locked` TINYINT(1) NOT NULL DEFAULT 0,
+  `is_superadmin` TINYINT(1) NOT NULL DEFAULT 0,
+  `estado` TINYINT(1) NOT NULL DEFAULT 1,
+  `fecha_creacion` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `ultimo_acceso` TIMESTAMP NULL DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `users_rut_unique` (`rut`),
+  UNIQUE KEY `users_username_unique` (`username`),
+  UNIQUE KEY `users_correo_unique` (`correo`),
+  KEY `users_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `users_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- 3) Agregar columna data a module_records
-ALTER TABLE `module_records`
-  ADD COLUMN IF NOT EXISTS `data` JSON DEFAULT NULL AFTER `descripcion`;
-
--- 4) Tablas de familias, subfamilias y compras (inventario ligero)
 CREATE TABLE IF NOT EXISTS `inventario_categorias` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
@@ -82,9 +118,6 @@ CREATE TABLE IF NOT EXISTS `inventario_productos` (
   CONSTRAINT `inventario_productos_unidad_fk` FOREIGN KEY (`unidad_id`) REFERENCES `inventario_unidades` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE `inventario_productos`
-  ADD COLUMN IF NOT EXISTS `subfamilia_id` INT DEFAULT NULL AFTER `categoria_id`;
-
 CREATE TABLE IF NOT EXISTS `inventario_movimientos` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `producto_id` INT NOT NULL,
@@ -95,6 +128,49 @@ CREATE TABLE IF NOT EXISTS `inventario_movimientos` (
   PRIMARY KEY (`id`),
   KEY `inventario_movimientos_producto_idx` (`producto_id`),
   CONSTRAINT `inventario_movimientos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `inventario_productos` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `clientes` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `empresa_id` INT UNSIGNED DEFAULT NULL,
+  `nombre` VARCHAR(150) NOT NULL,
+  `documento` VARCHAR(60) DEFAULT NULL,
+  `telefono` VARCHAR(30) DEFAULT NULL,
+  `correo` VARCHAR(150) DEFAULT NULL,
+  `direccion` VARCHAR(200) DEFAULT NULL,
+  `estado` TINYINT(1) NOT NULL DEFAULT 1,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `clientes_empresa_id_idx` (`empresa_id`),
+  CONSTRAINT `clientes_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `ventas` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `cliente_id` INT UNSIGNED DEFAULT NULL,
+  `cliente_nombre` VARCHAR(150) DEFAULT NULL,
+  `fecha` DATE NOT NULL,
+  `total` DECIMAL(12,2) NOT NULL DEFAULT 0,
+  `nota` VARCHAR(255) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `ventas_cliente_idx` (`cliente_id`),
+  CONSTRAINT `ventas_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `venta_items` (
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `venta_id` INT NOT NULL,
+  `producto_id` INT NOT NULL,
+  `cantidad` DECIMAL(12,2) NOT NULL,
+  `precio_unitario` DECIMAL(12,2) NOT NULL,
+  `total` DECIMAL(12,2) NOT NULL,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `venta_items_venta_idx` (`venta_id`),
+  KEY `venta_items_producto_idx` (`producto_id`),
+  CONSTRAINT `venta_items_venta_fk` FOREIGN KEY (`venta_id`) REFERENCES `ventas` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `venta_items_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `inventario_productos` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `inventario_compras` (
