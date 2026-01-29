@@ -162,6 +162,232 @@ function ensure_event_types(): array
     return $defaults;
 }
 
+function table_exists(string $table): bool
+{
+    try {
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?'
+        );
+        $stmt->execute([$GLOBALS['config']['db']['name'], $table]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Exception $e) {
+        return false;
+    } catch (Error $e) {
+        return false;
+    }
+}
+
+function column_exists(string $table, string $column): bool
+{
+    try {
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?'
+        );
+        $stmt->execute([$GLOBALS['config']['db']['name'], $table, $column]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Exception $e) {
+        return false;
+    } catch (Error $e) {
+        return false;
+    }
+}
+
+function get_default_empresa_id(): ?int
+{
+    try {
+        $empresaId = db()->query('SELECT id FROM empresas ORDER BY id LIMIT 1')->fetchColumn();
+        return $empresaId ? (int) $empresaId : null;
+    } catch (Exception $e) {
+        return null;
+    } catch (Error $e) {
+        return null;
+    }
+}
+
+function get_default_bodega_id(): ?int
+{
+    if (!table_exists('bodegas')) {
+        return null;
+    }
+
+    try {
+        $bodegaId = db()->query('SELECT id FROM bodegas ORDER BY id LIMIT 1')->fetchColumn();
+        if ($bodegaId) {
+            return (int) $bodegaId;
+        }
+
+        $empresaId = get_default_empresa_id();
+        $stmt = db()->prepare('INSERT INTO bodegas (nombre, empresa_id) VALUES (?, ?)');
+        $stmt->execute(['Bodega principal', $empresaId]);
+        return (int) db()->lastInsertId();
+    } catch (Exception $e) {
+        return null;
+    } catch (Error $e) {
+        return null;
+    }
+}
+
+function ensure_comercial_tables(): void
+{
+    try {
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_categorias (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY inventario_categorias_nombre_unique (nombre)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_subfamilias (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                categoria_id INT NULL,
+                nombre VARCHAR(150) NOT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY inventario_subfamilias_nombre_unique (nombre),
+                KEY inventario_subfamilias_categoria_idx (categoria_id),
+                CONSTRAINT inventario_subfamilias_categoria_fk FOREIGN KEY (categoria_id) REFERENCES inventario_categorias (id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_unidades (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                abreviatura VARCHAR(30) NOT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY inventario_unidades_nombre_unique (nombre)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_productos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                sku VARCHAR(80) NOT NULL,
+                categoria_id INT NULL,
+                subfamilia_id INT NULL,
+                unidad_id INT NULL,
+                precio_compra DECIMAL(12,2) DEFAULT NULL,
+                precio_venta DECIMAL(12,2) DEFAULT NULL,
+                stock_minimo DECIMAL(12,2) DEFAULT NULL,
+                stock_actual DECIMAL(12,2) NOT NULL DEFAULT 0,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY inventario_productos_sku_unique (sku),
+                KEY inventario_productos_categoria_idx (categoria_id),
+                KEY inventario_productos_subfamilia_idx (subfamilia_id),
+                KEY inventario_productos_unidad_idx (unidad_id),
+                CONSTRAINT inventario_productos_categoria_fk FOREIGN KEY (categoria_id) REFERENCES inventario_categorias (id) ON DELETE SET NULL,
+                CONSTRAINT inventario_productos_subfamilia_fk FOREIGN KEY (subfamilia_id) REFERENCES inventario_subfamilias (id) ON DELETE SET NULL,
+                CONSTRAINT inventario_productos_unidad_fk FOREIGN KEY (unidad_id) REFERENCES inventario_unidades (id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_movimientos (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                producto_id INT NOT NULL,
+                tipo VARCHAR(20) NOT NULL,
+                cantidad DECIMAL(12,2) NOT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY inventario_movimientos_producto_idx (producto_id),
+                CONSTRAINT inventario_movimientos_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS clientes (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                nombre VARCHAR(150) NOT NULL,
+                documento VARCHAR(60) DEFAULT NULL,
+                correo VARCHAR(150) DEFAULT NULL,
+                telefono VARCHAR(40) DEFAULT NULL,
+                direccion VARCHAR(200) DEFAULT NULL,
+                notas VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY clientes_nombre_idx (nombre)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS ventas (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                cliente_id INT NULL,
+                cliente_nombre VARCHAR(150) DEFAULT NULL,
+                fecha DATE NOT NULL,
+                total DECIMAL(12,2) NOT NULL DEFAULT 0,
+                nota VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY ventas_cliente_idx (cliente_id),
+                CONSTRAINT ventas_cliente_fk FOREIGN KEY (cliente_id) REFERENCES clientes (id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS venta_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                venta_id INT NOT NULL,
+                producto_id INT NOT NULL,
+                cantidad DECIMAL(12,2) NOT NULL,
+                precio_unitario DECIMAL(12,2) NOT NULL,
+                total DECIMAL(12,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY venta_items_venta_idx (venta_id),
+                KEY venta_items_producto_idx (producto_id),
+                CONSTRAINT venta_items_venta_fk FOREIGN KEY (venta_id) REFERENCES ventas (id) ON DELETE CASCADE,
+                CONSTRAINT venta_items_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_compras (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                proveedor VARCHAR(150) NOT NULL,
+                fecha DATE NOT NULL,
+                total DECIMAL(12,2) NOT NULL DEFAULT 0,
+                nota VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_compra_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                compra_id INT NOT NULL,
+                producto_id INT NOT NULL,
+                cantidad DECIMAL(12,2) NOT NULL,
+                precio_unitario DECIMAL(12,2) NOT NULL,
+                total DECIMAL(12,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY inventario_compra_items_compra_idx (compra_id),
+                KEY inventario_compra_items_producto_idx (producto_id),
+                CONSTRAINT inventario_compra_items_compra_fk FOREIGN KEY (compra_id) REFERENCES inventario_compras (id) ON DELETE CASCADE,
+                CONSTRAINT inventario_compra_items_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
+
+    try {
+        db()->exec('ALTER TABLE inventario_productos ADD COLUMN IF NOT EXISTS subfamilia_id INT NULL');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_id INT NULL');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150) DEFAULT NULL');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha DATE NOT NULL DEFAULT "1970-01-01"');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS total DECIMAL(12,2) NOT NULL DEFAULT 0');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS nota VARCHAR(255) DEFAULT NULL');
+        db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
+}
+
 function current_role_id(): ?int
 {
     if (!isset($_SESSION['user']['rol'])) {
@@ -190,6 +416,8 @@ function current_role_id(): ?int
 
     return $roleIdCache[$roleName];
 }
+
+ensure_comercial_tables();
 
 function is_superuser(): bool
 {

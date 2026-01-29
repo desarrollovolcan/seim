@@ -50,44 +50,42 @@
                 </a>
             </li>
 
+            <li class="side-nav-title mt-3" data-lang="menu-title">Entradas</li>
+
             <li class="side-nav-item">
-                <a href="usuario.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="user"></i></span>
-                    <span class="menu-text">Usuario</span>
+                <a href="compras.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="truck"></i></span>
+                    <span class="menu-text">Compras</span>
                 </a>
             </li>
 
+            <li class="side-nav-title mt-3" data-lang="menu-title">Salidas</li>
+
             <li class="side-nav-item">
-                <a href="empresa.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="building-2"></i></span>
-                    <span class="menu-text">Empresa</span>
+                <a href="ventas.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
+                    <span class="menu-text">Ventas</span>
                 </a>
             </li>
 
-            <li class="side-nav-title mt-3" data-lang="menu-title">Inventario</li>
+            <li class="side-nav-title mt-3" data-lang="menu-title">Productos</li>
 
             <li class="side-nav-item">
                 <a href="inventario-categorias.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="list"></i></span>
-                    <span class="menu-text">Categorías</span>
+                    <span class="menu-text">Familia</span>
                 </a>
             </li>
             <li class="side-nav-item">
-                <a href="inventario-unidades.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="ruler"></i></span>
-                    <span class="menu-text">Unidades</span>
+                <a href="inventario-subfamilias.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="list-tree"></i></span>
+                    <span class="menu-text">Sub familia</span>
                 </a>
             </li>
             <li class="side-nav-item">
                 <a href="inventario-productos.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="package"></i></span>
-                    <span class="menu-text">Productos</span>
-                </a>
-            </li>
-            <li class="side-nav-item">
-                <a href="inventario-movimientos.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
-                    <span class="menu-text">Movimientos</span>
+                    <span class="menu-text">Producto</span>
                 </a>
             </li>
             <li class="side-nav-item">
@@ -96,13 +94,40 @@
                     <span class="menu-text">Stock actual</span>
                 </a>
             </li>
+            <li class="side-nav-item">
+                <a href="inventario-movimientos.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
+                    <span class="menu-text">Movimientos</span>
+                </a>
+            </li>
 
-            <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
+            <li class="side-nav-title mt-3" data-lang="menu-title">Mantenedores</li>
 
             <li class="side-nav-item">
-                <a href="ventas.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
-                    <span class="menu-text">Control de ventas</span>
+                <a href="empresa.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="building-2"></i></span>
+                    <span class="menu-text">Empresa</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
+                <a href="usuario.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="user"></i></span>
+                    <span class="menu-text">Usuarios</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
+                <a href="clientes.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="users"></i></span>
+                    <span class="menu-text">Clientes</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
+                <a href="inventario-unidades.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="ruler"></i></span>
+                    <span class="menu-text">Unidades de medida</span>
                 </a>
             </li>
         </ul>

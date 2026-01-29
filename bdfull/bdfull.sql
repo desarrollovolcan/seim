@@ -1,7 +1,4 @@
--- Script de actualización para producción (solo tablas del menú actual)
--- Ejecutar en el orden indicado.
-
-CREATE TABLE IF NOT EXISTS `empresas` (
+CREATE TABLE `empresas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `razon_social` VARCHAR(200) DEFAULT NULL,
@@ -15,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `empresas` (
   UNIQUE KEY `empresas_ruc_unique` (`ruc`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `municipalidad` (
+CREATE TABLE `municipalidad` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `razon_social` VARCHAR(200) DEFAULT NULL,
@@ -35,7 +32,7 @@ CREATE TABLE IF NOT EXISTS `municipalidad` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `users` (
+CREATE TABLE `users` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `empresa_id` INT UNSIGNED DEFAULT NULL,
   `rut` VARCHAR(20) NOT NULL,
@@ -64,7 +61,7 @@ CREATE TABLE IF NOT EXISTS `users` (
   CONSTRAINT `users_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_categorias` (
+CREATE TABLE `inventario_categorias` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `descripcion` VARCHAR(255) DEFAULT NULL,
@@ -73,7 +70,7 @@ CREATE TABLE IF NOT EXISTS `inventario_categorias` (
   UNIQUE KEY `inventario_categorias_nombre_unique` (`nombre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_subfamilias` (
+CREATE TABLE `inventario_subfamilias` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `categoria_id` INT DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
@@ -85,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `inventario_subfamilias` (
   CONSTRAINT `inventario_subfamilias_categoria_fk` FOREIGN KEY (`categoria_id`) REFERENCES `inventario_categorias` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_unidades` (
+CREATE TABLE `inventario_unidades` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `abreviatura` VARCHAR(30) NOT NULL,
@@ -95,7 +92,7 @@ CREATE TABLE IF NOT EXISTS `inventario_unidades` (
   UNIQUE KEY `inventario_unidades_nombre_unique` (`nombre`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_productos` (
+CREATE TABLE `inventario_productos` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `nombre` VARCHAR(150) NOT NULL,
   `sku` VARCHAR(80) NOT NULL,
@@ -118,7 +115,7 @@ CREATE TABLE IF NOT EXISTS `inventario_productos` (
   CONSTRAINT `inventario_productos_unidad_fk` FOREIGN KEY (`unidad_id`) REFERENCES `inventario_unidades` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_movimientos` (
+CREATE TABLE `inventario_movimientos` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `producto_id` INT NOT NULL,
   `tipo` VARCHAR(20) NOT NULL,
@@ -130,7 +127,7 @@ CREATE TABLE IF NOT EXISTS `inventario_movimientos` (
   CONSTRAINT `inventario_movimientos_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `inventario_productos` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `clientes` (
+CREATE TABLE `clientes` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `empresa_id` INT UNSIGNED DEFAULT NULL,
   `nombre` VARCHAR(150) NOT NULL,
@@ -145,7 +142,7 @@ CREATE TABLE IF NOT EXISTS `clientes` (
   CONSTRAINT `clientes_empresa_fk` FOREIGN KEY (`empresa_id`) REFERENCES `empresas` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `ventas` (
+CREATE TABLE `ventas` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `cliente_id` INT UNSIGNED DEFAULT NULL,
   `cliente_nombre` VARCHAR(150) DEFAULT NULL,
@@ -158,7 +155,7 @@ CREATE TABLE IF NOT EXISTS `ventas` (
   CONSTRAINT `ventas_cliente_fk` FOREIGN KEY (`cliente_id`) REFERENCES `clientes` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `venta_items` (
+CREATE TABLE `venta_items` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `venta_id` INT NOT NULL,
   `producto_id` INT NOT NULL,
@@ -173,7 +170,7 @@ CREATE TABLE IF NOT EXISTS `venta_items` (
   CONSTRAINT `venta_items_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `inventario_productos` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_compras` (
+CREATE TABLE `inventario_compras` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `proveedor` VARCHAR(150) NOT NULL,
   `fecha` DATE NOT NULL,
@@ -183,7 +180,7 @@ CREATE TABLE IF NOT EXISTS `inventario_compras` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS `inventario_compra_items` (
+CREATE TABLE `inventario_compra_items` (
   `id` INT NOT NULL AUTO_INCREMENT,
   `compra_id` INT NOT NULL,
   `producto_id` INT NOT NULL,
@@ -197,3 +194,11 @@ CREATE TABLE IF NOT EXISTS `inventario_compra_items` (
   CONSTRAINT `inventario_compra_items_compra_fk` FOREIGN KEY (`compra_id`) REFERENCES `inventario_compras` (`id`) ON DELETE CASCADE,
   CONSTRAINT `inventario_compra_items_producto_fk` FOREIGN KEY (`producto_id`) REFERENCES `inventario_productos` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Datos base mínimos
+-- Sección: empresa
+INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion)
+VALUES ('Acquaperla', 'Acquaperla SpA', '99999999-9', '+56 9 6000 0000', 'contacto@acquaperla.cl', 'Av. Principal 123');
+
+-- Sección: super usuario
+INSERT INTO users (empresa_id, rut, nombre, apellido, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
+VALUES (1, '100.000.000-0', 'Super', 'Administrador', 'superadmin@acquaperla.cl', '+56 9 6000 0001', 'Av. Principal 123', 'superadmin', 'Super Administrador', '$2y$12$3ZBzq8bVxi/JfrIjwLt14OzSksyeb0PX95kdyA.jjLSj5PgaancpS', 1, 1, 1);
