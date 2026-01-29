@@ -239,6 +239,12 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
     }
 
     @media (max-width: 768px) {
+        .wrapper .detail-table-wrapper {
+            overflow: visible;
+            border: 0;
+            background-color: transparent;
+        }
+
         .wrapper .detail-table {
             min-width: 0;
         }

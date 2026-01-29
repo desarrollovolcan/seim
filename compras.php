@@ -281,7 +281,7 @@ include('partials/html.php');
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label">Detalle de productos</label>
-                                            <div class="table-responsive">
+                                            <div class="table-responsive detail-table-wrapper">
                                                 <table class="table table-bordered align-middle mb-2 detail-table" id="comprasDetalleTable">
                                                     <thead class="table-light">
                                                         <tr>
