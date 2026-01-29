@@ -146,60 +146,80 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoSidenavHeight = $logoSidenavHeight > 0 ? $logoSidenavHeight : null;
                     $logoSidenavHeightSm = $logoSidenavHeightSm > 0 ? $logoSidenavHeightSm : null;
                     $logoAuthHeight = $logoAuthHeight > 0 ? $logoAuthHeight : null;
+                    $logoColumns = [
+                        'logo_path' => $logoPath,
+                        'logo_topbar_height' => $logoTopbarHeight,
+                        'logo_sidenav_height' => $logoSidenavHeight,
+                        'logo_sidenav_height_sm' => $logoSidenavHeightSm,
+                        'logo_auth_height' => $logoAuthHeight,
+                    ];
+                    $availableLogoColumns = [];
+                    foreach ($logoColumns as $column => $value) {
+                        if (column_exists('empresas', $column)) {
+                            $availableLogoColumns[$column] = $value;
+                        }
+                    }
 
                     if ($action === 'update' && $recordId > 0) {
-                        $stmt = db()->prepare('SELECT logo_path FROM empresas WHERE id = ? LIMIT 1');
-                        $stmt->execute([$recordId]);
-                        $currentLogoPath = $stmt->fetchColumn();
-                        if ($logoPath === null && $currentLogoPath) {
-                            $logoPath = (string) $currentLogoPath;
+                        if (column_exists('empresas', 'logo_path')) {
+                            $stmt = db()->prepare('SELECT logo_path FROM empresas WHERE id = ? LIMIT 1');
+                            $stmt->execute([$recordId]);
+                            $currentLogoPath = $stmt->fetchColumn();
+                            if ($logoPath === null && $currentLogoPath) {
+                                $logoPath = (string) $currentLogoPath;
+                            }
                         }
                         $stmt = db()->prepare('SELECT id FROM empresas WHERE id = ? LIMIT 1');
                         $stmt->execute([$recordId]);
                         if (!$stmt->fetchColumn()) {
                             throw new RuntimeException('La empresa que intentas editar no existe.');
                         }
-                        $stmt = db()->prepare(
-                            'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ?, logo_path = ?, logo_topbar_height = ?, logo_sidenav_height = ?, logo_sidenav_height_sm = ?, logo_auth_height = ? WHERE id = ?'
-                        );
-                        $stmt->execute([
+                        $columns = ['nombre', 'razon_social', 'ruc', 'telefono', 'correo', 'direccion'];
+                        $values = [
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
                             $rutForDb,
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
-                            $logoPath,
-                            $logoTopbarHeight,
-                            $logoSidenavHeight,
-                            $logoSidenavHeightSm,
-                            $logoAuthHeight,
-                            $recordId,
-                        ]);
+                        ];
+                        foreach ($availableLogoColumns as $column => $value) {
+                            $columns[] = $column;
+                            $values[] = $value;
+                        }
+                        $setParts = array_map(static fn(string $column): string => $column . ' = ?', $columns);
+                        $values[] = $recordId;
+                        $stmt = db()->prepare('UPDATE empresas SET ' . implode(', ', $setParts) . ' WHERE id = ?');
+                        $stmt->execute($values);
                         $empresaId = $recordId;
                         $_SESSION['empresa_flash'] = 'Empresa actualizada correctamente.';
                     } else {
-                        $stmt = db()->prepare(
-                            'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion, logo_path, logo_topbar_height, logo_sidenav_height, logo_sidenav_height_sm, logo_auth_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
-                        );
-                        $stmt->execute([
+                        $columns = ['nombre', 'razon_social', 'ruc', 'telefono', 'correo', 'direccion'];
+                        $values = [
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
                             $rutForDb,
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
-                            $logoPath,
-                            $logoTopbarHeight,
-                            $logoSidenavHeight,
-                            $logoSidenavHeightSm,
-                            $logoAuthHeight,
-                        ]);
+                        ];
+                        foreach ($availableLogoColumns as $column => $value) {
+                            $columns[] = $column;
+                            $values[] = $value;
+                        }
+                        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+                        $stmt = db()->prepare(
+                            'INSERT INTO empresas (' . implode(', ', $columns) . ') VALUES (' . $placeholders . ')'
+                        );
+                        $stmt->execute($values);
                         $empresaId = (int) db()->lastInsertId();
                         $_SESSION['empresa_flash'] = 'Empresa registrada correctamente.';
                     }
 
                     if (!empty($_FILES['logo']['name'] ?? '') && $empresaId > 0) {
+                        if (!column_exists('empresas', 'logo_path')) {
+                            throw new RuntimeException('La columna logo_path no existe en la base de datos.');
+                        }
                         if (!isset($_FILES['logo']['error']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
                             throw new RuntimeException('No se pudo subir el logo.');
                         }
