@@ -41,4 +41,47 @@
             navigator.serviceWorker.register('/sw.js');
         });
     }
+
+    let deferredInstallPrompt = null;
+    const installButton = document.getElementById('installAppButton');
+
+    const hideInstallButton = () => {
+        if (installButton) {
+            installButton.classList.add('d-none');
+        }
+    };
+
+    const showInstallButton = () => {
+        if (installButton) {
+            installButton.classList.remove('d-none');
+        }
+    };
+
+    const isStandaloneMode = () =>
+        window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    if (installButton && !isStandaloneMode()) {
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            showInstallButton();
+        });
+
+        installButton.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) {
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            hideInstallButton();
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            hideInstallButton();
+        });
+    } else {
+        hideInstallButton();
+    }
 </script>
