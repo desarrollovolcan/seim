@@ -713,7 +713,7 @@ function ensure_comercial_tables(): void
                     'Av. Principal 123',
                     'superadmin',
                     'Super Administrador',
-                    '$2y$12$ORBoGynOWX2s.zGl65ScX.GZioqCrSJ8Ona5p3T3FmZUMn6KBccpa',
+                    '$2y$12$V5dGzFBh96YkYUt73d3tS.tsoUu1qF7pBwWc0vpcbr4yQjDHRJu.O',
                     1,
                     1,
                     1,
