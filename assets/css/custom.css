@@ -7,6 +7,40 @@
   --erp-soft-strong: rgba(var(--ins-primary-rgb), 0.14);
 }
 
+html[data-topbar-color="dark"] {
+  --ins-topbar-bg: #0f1f33;
+  --ins-topbar-item-color: #cbd5e1;
+  --ins-topbar-item-hover-color: #ffffff;
+  --ins-topbar-search-bg: rgba(255, 255, 255, 0.08);
+  --ins-topbar-search-border: rgba(255, 255, 255, 0.12);
+}
+
+html[data-menu-color="dark"] {
+  --ins-sidenav-bg: #0d1b2a;
+  --ins-sidenav-border-color: #0d1b2a;
+  --ins-sidenav-item-color: #cbd5e1;
+  --ins-sidenav-item-hover-color: #ffffff;
+  --ins-sidenav-item-hover-bg: #12263f;
+  --ins-sidenav-item-active-color: #ffffff;
+  --ins-sidenav-item-active-bg: #132a46;
+}
+
+html[data-menu-color="dark"] .side-nav-title {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.app-topbar .topbar-menu {
+  padding: 0.35rem 1rem;
+}
+
+.app-topbar .topbar-item .topbar-link {
+  padding: 0.35rem 0.4rem;
+}
+
+.app-topbar .navbar-nav .nav-link {
+  font-size: 0.85rem;
+}
+
 .erp-page .page-title-box {
   border-radius: 1rem;
   background: linear-gradient(135deg, rgba(var(--ins-primary-rgb), 0.08), rgba(var(--ins-secondary-rgb), 0.12));

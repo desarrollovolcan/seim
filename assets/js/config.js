@@ -21,7 +21,7 @@
             color: "dark",              // Topbar color: light, dark, or gray
         },
         menu: {
-            color: "gray",              // Menu color: light, dark, or gray
+            color: "dark",              // Menu color: light, dark, or gray
         },
         sidenav: {
             size: "default",            // Sidebar size: default, collapse, or offcanvas

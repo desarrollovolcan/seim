@@ -65,7 +65,7 @@
 
         <!--- Sidenav Menu -->
         <ul class="side-nav">
-            <li class="side-nav-title mt-2" data-lang="menu-title">Inicio</li>
+            <li class="side-nav-title mt-2" data-lang="menu-title">General</li>
 
             <?php if ($canDashboard) : ?>
                 <li class="side-nav-item">
@@ -77,7 +77,7 @@
             <?php endif; ?>
 
             <?php if ($showEntradas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Entradas</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Compras</li>
 
                 <?php if ($canCompras) : ?>
                     <li class="side-nav-item">
@@ -90,7 +90,7 @@
             <?php endif; ?>
 
             <?php if ($showSalidas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Salidas</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
 
                 <?php if ($canVentas) : ?>
                     <li class="side-nav-item">
@@ -103,7 +103,7 @@
             <?php endif; ?>
 
             <?php if ($showComercial) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Comercial</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Contactos</li>
 
                 <?php if ($canClientes) : ?>
                     <li class="side-nav-item">
@@ -227,7 +227,7 @@
             <?php endif; ?>
 
             <?php if ($showMantenedores) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Mantenedores</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Configuración</li>
 
                 <?php if ($canNotificacionesImap) : ?>
                     <li class="side-nav-item">
