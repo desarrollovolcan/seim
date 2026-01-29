@@ -3,139 +3,164 @@ require_once __DIR__ . '/app/bootstrap.php';
 
 $pageTitle = 'Registrar venta';
 $pageSubtitle = 'Ventas';
-$pageDescription = 'Registro de ventas con cabecera y detalle de productos.';
+$pageDescription = 'Completa la cotización con datos generales, tributarios e ítems del servicio.';
 $moduleKey = 'ventas-registrar';
-$moduleTitleField = 'numero_guia';
-
-$currentUser = $_SESSION['user']['nombre'] ?? 'Usuario';
-$currentUserLastName = $_SESSION['user']['apellido'] ?? '';
-$usuarioVendedor = trim($currentUser . ' ' . $currentUserLastName);
-
-$productosDisponibles = [];
-$productoPrecios = [];
-try {
-    $stmt = db()->prepare('SELECT id, nombre, data FROM module_records WHERE module_key = ? ORDER BY created_at DESC');
-    $stmt->execute(['productos']);
-    $productos = $stmt->fetchAll();
-    foreach ($productos as $producto) {
-        $decoded = [];
-        if (!empty($producto['data'])) {
-            $decoded = json_decode((string) $producto['data'], true);
-        }
-        $precioVenta = isset($decoded['precio_venta']) ? (float) $decoded['precio_venta'] : 0.0;
-        $nombre = (string) ($producto['nombre'] ?? 'Producto');
-        $productosDisponibles[(string) $producto['id']] = sprintf('%s - Precio: %0.2f', $nombre, $precioVenta);
-        $productoPrecios[(string) $producto['id']] = $precioVenta;
-    }
-} catch (Exception $e) {
-    $productosDisponibles = [];
-    $productoPrecios = [];
-} catch (Error $e) {
-    $productosDisponibles = [];
-    $productoPrecios = [];
-}
+$moduleTitleField = 'numero';
+$hideModuleTable = true;
+$hideModuleIntro = true;
 
 $moduleFields = [
     [
-        'type' => 'section',
-        'label' => 'Cabecera de la guía',
-        'description' => 'Datos generales de la guía de venta.',
+        'name' => 'numero',
+        'label' => 'Número',
+        'type' => 'text',
+        'required' => true,
+        'placeholder' => 'COT-000016',
+        'col' => 'erp-field erp-field--third',
     ],
     [
-        'name' => 'fecha_guia',
-        'label' => 'Fecha de guía',
+        'name' => 'fecha_emision',
+        'label' => 'Fecha emisión',
         'type' => 'date',
         'required' => true,
         'default' => date('Y-m-d'),
+        'col' => 'erp-field erp-field--third',
     ],
     [
-        'name' => 'numero_guia',
-        'label' => 'Número de guía',
-        'type' => 'text',
+        'name' => 'estado',
+        'label' => 'Estado',
+        'type' => 'select',
         'required' => true,
-        'placeholder' => 'GUIA-0001',
+        'options' => [
+            'Pendiente' => 'Pendiente',
+            'Aprobada' => 'Aprobada',
+            'Anulada' => 'Anulada',
+        ],
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'name' => 'cliente',
         'label' => 'Cliente',
-        'type' => 'text',
-        'required' => true,
-        'placeholder' => 'Nombre o razón social',
-    ],
-    [
-        'name' => 'direccion_entrega',
-        'label' => 'Dirección de entrega',
-        'type' => 'text',
-        'required' => false,
-        'placeholder' => 'Dirección o punto de entrega',
-    ],
-    [
-        'name' => 'forma_pago',
-        'label' => 'Forma de pago',
-        'type' => 'text',
-        'required' => true,
-    ],
-    [
-        'name' => 'usuario_vendedor',
-        'label' => 'Usuario vendedor',
-        'type' => 'text',
-        'required' => true,
-        'default' => $usuarioVendedor !== '' ? $usuarioVendedor : 'Usuario',
-        'readonly' => true,
-    ],
-    [
-        'type' => 'section',
-        'label' => 'Detalle de la guía',
-        'description' => 'Selecciona productos ya creados y define cantidades.',
-    ],
-    [
-        'name' => 'producto_id',
-        'label' => 'Producto',
         'type' => 'select',
         'required' => true,
-        'options' => $productosDisponibles,
-        'help' => 'Se listan los productos creados en el catálogo.',
+        'options' => [
+            'cliente_demo' => 'Cliente demo',
+            'cliente_plus' => 'Cliente Plus',
+        ],
+        'col' => 'erp-field erp-field--two-thirds',
+    ],
+    [
+        'name' => 'proyecto',
+        'label' => 'Proyecto',
+        'type' => 'select',
+        'required' => true,
+        'options' => [
+            'proyecto_a' => 'Proyecto A',
+            'proyecto_b' => 'Proyecto B',
+        ],
         'col' => 'erp-field erp-field--third',
     ],
     [
-        'name' => 'cantidad',
-        'label' => 'Cantidad',
+        'type' => 'group_start',
+        'label' => 'Datos tributarios (SII)',
+        'description' => 'Estos datos se toman desde la ficha del cliente.',
+    ],
+    [
+        'name' => 'tipo_documento',
+        'label' => 'Tipo de documento',
+        'type' => 'select',
+        'required' => true,
+        'options' => [
+            'Factura electrónica' => 'Factura electrónica',
+            'Boleta electrónica' => 'Boleta electrónica',
+            'Nota de crédito' => 'Nota de crédito',
+        ],
+        'col' => 'erp-field erp-field--third',
+    ],
+    [
+        'name' => 'folio_documento',
+        'label' => 'Folio / N° documento',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Ingresa el folio',
+        'col' => 'erp-field erp-field--third',
+    ],
+    [
+        'name' => 'tasa_impuesto',
+        'label' => 'Tasa impuesto (%)',
         'type' => 'number',
         'required' => true,
-        'step' => '1',
-        'default' => 1,
+        'default' => '19',
+        'step' => '0.01',
         'col' => 'erp-field erp-field--sixth',
     ],
     [
-        'name' => 'precio_venta',
-        'label' => 'Precio de venta',
+        'name' => 'monto_exento',
+        'label' => 'Monto exento',
         'type' => 'number',
-        'required' => true,
+        'required' => false,
         'step' => '0.01',
-        'readonly' => true,
-        'placeholder' => '0.00',
-        'help' => 'Se completa con el precio de venta del producto seleccionado.',
+        'default' => '0',
         'col' => 'erp-field erp-field--sixth',
     ],
     [
-        'name' => 'subtotal',
-        'label' => 'Subtotal',
-        'type' => 'number',
+        'name' => 'rut_receptor',
+        'label' => 'RUT Receptor',
+        'type' => 'text',
         'required' => true,
-        'step' => '0.01',
-        'readonly' => true,
-        'placeholder' => '0.00',
-        'col' => 'erp-field erp-field--sixth',
+        'placeholder' => '12.345.678-9',
+        'col' => 'erp-field erp-field--quarter',
     ],
     [
-        'name' => 'total_venta',
-        'label' => 'Total venta',
-        'type' => 'number',
+        'name' => 'razon_social',
+        'label' => 'Razón social',
+        'type' => 'text',
         'required' => true,
-        'step' => '0.01',
-        'readonly' => true,
-        'placeholder' => '0.00',
-        'col' => 'erp-field erp-field--sixth',
+        'placeholder' => 'Razón social',
+        'col' => 'erp-field erp-field--quarter',
+    ],
+    [
+        'name' => 'giro',
+        'label' => 'Giro',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Giro',
+        'col' => 'erp-field erp-field--quarter',
+    ],
+    [
+        'name' => 'codigo_actividad',
+        'label' => 'Código actividad',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Código actividad',
+        'col' => 'erp-field erp-field--quarter',
+    ],
+    [
+        'name' => 'direccion',
+        'label' => 'Dirección',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Dirección',
+        'col' => 'erp-field erp-field--two-thirds',
+    ],
+    [
+        'name' => 'comuna',
+        'label' => 'Comuna',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Comuna',
+        'col' => 'erp-field erp-field--quarter',
+    ],
+    [
+        'name' => 'ciudad',
+        'label' => 'Ciudad',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Ciudad',
+        'col' => 'erp-field erp-field--quarter',
+    ],
+    [
+        'type' => 'group_end',
     ],
     [
         'name' => 'observaciones',
@@ -146,60 +171,79 @@ $moduleFields = [
         'placeholder' => 'Notas adicionales para la guía.',
     ],
 ];
+
+$formAppendHtml = '
+<div class="erp-form-card mt-2">
+    <div class="erp-form-card__header">
+        <div>
+            <h6 class="mb-0">Items de cotización</h6>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm">Agregar item manual</button>
+            <select class="form-select form-select-sm" style="min-width: 220px;">
+                <option value="">Selecciona servicio</option>
+                <option>Servicio de implementación</option>
+                <option>Servicio de soporte</option>
+                <option>Consultoría especializada</option>
+            </select>
+            <button type="button" class="btn btn-outline-primary btn-sm">Agregar servicio</button>
+        </div>
+    </div>
+    <div class="erp-form-card__body">
+        <div class="table-responsive">
+            <table class="table erp-table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Descripción</th>
+                        <th class="text-center" style="min-width: 120px;">Cantidad</th>
+                        <th class="text-center" style="min-width: 150px;">Precio unitario</th>
+                        <th class="text-center" style="min-width: 120px;">Impuesto %</th>
+                        <th class="text-center" style="min-width: 120px;">Impuesto $</th>
+                        <th class="text-center" style="min-width: 120px;">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><input type="text" class="form-control" placeholder=""></td>
+                        <td><input type="number" class="form-control text-center" value="1"></td>
+                        <td><input type="number" class="form-control text-center" value="0"></td>
+                        <td><input type="number" class="form-control text-center" value="0"></td>
+                        <td><input type="number" class="form-control text-center" value="0.00"></td>
+                        <td><input type="number" class="form-control text-center" value="0.00"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<div class="row g-3 mt-3">
+    <div class="col-lg-3 col-md-6">
+        <label class="form-label">Impuesto (%)</label>
+        <input type="number" class="form-control" value="0">
+        <div class="form-check mt-2">
+            <input class="form-check-input" type="checkbox" id="impuestoAplicar">
+            <label class="form-check-label small text-muted" for="impuestoAplicar">Aplicar impuesto</label>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <label class="form-label">Subtotal</label>
+        <input type="number" class="form-control" value="0.00">
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <label class="form-label">Impuestos</label>
+        <input type="number" class="form-control" value="0.00">
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <label class="form-label">Total</label>
+        <input type="number" class="form-control" value="0.00">
+    </div>
+</div>';
+
 $moduleListColumns = [
-    ['key' => 'numero_guia', 'label' => 'Guía'],
-    ['key' => 'fecha_guia', 'label' => 'Fecha'],
+    ['key' => 'numero', 'label' => 'Número'],
+    ['key' => 'fecha_emision', 'label' => 'Fecha'],
     ['key' => 'cliente', 'label' => 'Cliente'],
-    ['key' => 'producto_id', 'label' => 'Producto'],
-    ['key' => 'cantidad', 'label' => 'Cantidad'],
-    ['key' => 'total_venta', 'label' => 'Total'],
-    ['key' => 'usuario_vendedor', 'label' => 'Vendedor'],
+    ['key' => 'estado', 'label' => 'Estado'],
 ];
-
-$pageInlineScript = sprintf(
-    <<<'SCRIPT'
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const priceMap = %s;
-        const productSelect = document.getElementById('module-producto_id');
-        const cantidadInput = document.getElementById('module-cantidad');
-        const precioInput = document.getElementById('module-precio_venta');
-        const subtotalInput = document.getElementById('module-subtotal');
-        const totalInput = document.getElementById('module-total_venta');
-
-        const updateTotals = () => {
-            if (!productSelect || !cantidadInput) {
-                return;
-            }
-            const selectedId = productSelect.value;
-            const priceValue = selectedId && priceMap[selectedId] ? parseFloat(priceMap[selectedId]) : null;
-            if (priceValue !== null && precioInput) {
-                precioInput.value = priceValue.toFixed(2);
-            }
-
-            const cantidad = cantidadInput.value !== '' ? parseFloat(cantidadInput.value) : null;
-            if (priceValue !== null && cantidad !== null && !Number.isNaN(cantidad)) {
-                const subtotal = priceValue * cantidad;
-                if (subtotalInput) {
-                    subtotalInput.value = subtotal.toFixed(2);
-                }
-                if (totalInput) {
-                    totalInput.value = subtotal.toFixed(2);
-                }
-            }
-        };
-
-        if (productSelect) {
-            productSelect.addEventListener('change', updateTotals);
-        }
-        if (cantidadInput) {
-            cantidadInput.addEventListener('input', updateTotals);
-        }
-        updateTotals();
-    });
-</script>
-SCRIPT,
-    json_encode($productoPrecios, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)
-);
 
 include('partials/generic-page.php');
