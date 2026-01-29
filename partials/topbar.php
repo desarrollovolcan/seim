@@ -4,6 +4,20 @@
     <?php
     $logoTopbarHeight = (int) ($municipalidad['logo_topbar_height'] ?? 56);
     $logoTopbarHeightSm = min($logoTopbarHeight, 56);
+    $topbarLogoPath = $municipalidad['logo_path'] ?? 'assets/images/logo.png';
+    try {
+        $empresaId = current_empresa_id();
+        if ($empresaId && column_exists('empresas', 'logo_path')) {
+            $stmt = db()->prepare('SELECT logo_path FROM empresas WHERE id = ? LIMIT 1');
+            $stmt->execute([$empresaId]);
+            $empresaLogoPath = $stmt->fetchColumn();
+            if (is_string($empresaLogoPath) && $empresaLogoPath !== '') {
+                $topbarLogoPath = $empresaLogoPath;
+            }
+        }
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
     ?>
     <div class="container-fluid topbar-menu">
         <div class="d-flex align-items-center gap-2">
@@ -12,20 +26,20 @@
                 <!-- Logo light -->
                 <a href="index.php" class="logo-light">
                     <span class="logo-lg d-none d-sm-inline">
-                        <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeight; ?>px;">
+                        <img src="<?php echo htmlspecialchars($topbarLogoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeight; ?>px;">
                     </span>
                     <span class="logo-sm d-inline d-sm-none">
-                        <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeightSm; ?>px;">
+                        <img src="<?php echo htmlspecialchars($topbarLogoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeightSm; ?>px;">
                     </span>
                 </a>
 
                 <!-- Logo Dark -->
                 <a href="index.php" class="logo-dark">
                     <span class="logo-lg d-none d-sm-inline">
-                        <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeight; ?>px;">
+                        <img src="<?php echo htmlspecialchars($topbarLogoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeight; ?>px;">
                     </span>
                     <span class="logo-sm d-inline d-sm-none">
-                        <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeightSm; ?>px;">
+                        <img src="<?php echo htmlspecialchars($topbarLogoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoTopbarHeightSm; ?>px;">
                     </span>
                 </a>
             </div>
