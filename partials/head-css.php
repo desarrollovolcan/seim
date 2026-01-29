@@ -49,6 +49,21 @@ $logoSidenavHeightSm = $municipalidad['logo_sidenav_height_sm'] ?? 36;
         color: rgba(var(--ins-body-color-rgb), 0.6);
     }
 
+    .wrapper {
+        font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        color: #0f172a;
+    }
+
+    .wrapper h1,
+    .wrapper h2,
+    .wrapper h3,
+    .wrapper h4,
+    .wrapper h5,
+    .wrapper h6 {
+        font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+        letter-spacing: -0.01em;
+    }
+
     .side-nav .side-nav-item .side-nav-link {
         border-radius: 0.5rem;
         padding: 0.55rem 0.85rem;
@@ -219,6 +234,20 @@ $logoSidenavHeightSm = $municipalidad['logo_sidenav_height_sm'] ?? 36;
 
     .wrapper .table tbody tr:hover {
         background-color: rgba(var(--ins-primary-rgb), 0.05);
+    }
+
+    .wrapper .btn {
+        border-radius: 0.65rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        padding: 0.45rem 0.95rem;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+    }
+
+    .wrapper .btn.btn-sm {
+        padding: 0.3rem 0.7rem;
+        font-size: 0.78rem;
+        box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
     }
 
     .wrapper .btn-primary {
