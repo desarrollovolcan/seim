@@ -100,13 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             }
         } else {
+            $rutInput = $_POST['rut'] ?? $_POST['ruc'] ?? '';
             foreach ($fields as $key => $value) {
                 if (str_starts_with($key, 'logo_')) {
                     $fields[$key] = trim((string) ($_POST[$key] ?? $value));
                     continue;
                 }
                 if ($key === 'ruc') {
-                    $rutInput = $_POST['rut'] ?? $_POST['ruc'] ?? '';
                     $fields[$key] = trim((string) $rutInput);
                     continue;
                 }
@@ -116,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['nombre'] === '') {
                 $errors[] = 'El nombre es obligatorio.';
             }
+
             $rutForDb = '';
             if ($fields['ruc'] === '') {
                 $errors[] = 'El RUT es obligatorio.';
@@ -127,8 +128,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fields['ruc'] = format_rut($rutForDb);
                 }
             }
+
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Debes ingresar un correo válido.';
+            }
+
+            if (!$errors) {
+                $params = [$fields['nombre'], $rutForDb];
+                $duplicateSql = 'SELECT id FROM empresas WHERE (nombre = ? OR REPLACE(REPLACE(UPPER(ruc), \'.\', \'\'), \'-\', \'\') = UPPER(?))';
+                if ($action === 'update' && $recordId > 0) {
+                    $duplicateSql .= ' AND id <> ?';
+                    $params[] = $recordId;
+                }
+                $stmt = db()->prepare($duplicateSql . ' LIMIT 1');
+                $stmt->execute($params);
+                if ($stmt->fetchColumn()) {
+                    $errors[] = 'Ya existe una empresa con el mismo nombre o RUT.';
+                }
             }
 
             if (!$errors) {
@@ -234,8 +250,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
 
                     redirect('empresa.php');
+                } catch (PDOException $e) {
+                    if ((string) $e->getCode() === '23000') {
+                        $errors[] = 'Ya existe una empresa con el mismo nombre o RUT.';
+                    } else {
+                        $errors[] = 'No se pudo guardar la empresa. Intenta nuevamente.';
+                    }
                 } catch (Exception $e) {
-                    $errors[] = 'No se pudo guardar la empresa. Revisa que el nombre o RUT no estén duplicados.';
+                    $errors[] = 'No se pudo guardar la empresa. Intenta nuevamente.';
                 }
             }
         }
