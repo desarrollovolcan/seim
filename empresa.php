@@ -155,6 +155,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
 
             if (!$errors) {
+                $params = [$fields['nombre'], $rutForDb];
+                $duplicateSql = 'SELECT id FROM empresas WHERE (nombre = ? OR REPLACE(REPLACE(UPPER(ruc), \'.\', \'\'), \'-\', \'\') = UPPER(?))';
+                if ($action === 'update' && $recordId > 0) {
+                    $duplicateSql .= ' AND id <> ?';
+                    $params[] = $recordId;
+                }
+                $stmt = db()->prepare($duplicateSql . ' LIMIT 1');
+                $stmt->execute($params);
+                if ($stmt->fetchColumn()) {
+                    $errors[] = 'Ya existe una empresa con el mismo nombre o RUT.';
+                }
+            }
+
+            if (!$errors) {
                 try {
                     $logoPath = $fields['logo_path'] !== '' ? $fields['logo_path'] : null;
                     $logoTopbarHeight = (int) ($fields['logo_topbar_height'] !== '' ? $fields['logo_topbar_height'] : 0);
@@ -172,6 +186,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([$recordId]);
                         if (!$stmt->fetchColumn()) {
                             throw new RuntimeException('La empresa que intentas editar no existe.');
+                        }
+                        $stmt = db()->prepare('SELECT ruc FROM empresas WHERE id = ? LIMIT 1');
+                        $stmt->execute([$recordId]);
+                        $currentRuc = $stmt->fetchColumn();
+                        if ($currentRuc !== false && normalize_rut((string) $currentRuc) === $rutForDb) {
+                            $rutForDb = (string) $currentRuc;
                         }
                         $stmt = db()->prepare(
                             'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ?, logo_path = ?, logo_topbar_height = ?, logo_sidenav_height = ?, logo_sidenav_height_sm = ?, logo_auth_height = ? WHERE id = ?'
