@@ -65,165 +65,178 @@
 
         <!--- Sidenav Menu -->
         <ul class="side-nav">
-            <li class="side-nav-title mt-2" data-lang="menu-title">General</li>
-
             <?php if ($canDashboard) : ?>
                 <li class="side-nav-item">
-                    <a href="dashboard.php" class="side-nav-link">
-                        <span class="menu-icon"><i data-lucide="layout-dashboard"></i></span>
-                        <span class="menu-text">Dashboard</span>
+                    <a href="#sidebarGeneral" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarGeneral" class="side-nav-link">
+                        <span class="menu-text">General</span>
+                        <span class="menu-arrow"></span>
                     </a>
+                    <div class="collapse" id="sidebarGeneral">
+                        <ul class="sub-menu">
+                            <li class="side-nav-item">
+                                <a href="dashboard.php" class="side-nav-link">Dashboard</a>
+                            </li>
+                        </ul>
+                    </div>
                 </li>
             <?php endif; ?>
 
             <?php if ($showEntradas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Compras</li>
-
-                <?php if ($canCompras) : ?>
-                    <li class="side-nav-item">
-                        <a href="compras.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="truck"></i></span>
-                            <span class="menu-text">Compras</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="side-nav-item">
+                    <a href="#sidebarCompras" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarCompras" class="side-nav-link">
+                        <span class="menu-text">Compras</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarCompras">
+                        <ul class="sub-menu">
+                            <?php if ($canCompras) : ?>
+                                <li class="side-nav-item">
+                                    <a href="compras.php" class="side-nav-link">Compras</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
             <?php endif; ?>
 
             <?php if ($showSalidas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
-
-                <?php if ($canVentas) : ?>
-                    <li class="side-nav-item">
-                        <a href="ventas.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
-                            <span class="menu-text">Ventas</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="side-nav-item">
+                    <a href="#sidebarVentas" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarVentas" class="side-nav-link">
+                        <span class="menu-text">Ventas</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarVentas">
+                        <ul class="sub-menu">
+                            <?php if ($canVentas) : ?>
+                                <li class="side-nav-item">
+                                    <a href="ventas.php" class="side-nav-link">Ventas</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
             <?php endif; ?>
 
             <?php if ($showComercial) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Contactos</li>
-
-                <?php if ($canClientes) : ?>
-                    <li class="side-nav-item">
-                        <a href="clientes.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="users"></i></span>
-                            <span class="menu-text">Clientes</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($canProveedores) : ?>
-                    <li class="side-nav-item">
-                        <a href="proveedores.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="building"></i></span>
-                            <span class="menu-text">Proveedores</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="side-nav-item">
+                    <a href="#sidebarContactos" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarContactos" class="side-nav-link">
+                        <span class="menu-text">Contactos</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarContactos">
+                        <ul class="sub-menu">
+                            <?php if ($canClientes) : ?>
+                                <li class="side-nav-item">
+                                    <a href="clientes.php" class="side-nav-link">Clientes</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canProveedores) : ?>
+                                <li class="side-nav-item">
+                                    <a href="proveedores.php" class="side-nav-link">Proveedores</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
             <?php endif; ?>
 
             <?php if ($showInventario) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Inventario</li>
-
-                <?php if ($canCategorias) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-categorias.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="list"></i></span>
-                            <span class="menu-text">Familias</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($canSubfamilias) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-subfamilias.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="list-tree"></i></span>
-                            <span class="menu-text">Subfamilias</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($canProductos) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-productos.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="package"></i></span>
-                            <span class="menu-text">Productos</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($canUnidades) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-unidades.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="ruler"></i></span>
-                            <span class="menu-text">Unidades de medida</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($canStock) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-stock.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="layers"></i></span>
-                            <span class="menu-text">Stock actual</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-                <?php if ($canMovimientos) : ?>
-                    <li class="side-nav-item">
-                        <a href="inventario-movimientos.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
-                            <span class="menu-text">Movimientos</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+                <li class="side-nav-item">
+                    <a href="#sidebarInventario" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarInventario" class="side-nav-link">
+                        <span class="menu-text">Inventario</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarInventario">
+                        <ul class="sub-menu">
+                            <?php if ($canCategorias) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-categorias.php" class="side-nav-link">Familias</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canSubfamilias) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-subfamilias.php" class="side-nav-link">Subfamilias</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canProductos) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-productos.php" class="side-nav-link">Productos</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canUnidades) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-unidades.php" class="side-nav-link">Unidades de medida</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canStock) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-stock.php" class="side-nav-link">Stock actual</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canMovimientos) : ?>
+                                <li class="side-nav-item">
+                                    <a href="inventario-movimientos.php" class="side-nav-link">Movimientos</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
             <?php endif; ?>
 
             <?php if ($showAdministracion) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Administración</li>
+                <li class="side-nav-item">
+                    <a href="#sidebarAdministracion" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarAdministracion" class="side-nav-link">
+                        <span class="menu-text">Administración</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarAdministracion">
+                        <ul class="sub-menu">
+                            <?php if ($canEmpresas) : ?>
+                                <li class="side-nav-item">
+                                    <a href="empresa.php" class="side-nav-link">Empresas</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canUsuarios) : ?>
+                                <li class="side-nav-item">
+                                    <a href="usuario.php" class="side-nav-link">Usuarios</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canUsuariosEmpresas) : ?>
+                                <li class="side-nav-item">
+                                    <a href="usuarios-empresas.php" class="side-nav-link">Usuarios por empresa</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canRoles) : ?>
+                                <li class="side-nav-item">
+                                    <a href="roles.php" class="side-nav-link">Roles</a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($canPermisos) : ?>
+                                <li class="side-nav-item">
+                                    <a href="roles-permisos.php" class="side-nav-link">Permisos</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
+            <?php endif; ?>
 
-                <?php if ($canEmpresas) : ?>
-                    <li class="side-nav-item">
-                        <a href="empresa.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="building-2"></i></span>
-                            <span class="menu-text">Empresas</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($canUsuarios) : ?>
-                    <li class="side-nav-item">
-                        <a href="usuario.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="user"></i></span>
-                            <span class="menu-text">Usuarios</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($canUsuariosEmpresas) : ?>
-                    <li class="side-nav-item">
-                        <a href="usuarios-empresas.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="building"></i></span>
-                            <span class="menu-text">Usuarios por empresa</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($canRoles) : ?>
-                    <li class="side-nav-item">
-                        <a href="roles.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="shield"></i></span>
-                            <span class="menu-text">Roles</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
-
-                <?php if ($canPermisos) : ?>
-                    <li class="side-nav-item">
-                        <a href="roles-permisos.php" class="side-nav-link">
-                            <span class="menu-icon"><i data-lucide="key-round"></i></span>
-                            <span class="menu-text">Permisos</span>
-                        </a>
-                    </li>
-                <?php endif; ?>
+            <?php if ($showMantenedores) : ?>
+                <li class="side-nav-item">
+                    <a href="#sidebarConfiguracion" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarConfiguracion" class="side-nav-link">
+                        <span class="menu-text">Configuración</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarConfiguracion">
+                        <ul class="sub-menu">
+                            <?php if ($canNotificacionesImap) : ?>
+                                <li class="side-nav-item">
+                                    <a href="configuracion-imap.php" class="side-nav-link">Configuración IMAP</a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
             <?php endif; ?>
 
             <?php if ($showMantenedores) : ?>

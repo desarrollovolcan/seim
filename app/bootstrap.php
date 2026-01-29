@@ -200,7 +200,7 @@ function format_rut(string $rut): string
 function get_municipalidad(): array
 {
     $defaults = [
-        'nombre' => 'Go Muni',
+        'nombre' => 'Seim Inventario',
         'razon_social' => '',
         'moneda' => 'CLP',
         'logo_path' => 'assets/images/logo.png',

@@ -8,7 +8,7 @@
 }
 
 html[data-topbar-color="dark"] {
-  --ins-topbar-bg: #0f1f33;
+  --ins-topbar-bg: #0d1b2a;
   --ins-topbar-item-color: #cbd5e1;
   --ins-topbar-item-hover-color: #ffffff;
   --ins-topbar-search-bg: rgba(255, 255, 255, 0.08);
@@ -39,6 +39,22 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .app-topbar .navbar-nav .nav-link {
   font-size: 0.85rem;
+}
+
+.side-nav .side-nav-link {
+  padding: 0.45rem 0.75rem;
+  margin: 0.1rem 0.4rem;
+  border-radius: 0.45rem;
+}
+
+.side-nav .sub-menu {
+  margin-left: 0.5rem;
+  padding-left: 0;
+}
+
+.side-nav .sub-menu .side-nav-link {
+  padding-left: 1.25rem;
+  font-size: 0.82rem;
 }
 
 .erp-page .page-title-box {

@@ -116,7 +116,7 @@ $logoPath = $authLogo['logo_path'] ?? 'assets/images/logo.png';
 
                         <p class="text-center text-muted mt-auto mb-0">
                             ©
-                            <script>document.write(new Date().getFullYear())</script> Go Muni - tecnologia escalable
+                            <script>document.write(new Date().getFullYear())</script> Seim Inventario - tecnologia escalable
                         </p>
                     </div>
                 </div>
