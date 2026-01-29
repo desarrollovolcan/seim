@@ -173,6 +173,8 @@
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
+                                    <a href="compras.php" class="btn btn-outline-warning">Registrar compra</a>
+                                    <a href="inventario-categorias.php" class="btn btn-outline-info">Nueva familia</a>
                                     <a href="inventario-productos.php" class="btn btn-outline-primary">Nuevo producto</a>
                                     <a href="inventario-movimientos.php" class="btn btn-outline-secondary">Registrar movimiento</a>
                                     <a href="clientes.php" class="btn btn-outline-info">Nuevo cliente</a>

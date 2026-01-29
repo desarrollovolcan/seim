@@ -241,6 +241,19 @@ function ensure_comercial_tables(): void
         );
 
         db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_subfamilias (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                categoria_id INT NULL,
+                nombre VARCHAR(150) NOT NULL,
+                descripcion VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE KEY inventario_subfamilias_nombre_unique (nombre),
+                KEY inventario_subfamilias_categoria_idx (categoria_id),
+                CONSTRAINT inventario_subfamilias_categoria_fk FOREIGN KEY (categoria_id) REFERENCES inventario_categorias (id) ON DELETE SET NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
             'CREATE TABLE IF NOT EXISTS inventario_unidades (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nombre VARCHAR(150) NOT NULL,
@@ -257,6 +270,7 @@ function ensure_comercial_tables(): void
                 nombre VARCHAR(150) NOT NULL,
                 sku VARCHAR(80) NOT NULL,
                 categoria_id INT NULL,
+                subfamilia_id INT NULL,
                 unidad_id INT NULL,
                 precio_compra DECIMAL(12,2) DEFAULT NULL,
                 precio_venta DECIMAL(12,2) DEFAULT NULL,
@@ -266,8 +280,10 @@ function ensure_comercial_tables(): void
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY inventario_productos_sku_unique (sku),
                 KEY inventario_productos_categoria_idx (categoria_id),
+                KEY inventario_productos_subfamilia_idx (subfamilia_id),
                 KEY inventario_productos_unidad_idx (unidad_id),
                 CONSTRAINT inventario_productos_categoria_fk FOREIGN KEY (categoria_id) REFERENCES inventario_categorias (id) ON DELETE SET NULL,
+                CONSTRAINT inventario_productos_subfamilia_fk FOREIGN KEY (subfamilia_id) REFERENCES inventario_subfamilias (id) ON DELETE SET NULL,
                 CONSTRAINT inventario_productos_unidad_fk FOREIGN KEY (unidad_id) REFERENCES inventario_unidades (id) ON DELETE SET NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
         );
@@ -328,11 +344,39 @@ function ensure_comercial_tables(): void
                 CONSTRAINT venta_items_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
         );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_compras (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                proveedor VARCHAR(150) NOT NULL,
+                fecha DATE NOT NULL,
+                total DECIMAL(12,2) NOT NULL DEFAULT 0,
+                nota VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
+
+        db()->exec(
+            'CREATE TABLE IF NOT EXISTS inventario_compra_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                compra_id INT NOT NULL,
+                producto_id INT NOT NULL,
+                cantidad DECIMAL(12,2) NOT NULL,
+                precio_unitario DECIMAL(12,2) NOT NULL,
+                total DECIMAL(12,2) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                KEY inventario_compra_items_compra_idx (compra_id),
+                KEY inventario_compra_items_producto_idx (producto_id),
+                CONSTRAINT inventario_compra_items_compra_fk FOREIGN KEY (compra_id) REFERENCES inventario_compras (id) ON DELETE CASCADE,
+                CONSTRAINT inventario_compra_items_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+        );
     } catch (Exception $e) {
     } catch (Error $e) {
     }
 
     try {
+        db()->exec('ALTER TABLE inventario_productos ADD COLUMN IF NOT EXISTS subfamilia_id INT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_id INT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS cliente_nombre VARCHAR(150) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS fecha DATE NOT NULL DEFAULT "1970-01-01"');
