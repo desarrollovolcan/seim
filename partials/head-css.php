@@ -1,14 +1,14 @@
 <?php
 require_once __DIR__ . '/../app/bootstrap.php';
 $municipalidad = get_municipalidad();
-$primaryColor = $municipalidad['color_primary'] ?? '#6658dd';
-$secondaryColor = $municipalidad['color_secondary'] ?? '#4a81d4';
+$primaryColor = $municipalidad['color_primary'] ?? '#1d4ed8';
+$secondaryColor = $municipalidad['color_secondary'] ?? '#3b82f6';
 $logoPath = $municipalidad['logo_path'] ?? 'assets/images/logo.png';
 $logoTopbarHeight = $municipalidad['logo_topbar_height'] ?? 56;
 $logoSidenavHeight = $municipalidad['logo_sidenav_height'] ?? 48;
 $logoSidenavHeightSm = $municipalidad['logo_sidenav_height_sm'] ?? 36;
-$primaryRgb = hex_to_rgb($primaryColor) ?? [102, 88, 221];
-$secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
+    $primaryRgb = hex_to_rgb($primaryColor) ?? [29, 78, 216];
+    $secondaryRgb = hex_to_rgb($secondaryColor) ?? [59, 130, 246];
 ?>
 
 <!-- Theme Config Js -->
@@ -97,6 +97,27 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
 
         .app-topbar .topnav-toggle-button {
             margin-left: auto;
+        }
+
+        .wrapper .form-control,
+        .wrapper .form-select {
+            min-height: 40px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .wrapper textarea.form-control {
+            min-height: 96px;
+        }
+
+        .wrapper .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .wrapper .table {
+            min-width: 640px;
         }
     }
 
@@ -203,8 +224,30 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
     .wrapper .table-responsive {
         border: 1px solid #e2e8f0;
         border-radius: 0.85rem;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
         background-color: #ffffff;
+    }
+
+    .wrapper .detail-table {
+        border-color: #e2e8f0;
+    }
+
+    .wrapper .detail-table .btn {
+        border-radius: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .wrapper .detail-table-wrapper {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .wrapper .detail-table {
+            min-width: 720px;
+        }
     }
 
     .wrapper .list-group-item {
