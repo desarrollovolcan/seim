@@ -499,6 +499,10 @@ function ensure_comercial_tables(): void
                 telefono VARCHAR(40) DEFAULT NULL,
                 correo VARCHAR(150) DEFAULT NULL,
                 direccion VARCHAR(200) DEFAULT NULL,
+                contacto_nombre VARCHAR(150) DEFAULT NULL,
+                contacto_cargo VARCHAR(120) DEFAULT NULL,
+                contacto_telefono VARCHAR(30) DEFAULT NULL,
+                contacto_correo VARCHAR(150) DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 KEY proveedores_empresa_idx (empresa_id),
                 UNIQUE KEY proveedores_rut_unique (rut),
@@ -620,6 +624,10 @@ function ensure_comercial_tables(): void
         db()->exec('ALTER TABLE inventario_movimientos ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
         db()->exec('ALTER TABLE clientes ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
         db()->exec('ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
+        db()->exec('ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS contacto_nombre VARCHAR(150) DEFAULT NULL');
+        db()->exec('ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS contacto_cargo VARCHAR(120) DEFAULT NULL');
+        db()->exec('ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS contacto_telefono VARCHAR(30) DEFAULT NULL');
+        db()->exec('ALTER TABLE proveedores ADD COLUMN IF NOT EXISTS contacto_correo VARCHAR(150) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
         db()->exec('ALTER TABLE inventario_compras ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
         db()->exec('ALTER TABLE inventario_compra_items ADD COLUMN IF NOT EXISTS empresa_id INT NULL');
