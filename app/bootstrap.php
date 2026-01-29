@@ -660,6 +660,47 @@ function ensure_comercial_tables(): void
     } catch (Exception $e) {
     } catch (Error $e) {
     }
+
+    try {
+        if (table_exists('users')) {
+            $stmt = db()->prepare('SELECT id FROM users WHERE is_superadmin = 1 OR username = ? LIMIT 1');
+            $stmt->execute(['superadmin']);
+            $superAdminId = $stmt->fetchColumn();
+            if (!$superAdminId) {
+                $empresaId = get_default_empresa_id();
+                $stmt = db()->prepare(
+                    'INSERT INTO users (empresa_id, rut, nombre, apellido, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                );
+                $stmt->execute([
+                    $empresaId,
+                    '100.000.000-0',
+                    'Super',
+                    'Administrador',
+                    'superadmin@acquaperla.cl',
+                    '+56 9 6000 0001',
+                    'Av. Principal 123',
+                    'superadmin',
+                    'Super Administrador',
+                    '$2y$12$ORBoGynOWX2s.zGl65ScX.GZioqCrSJ8Ona5p3T3FmZUMn6KBccpa',
+                    1,
+                    1,
+                    1,
+                ]);
+                $superAdminId = (int) db()->lastInsertId();
+                if ($superAdminId && $empresaId && table_exists('user_empresas')) {
+                    $stmt = db()->prepare('SELECT 1 FROM user_empresas WHERE user_id = ? AND empresa_id = ?');
+                    $stmt->execute([$superAdminId, $empresaId]);
+                    if (!$stmt->fetchColumn()) {
+                        $stmt = db()->prepare('INSERT INTO user_empresas (user_id, empresa_id) VALUES (?, ?)');
+                        $stmt->execute([$superAdminId, $empresaId]);
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
 }
 
 function current_role_id(): ?int
