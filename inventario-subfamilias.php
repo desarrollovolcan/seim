@@ -11,14 +11,27 @@ $editingId = null;
 $viewRecord = null;
 
 $fields = [
+    'categoria_id' => '',
     'nombre' => '',
     'descripcion' => '',
 ];
 
+$familias = [];
+try {
+    $familias = db()->query('SELECT id, nombre FROM inventario_categorias ORDER BY nombre')->fetchAll();
+} catch (Exception $e) {
+    $errors[] = 'No se pudo cargar la lista de familias.';
+}
+
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? LIMIT 1');
+        $stmt = db()->prepare(
+            'SELECT s.*, c.nombre AS familia_nombre
+             FROM inventario_subfamilias s
+             LEFT JOIN inventario_categorias c ON c.id = s.categoria_id
+             WHERE s.id = ? LIMIT 1'
+        );
         $stmt->execute([$viewId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
@@ -27,10 +40,11 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? LIMIT 1');
+        $stmt = db()->prepare('SELECT * FROM inventario_subfamilias WHERE id = ? LIMIT 1');
         $stmt->execute([$editingId]);
         $record = $stmt->fetch();
         if ($record) {
+            $fields['categoria_id'] = (string) ($record['categoria_id'] ?? '');
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
             $fields['descripcion'] = (string) ($record['descripcion'] ?? '');
         }
@@ -46,12 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'delete' && $recordId > 0) {
             try {
-                $stmt = db()->prepare('DELETE FROM inventario_categorias WHERE id = ?');
+                $stmt = db()->prepare('DELETE FROM inventario_subfamilias WHERE id = ?');
                 $stmt->execute([$recordId]);
-                $_SESSION['categoria_flash'] = 'Familia eliminada correctamente.';
-                redirect('inventario-categorias.php');
+                $_SESSION['subfamilia_flash'] = 'Subfamilia eliminada correctamente.';
+                redirect('inventario-subfamilias.php');
             } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar la categoría.';
+                $errors[] = 'No se pudo eliminar la subfamilia.';
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -61,51 +75,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['nombre'] === '') {
                 $errors[] = 'El nombre es obligatorio.';
             }
+            if ($fields['categoria_id'] === '') {
+                $errors[] = 'La familia es obligatoria.';
+            }
 
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
-                        $stmt = db()->prepare('UPDATE inventario_categorias SET nombre = ?, descripcion = ? WHERE id = ?');
+                        $stmt = db()->prepare(
+                            'UPDATE inventario_subfamilias SET categoria_id = ?, nombre = ?, descripcion = ? WHERE id = ?'
+                        );
                         $stmt->execute([
+                            (int) $fields['categoria_id'],
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
                             $recordId,
                         ]);
-                        $_SESSION['categoria_flash'] = 'Familia actualizada correctamente.';
+                        $_SESSION['subfamilia_flash'] = 'Subfamilia actualizada correctamente.';
                     } else {
-                        $stmt = db()->prepare('INSERT INTO inventario_categorias (nombre, descripcion) VALUES (?, ?)');
+                        $stmt = db()->prepare(
+                            'INSERT INTO inventario_subfamilias (categoria_id, nombre, descripcion) VALUES (?, ?, ?)'
+                        );
                         $stmt->execute([
+                            (int) $fields['categoria_id'],
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
                         ]);
-                        $_SESSION['categoria_flash'] = 'Familia creada correctamente.';
+                        $_SESSION['subfamilia_flash'] = 'Subfamilia creada correctamente.';
                     }
-                    redirect('inventario-categorias.php');
+                    redirect('inventario-subfamilias.php');
                 } catch (Exception $e) {
-                    $errors[] = 'No se pudo guardar la familia. Revisa que el nombre no esté duplicado.';
+                    $errors[] = 'No se pudo guardar la subfamilia. Revisa que el nombre no esté duplicado.';
                 }
             }
         }
     }
 }
 
-if (isset($_SESSION['categoria_flash'])) {
-    $successMessage = (string) $_SESSION['categoria_flash'];
-    unset($_SESSION['categoria_flash']);
+if (isset($_SESSION['subfamilia_flash'])) {
+    $successMessage = (string) $_SESSION['subfamilia_flash'];
+    unset($_SESSION['subfamilia_flash']);
 }
 
-$categorias = [];
+$subfamilias = [];
 try {
-    $categorias = db()->query('SELECT * FROM inventario_categorias ORDER BY created_at DESC')->fetchAll();
+    $subfamilias = db()->query(
+        'SELECT s.*, c.nombre AS familia_nombre
+         FROM inventario_subfamilias s
+         LEFT JOIN inventario_categorias c ON c.id = s.categoria_id
+         ORDER BY s.created_at DESC'
+    )->fetchAll();
 } catch (Exception $e) {
-    $errors[] = 'No se pudo cargar el listado de familias.';
+    $errors[] = 'No se pudo cargar el listado de subfamilias.';
 }
 
 include('partials/html.php');
 ?>
 
 <head>
-    <?php $title = 'Familias'; include('partials/title-meta.php'); ?>
+    <?php $title = 'Subfamilias'; include('partials/title-meta.php'); ?>
 
     <?php include('partials/head-css.php'); ?>
 </head>
@@ -116,17 +144,17 @@ include('partials/html.php');
 
         <div class="content-page">
             <div class="container-fluid">
-                <?php $subtitle = 'Productos'; $title = 'Familias'; include('partials/page-title.php'); ?>
+                <?php $subtitle = 'Productos'; $title = 'Subfamilias'; include('partials/page-title.php'); ?>
 
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Familias de productos</h5>
+                                <h5 class="card-title mb-0">Subfamilias de productos</h5>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-muted small">Show Code</span>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="showCodeSwitchCategorias">
+                                        <input class="form-check-input" type="checkbox" id="showCodeSwitchSubfamilias">
                                     </div>
                                 </div>
                             </div>
@@ -146,15 +174,16 @@ include('partials/html.php');
 
                                 <?php if ($viewRecord) : ?>
                                     <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
-                                        <h6 class="fw-semibold mb-2">Detalle de familia</h6>
+                                        <h6 class="fw-semibold mb-2">Detalle de subfamilia</h6>
                                         <div class="row g-2">
-                                            <div class="col-md-6"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                                            <div class="col-md-6"><span class="text-muted">Descripción:</span> <?php echo htmlspecialchars($viewRecord['descripcion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Familia:</span> <?php echo htmlspecialchars($viewRecord['familia_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Descripción:</span> <?php echo htmlspecialchars($viewRecord['descripcion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
 
-                                <form method="post" action="inventario-categorias.php">
+                                <form method="post" action="inventario-subfamilias.php">
                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                     <input type="hidden" name="action" value="<?php echo $editingId ? 'update' : 'create'; ?>">
                                     <?php if ($editingId) : ?>
@@ -163,20 +192,31 @@ include('partials/html.php');
 
                                     <div class="row g-3">
                                         <div class="col-md-6 col-xl-4">
+                                            <label class="form-label">Familia</label>
+                                            <select name="categoria_id" class="form-select" required>
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($familias as $familia) : ?>
+                                                    <option value="<?php echo (int) $familia['id']; ?>" <?php echo $fields['categoria_id'] === (string) $familia['id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($familia['nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 col-xl-4">
                                             <label class="form-label">Nombre</label>
                                             <input type="text" name="nombre" class="form-control" value="<?php echo htmlspecialchars($fields['nombre'], ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
-                                        <div class="col-md-6 col-xl-8">
+                                        <div class="col-md-6 col-xl-4">
                                             <label class="form-label">Descripción</label>
                                             <input type="text" name="descripcion" class="form-control" value="<?php echo htmlspecialchars($fields['descripcion'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Descripción opcional">
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
                                             <button type="submit" class="btn btn-primary">
-                                                <?php echo $editingId ? 'Actualizar familia' : 'Guardar familia'; ?>
+                                                <?php echo $editingId ? 'Actualizar subfamilia' : 'Guardar subfamilia'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
-                                                <a href="inventario-categorias.php" class="btn btn-outline-secondary">Cancelar edición</a>
+                                                <a href="inventario-subfamilias.php" class="btn btn-outline-secondary">Cancelar edición</a>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -190,38 +230,40 @@ include('partials/html.php');
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Familias registradas</h5>
+                                <h5 class="card-title mb-0">Subfamilias registradas</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-striped align-middle mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Nombre</th>
+                                                <th>Familia</th>
+                                                <th>Subfamilia</th>
                                                 <th>Descripción</th>
                                                 <th>Creado</th>
                                                 <th class="text-end">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if (!$categorias) : ?>
+                                            <?php if (!$subfamilias) : ?>
                                                 <tr>
-                                                    <td colspan="4" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="5" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
-                                                <?php foreach ($categorias as $categoria) : ?>
+                                                <?php foreach ($subfamilias as $subfamilia) : ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($categoria['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($categoria['descripcion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($categoria['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($subfamilia['familia_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($subfamilia['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($subfamilia['descripcion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($subfamilia['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
-                                                            <a class="btn btn-sm btn-outline-primary" href="inventario-categorias.php?view=<?php echo (int) $categoria['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="inventario-categorias.php?edit=<?php echo (int) $categoria['id']; ?>">Editar</a>
-                                                            <form method="post" action="inventario-categorias.php" class="d-inline">
+                                                            <a class="btn btn-sm btn-outline-primary" href="inventario-subfamilias.php?view=<?php echo (int) $subfamilia['id']; ?>">Ver</a>
+                                                            <a class="btn btn-sm btn-outline-secondary" href="inventario-subfamilias.php?edit=<?php echo (int) $subfamilia['id']; ?>">Editar</a>
+                                                            <form method="post" action="inventario-subfamilias.php" class="d-inline">
                                                                 <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                                                 <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $categoria['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta categoría?');">Eliminar</button>
+                                                                <input type="hidden" name="id" value="<?php echo (int) $subfamilia['id']; ?>">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta subfamilia?');">Eliminar</button>
                                                             </form>
                                                         </td>
                                                     </tr>
