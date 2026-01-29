@@ -112,6 +112,10 @@
   grid-column: span 3;
 }
 
+.erp-form-grid .erp-field--sixth {
+  grid-column: span 2;
+}
+
 .erp-form-grid .erp-field--third {
   grid-column: span 4;
 }

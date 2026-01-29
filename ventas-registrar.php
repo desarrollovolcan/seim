@@ -95,6 +95,7 @@ $moduleFields = [
         'required' => true,
         'options' => $productosDisponibles,
         'help' => 'Se listan los productos creados en el catálogo.',
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'name' => 'cantidad',
@@ -103,6 +104,7 @@ $moduleFields = [
         'required' => true,
         'step' => '1',
         'default' => 1,
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'precio_venta',
@@ -113,6 +115,7 @@ $moduleFields = [
         'readonly' => true,
         'placeholder' => '0.00',
         'help' => 'Se completa con el precio de venta del producto seleccionado.',
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'subtotal',
@@ -122,6 +125,7 @@ $moduleFields = [
         'step' => '0.01',
         'readonly' => true,
         'placeholder' => '0.00',
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'total_venta',
@@ -131,6 +135,7 @@ $moduleFields = [
         'step' => '0.01',
         'readonly' => true,
         'placeholder' => '0.00',
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'observaciones',
