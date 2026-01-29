@@ -95,9 +95,9 @@
                 </a>
             </li>
             <li class="side-nav-item">
-                <a href="inventario-stock.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="layers"></i></span>
-                    <span class="menu-text">Stock actual</span>
+                <a href="inventario-movimientos.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
+                    <span class="menu-text">Movimientos</span>
                 </a>
             </li>
 
@@ -121,6 +121,13 @@
                 <a href="clientes.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="users"></i></span>
                     <span class="menu-text">Clientes</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
+                <a href="proveedores.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="building"></i></span>
+                    <span class="menu-text">Proveedores</span>
                 </a>
             </li>
 

@@ -9,19 +9,21 @@ $errors = [];
 $successMessage = '';
 
 $fields = [
-    'proveedor' => '',
+    'proveedor_id' => '',
     'tipo_documento' => '',
     'numero_documento' => '',
     'fecha' => date('Y-m-d'),
     'nota' => '',
 ];
 
+$proveedores = [];
 $productos = [];
 [$lineItems, $lineErrors] = [[['producto_id' => '', 'cantidad' => '', 'precio_unitario' => '']], []];
 try {
+    $proveedores = db()->query('SELECT id, nombre, razon_social, rut FROM proveedores ORDER BY nombre')->fetchAll();
     $productos = db()->query('SELECT id, nombre, sku, stock_actual FROM inventario_productos ORDER BY nombre')->fetchAll();
 } catch (Exception $e) {
-    $errors[] = 'No se pudo cargar la lista de productos.';
+    $errors[] = 'No se pudo cargar los catálogos de compras.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -45,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         }
 
-        if ($fields['proveedor'] === '') {
+        if ($fields['proveedor_id'] === '') {
             $errors[] = 'El proveedor es obligatorio.';
         }
         if ($fields['tipo_documento'] === '') {
@@ -90,11 +92,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 db()->beginTransaction();
 
+                $stmt = db()->prepare('SELECT nombre, razon_social FROM proveedores WHERE id = ? LIMIT 1');
+                $stmt->execute([(int) $fields['proveedor_id']]);
+                $proveedor = $stmt->fetch();
+                if (!$proveedor) {
+                    throw new RuntimeException('Proveedor no encontrado.');
+                }
+
+                $proveedorNombre = $proveedor['razon_social'] ?: $proveedor['nombre'];
+
                 $stmt = db()->prepare(
                     'INSERT INTO inventario_compras (proveedor, tipo_documento, numero_documento, fecha, total, nota) VALUES (?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([
-                    $fields['proveedor'],
+                    $proveedorNombre,
                     $fields['tipo_documento'],
                     $fields['numero_documento'],
                     $fields['fecha'],
@@ -218,7 +229,18 @@ include('partials/html.php');
                                     <div class="row g-3">
                                         <div class="col-md-6 col-xl-4">
                                             <label class="form-label">Proveedor</label>
-                                            <input type="text" name="proveedor" class="form-control" value="<?php echo htmlspecialchars($fields['proveedor'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <select name="proveedor_id" class="form-select" required>
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($proveedores as $proveedor) : ?>
+                                                    <option value="<?php echo (int) $proveedor['id']; ?>" <?php echo $fields['proveedor_id'] === (string) $proveedor['id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($proveedor['nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        <?php if (!empty($proveedor['rut'])) : ?>
+                                                            (<?php echo htmlspecialchars($proveedor['rut'], ENT_QUOTES, 'UTF-8'); ?>)
+                                                        <?php endif; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <div class="form-text">¿No aparece? <a href="proveedores.php">Registra un proveedor</a>.</div>
                                         </div>
                                         <div class="col-md-6 col-xl-2">
                                             <label class="form-label">Tipo documento</label>
@@ -292,7 +314,10 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">Guardar compra</button>
+                                            <button type="submit" class="btn btn-primary" <?php echo !$proveedores ? 'disabled' : ''; ?>>Guardar compra</button>
+                                            <?php if (!$proveedores) : ?>
+                                                <span class="text-muted align-self-center">Necesitas registrar al menos un proveedor.</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </form>
