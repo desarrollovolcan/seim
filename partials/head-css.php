@@ -98,6 +98,27 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
         .app-topbar .topnav-toggle-button {
             margin-left: auto;
         }
+
+        .wrapper .form-control,
+        .wrapper .form-select {
+            min-height: 40px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .wrapper textarea.form-control {
+            min-height: 96px;
+        }
+
+        .wrapper .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .wrapper .table {
+            min-width: 640px;
+        }
     }
 
     @media (max-width: 576px) {
@@ -203,8 +224,66 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
     .wrapper .table-responsive {
         border: 1px solid #e2e8f0;
         border-radius: 0.85rem;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
         background-color: #ffffff;
+    }
+
+    .wrapper .detail-table {
+        border-color: #e2e8f0;
+    }
+
+    .wrapper .detail-table .btn {
+        border-radius: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .wrapper .detail-table {
+            min-width: 0;
+        }
+
+        .wrapper .detail-table thead {
+            display: none;
+        }
+
+        .wrapper .detail-table tbody tr {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.65rem;
+            padding: 0.9rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .wrapper .detail-table tbody tr:last-child {
+            border-bottom: 0;
+        }
+
+        .wrapper .detail-table tbody td {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.35rem;
+            padding: 0;
+            border: 0;
+        }
+
+        .wrapper .detail-table tbody td::before {
+            content: attr(data-label);
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #94a3b8;
+        }
+
+        .wrapper .detail-table tbody td:last-child::before {
+            content: "";
+        }
+
+        .wrapper .detail-table tbody td .form-control,
+        .wrapper .detail-table tbody td .form-select {
+            width: 100%;
+        }
     }
 
     .wrapper .list-group-item {
