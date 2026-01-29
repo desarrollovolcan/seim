@@ -265,6 +265,7 @@ CREATE TABLE IF NOT EXISTS `user_empresas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Ajustes sobre tablas existentes
+
 ALTER TABLE `inventario_categorias` ADD COLUMN IF NOT EXISTS `empresa_id` INT DEFAULT NULL;
 ALTER TABLE `inventario_subfamilias` ADD COLUMN IF NOT EXISTS `empresa_id` INT DEFAULT NULL;
 ALTER TABLE `inventario_unidades` ADD COLUMN IF NOT EXISTS `empresa_id` INT DEFAULT NULL;
