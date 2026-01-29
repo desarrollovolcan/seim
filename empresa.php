@@ -26,28 +26,6 @@ $fields = [
     'logo_auth_height' => '',
 ];
 
-function normalize_rut(string $value): string
-{
-    $clean = preg_replace('/[^0-9kK]/', '', $value);
-    return strtoupper($clean ?? '');
-}
-
-function format_rut(string $value): string
-{
-    $normalized = normalize_rut($value);
-    if ($normalized === '' || strlen($normalized) < 2) {
-        return $normalized;
-    }
-
-    $body = substr($normalized, 0, -1);
-    $dv = substr($normalized, -1);
-    $reversed = strrev($body);
-    $chunks = str_split($reversed, 3);
-    $bodyWithDots = strrev(implode('.', $chunks));
-
-    return $bodyWithDots . '-' . $dv;
-}
-
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {

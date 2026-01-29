@@ -20,6 +20,10 @@ $fields = [
     'telefono' => '',
     'correo' => '',
     'direccion' => '',
+    'contacto_nombre' => '',
+    'contacto_cargo' => '',
+    'contacto_telefono' => '',
+    'contacto_correo' => '',
 ];
 
 if (isset($_GET['view'])) {
@@ -44,6 +48,10 @@ if (isset($_GET['edit'])) {
             $fields['telefono'] = (string) ($record['telefono'] ?? '');
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
+            $fields['contacto_nombre'] = (string) ($record['contacto_nombre'] ?? '');
+            $fields['contacto_cargo'] = (string) ($record['contacto_cargo'] ?? '');
+            $fields['contacto_telefono'] = (string) ($record['contacto_telefono'] ?? '');
+            $fields['contacto_correo'] = (string) ($record['contacto_correo'] ?? '');
         }
     }
 }
@@ -86,6 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Debes ingresar un correo válido.';
             }
+            if ($fields['contacto_correo'] !== '' && !filter_var($fields['contacto_correo'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = 'Debes ingresar un correo de contacto válido.';
+            }
 
             if (!$errors) {
                 try {
@@ -94,7 +105,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'UPDATE proveedores SET nombre = ?, razon_social = ?, rut = ?, telefono = ?, correo = ?, direccion = ?, empresa_id = ? WHERE id = ?'
+                            'UPDATE proveedores SET nombre = ?, razon_social = ?, rut = ?, telefono = ?, correo = ?, direccion = ?, contacto_nombre = ?, contacto_cargo = ?, contacto_telefono = ?, contacto_correo = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -103,6 +114,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $fields['contacto_nombre'] !== '' ? $fields['contacto_nombre'] : null,
+                            $fields['contacto_cargo'] !== '' ? $fields['contacto_cargo'] : null,
+                            $fields['contacto_telefono'] !== '' ? $fields['contacto_telefono'] : null,
+                            $fields['contacto_correo'] !== '' ? $fields['contacto_correo'] : null,
                             $empresaId,
                             $recordId,
                         ]);
@@ -112,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'INSERT INTO proveedores (nombre, razon_social, rut, telefono, correo, direccion, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO proveedores (nombre, razon_social, rut, telefono, correo, direccion, contacto_nombre, contacto_cargo, contacto_telefono, contacto_correo, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -121,6 +136,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $fields['contacto_nombre'] !== '' ? $fields['contacto_nombre'] : null,
+                            $fields['contacto_cargo'] !== '' ? $fields['contacto_cargo'] : null,
+                            $fields['contacto_telefono'] !== '' ? $fields['contacto_telefono'] : null,
+                            $fields['contacto_correo'] !== '' ? $fields['contacto_correo'] : null,
                             $empresaId,
                         ]);
                         $_SESSION['proveedor_flash'] = 'Proveedor registrado correctamente.';
@@ -201,6 +220,10 @@ include('partials/html.php');
                                             <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Contacto:</span> <?php echo htmlspecialchars($viewRecord['contacto_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Cargo:</span> <?php echo htmlspecialchars($viewRecord['contacto_cargo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Teléfono contacto:</span> <?php echo htmlspecialchars($viewRecord['contacto_telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Correo contacto:</span> <?php echo htmlspecialchars($viewRecord['contacto_correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -232,14 +255,27 @@ include('partials/html.php');
 
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Correo</label>
-                                            <div class="app-search">
-                                                <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($fields['correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="proveedor@correo.com">
-                                                <i data-lucide="mail" class="app-search-icon text-muted"></i>
-                                            </div>
+                                            <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($fields['correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="proveedor@correo.com">
                                         </div>
                                         <div class="col-md-6 col-xl-6">
                                             <label class="form-label">Dirección</label>
                                             <input type="text" name="direccion" class="form-control" value="<?php echo htmlspecialchars($fields['direccion'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Dirección">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Nombre contacto</label>
+                                            <input type="text" name="contacto_nombre" class="form-control" value="<?php echo htmlspecialchars($fields['contacto_nombre'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Nombre de contacto">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Cargo contacto</label>
+                                            <input type="text" name="contacto_cargo" class="form-control" value="<?php echo htmlspecialchars($fields['contacto_cargo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Cargo">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Teléfono contacto</label>
+                                            <input type="text" name="contacto_telefono" class="form-control" value="<?php echo htmlspecialchars($fields['contacto_telefono'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="+56 9 1234 5678">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Correo contacto</label>
+                                            <input type="email" name="contacto_correo" class="form-control" value="<?php echo htmlspecialchars($fields['contacto_correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="contacto@correo.com">
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
@@ -273,13 +309,14 @@ include('partials/html.php');
                                                 <th>Correo</th>
                                                 <th>Teléfono</th>
                                                 <th>Dirección</th>
+                                                <th>Contacto</th>
                                                 <th>Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if (!$proveedores) : ?>
                                                 <tr>
-                                                    <td colspan="6" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="7" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($proveedores as $proveedor) : ?>
@@ -294,6 +331,22 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars($proveedor['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($proveedor['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($proveedor['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>
+                                                            <?php if (!empty($proveedor['contacto_nombre']) || !empty($proveedor['contacto_cargo']) || !empty($proveedor['contacto_telefono']) || !empty($proveedor['contacto_correo'])) : ?>
+                                                                <div><?php echo htmlspecialchars($proveedor['contacto_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                <?php if (!empty($proveedor['contacto_cargo'])) : ?>
+                                                                    <div class="text-muted small"><?php echo htmlspecialchars($proveedor['contacto_cargo'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($proveedor['contacto_telefono'])) : ?>
+                                                                    <div class="text-muted small"><?php echo htmlspecialchars($proveedor['contacto_telefono'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                <?php endif; ?>
+                                                                <?php if (!empty($proveedor['contacto_correo'])) : ?>
+                                                                    <div class="text-muted small"><?php echo htmlspecialchars($proveedor['contacto_correo'], ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                <?php endif; ?>
+                                                            <?php else : ?>
+                                                                <span class="text-muted">—</span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                         <td class="text-nowrap">
                                                             <a href="proveedores.php?view=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-info btn-sm">Ver</a>
                                                             <?php if (has_permission('proveedores', 'edit')) : ?>
