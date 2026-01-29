@@ -6,6 +6,8 @@ CREATE TABLE `empresas` (
   `telefono` VARCHAR(30) DEFAULT NULL,
   `correo` VARCHAR(150) DEFAULT NULL,
   `direccion` VARCHAR(200) DEFAULT NULL,
+  `logo_path` VARCHAR(255) DEFAULT NULL,
+  `logo_default` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `empresas_nombre_unique` (`nombre`),

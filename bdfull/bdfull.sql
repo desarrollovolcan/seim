@@ -6,6 +6,8 @@ CREATE TABLE `empresas` (
   `telefono` VARCHAR(30) DEFAULT NULL,
   `correo` VARCHAR(150) DEFAULT NULL,
   `direccion` VARCHAR(200) DEFAULT NULL,
+  `logo_path` VARCHAR(255) DEFAULT NULL,
+  `logo_default` TINYINT(1) NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `empresas_nombre_unique` (`nombre`),
@@ -267,8 +269,8 @@ CREATE TABLE `user_empresas` (
 
 -- Datos base mínimos
 -- Sección: empresa
-INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion)
-VALUES ('Acquaperla', 'Acquaperla SpA', '99999999-9', '+56 9 6000 0000', 'contacto@acquaperla.cl', 'Av. Principal 123');
+INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion, logo_default)
+VALUES ('Acquaperla', 'Acquaperla SpA', '99999999-9', '+56 9 6000 0000', 'contacto@acquaperla.cl', 'Av. Principal 123', 1);
 
 -- Sección: roles
 INSERT INTO roles (nombre, descripcion)

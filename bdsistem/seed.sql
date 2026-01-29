@@ -1,7 +1,7 @@
 -- Datos base mínimos
 -- Sección: empresa
-INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion)
-VALUES ('Acquaperla', 'Acquaperla SpA', '99999999-9', '+56 9 6000 0000', 'contacto@acquaperla.cl', 'Av. Principal 123');
+INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion, logo_default)
+VALUES ('Acquaperla', 'Acquaperla SpA', '99999999-9', '+56 9 6000 0000', 'contacto@acquaperla.cl', 'Av. Principal 123', 1);
 
 -- Sección: roles
 INSERT INTO roles (nombre, descripcion)
