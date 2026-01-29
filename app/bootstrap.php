@@ -582,6 +582,7 @@ function ensure_comercial_tables(): void
         $hasRoles = (int) db()->query('SELECT COUNT(*) FROM roles')->fetchColumn();
         if ($hasRoles === 0) {
             $stmt = db()->prepare('INSERT INTO roles (nombre, descripcion) VALUES (?, ?)');
+            $stmt->execute(['Super Administrador', 'Acceso total al sistema']);
             $stmt->execute(['Administrador', 'Acceso total al sistema']);
             $stmt->execute(['Operador', 'Gestión operativa']);
             $stmt->execute(['Consulta', 'Solo lectura']);

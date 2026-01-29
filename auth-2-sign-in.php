@@ -11,12 +11,19 @@ if (isset($_SESSION['user'])) {
 
 $errors = [];
 $correo = '';
+$empresaSeleccionada = 0;
 $municipalidad = get_municipalidad();
 $logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
+$empresasDisponibles = load_empresas();
+
+if ($empresasDisponibles) {
+    $empresaSeleccionada = (int) ($empresasDisponibles[0]['id'] ?? 0);
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $correo = trim((string) ($_POST['correo'] ?? ''));
     $password = (string) ($_POST['password'] ?? '');
+    $empresaSeleccionada = (int) ($_POST['empresa_id'] ?? $empresaSeleccionada);
 
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
@@ -26,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Debes ingresar correo y contraseña.';
     }
 
+    if ($empresaSeleccionada <= 0) {
+        $errors[] = 'Debes seleccionar una empresa.';
+    }
+
     if (!$errors) {
         $user = User::findByCorreo(db(), $correo);
         if (!$user || !password_verify($password, $user['password_hash'])) {
@@ -33,6 +44,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ((int) ($user['estado'] ?? 0) !== 1) {
             $errors[] = 'Tu cuenta está pendiente de aprobación.';
         } else {
+            $empresasUsuario = load_user_empresas((int) $user['id']);
+            if (!$empresasUsuario && is_superuser()) {
+                $empresasUsuario = load_empresas();
+            }
+            if (!$empresasUsuario) {
+                $errors[] = 'Tu usuario no tiene empresas asignadas.';
+            } else {
+                $empresaValida = false;
+                foreach ($empresasUsuario as $empresa) {
+                    if ((int) ($empresa['id'] ?? 0) === $empresaSeleccionada) {
+                        $empresaValida = true;
+                        break;
+                    }
+                }
+                if (!$empresaValida) {
+                    $errors[] = 'La empresa seleccionada no está asociada a tu cuenta.';
+                }
+            }
+        }
+
+        if (!$errors) {
             session_regenerate_id(true);
             $_SESSION['user'] = [
                 'id' => $user['id'],
@@ -43,14 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'rol' => $user['rol'],
                 'avatar_path' => $user['avatar_path'] ?? null,
             ];
-            $empresasUsuario = load_user_empresas((int) $user['id']);
-            if (!$empresasUsuario && is_superuser()) {
-                $empresasUsuario = load_empresas();
-            }
             $_SESSION['user']['empresas'] = $empresasUsuario;
-            if ($empresasUsuario) {
-                $_SESSION['empresa_id'] = (int) $empresasUsuario[0]['id'];
-            }
+            $_SESSION['empresa_id'] = $empresaSeleccionada;
             redirect('dashboard.php');
         }
     }
@@ -142,6 +168,23 @@ include('partials/html.php');
                                         <input type="email" class="form-control" id="userEmail" name="correo" placeholder="usuario@municipalidad.cl" value="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>" required>
                                         <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
                                     </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="empresaSelect" class="form-label">Empresa <span class="text-danger">*</span></label>
+                                    <select class="form-select" id="empresaSelect" name="empresa_id" required>
+                                        <option value="">Selecciona una empresa</option>
+                                        <?php foreach ($empresasDisponibles as $empresa) : ?>
+                                            <?php $empresaId = (int) ($empresa['id'] ?? 0); ?>
+                                            <?php $empresaNombre = $empresa['razon_social'] ?: $empresa['nombre']; ?>
+                                            <option value="<?php echo $empresaId; ?>" <?php echo $empresaSeleccionada === $empresaId ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($empresaNombre, ENT_QUOTES, 'UTF-8'); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <?php if (empty($empresasDisponibles)) : ?>
+                                        <div class="form-text text-warning">No hay empresas registradas. Contacta al administrador.</div>
+                                    <?php endif; ?>
                                 </div>
 
                                 <div class="mb-3">
