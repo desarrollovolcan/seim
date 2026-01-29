@@ -170,6 +170,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoAuthHeight = $logoAuthHeight > 0 ? $logoAuthHeight : null;
 
                     if ($action === 'update' && $recordId > 0) {
+                        $stmt = db()->prepare('SELECT logo_path FROM empresas WHERE id = ? LIMIT 1');
+                        $stmt->execute([$recordId]);
+                        $currentLogoPath = $stmt->fetchColumn();
+                        if ($logoPath === null && $currentLogoPath) {
+                            $logoPath = (string) $currentLogoPath;
+                        }
                         $stmt = db()->prepare('SELECT id FROM empresas WHERE id = ? LIMIT 1');
                         $stmt->execute([$recordId]);
                         if (!$stmt->fetchColumn()) {
