@@ -22,9 +22,38 @@
                     <?php unset($_SESSION['permission_error']); ?>
                 <?php endif; ?>
 
+                <div class="row g-3 mb-1">
+                    <div class="col-12">
+                        <div class="card shadow-sm dashboard-hero">
+                            <div class="card-body">
+                                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                                    <div>
+                                        <h4 class="mb-1">Control ejecutivo de inventario</h4>
+                                        <p class="text-muted mb-0">Seguimiento de existencias, costos y ganancias con datos en tiempo real.</p>
+                                    </div>
+                                    <div class="dashboard-metrics">
+                                        <div class="dashboard-metric">
+                                            <span class="text-muted text-uppercase fs-12">Existencias críticas</span>
+                                            <h5 class="mb-0"><?php echo (int) ($resumen['productos_bajo_stock'] ?? 0); ?></h5>
+                                        </div>
+                                        <div class="dashboard-metric">
+                                            <span class="text-muted text-uppercase fs-12">Costo total</span>
+                                            <h5 class="mb-0">$<?php echo number_format((float) ($resumen['costo_total'] ?? 0), 2); ?></h5>
+                                        </div>
+                                        <div class="dashboard-metric">
+                                            <span class="text-muted text-uppercase fs-12">Ganancia total</span>
+                                            <h5 class="mb-0">$<?php echo number_format((float) ($resumen['ganancia_total'] ?? 0), 2); ?></h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row g-3">
                     <div class="col-md-6 col-xl-3">
-                        <div class="card shadow-sm h-100">
+                        <div class="card shadow-sm h-100 dashboard-kpi-card">
                             <div class="card-body">
                                 <p class="text-muted text-uppercase fs-12 mb-1">Ventas totales</p>
                                 <h3 class="mb-0">$<?php echo number_format((float) ($resumen['ventas_total'] ?? 0), 2); ?></h3>
@@ -33,7 +62,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <div class="card shadow-sm h-100">
+                        <div class="card shadow-sm h-100 dashboard-kpi-card">
                             <div class="card-body">
                                 <p class="text-muted text-uppercase fs-12 mb-1">Costo total</p>
                                 <h3 class="mb-0">$<?php echo number_format((float) ($resumen['costo_total'] ?? 0), 2); ?></h3>
@@ -42,7 +71,7 @@
                         </div>
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <div class="card shadow-sm h-100">
+                        <div class="card shadow-sm h-100 dashboard-kpi-card">
                             <div class="card-body">
                                 <p class="text-muted text-uppercase fs-12 mb-1">Ganancia total</p>
                                 <h3 class="mb-0">$<?php echo number_format((float) ($resumen['ganancia_total'] ?? 0), 2); ?></h3>
@@ -51,20 +80,11 @@
                         </div>
                     </div>
                     <div class="col-md-6 col-xl-3">
-                        <div class="card shadow-sm h-100">
+                        <div class="card shadow-sm h-100 dashboard-kpi-card">
                             <div class="card-body">
                                 <p class="text-muted text-uppercase fs-12 mb-1">Margen promedio</p>
                                 <h3 class="mb-0"><?php echo number_format((float) ($resumen['margen_total'] ?? 0), 2); ?>%</h3>
                                 <small class="text-muted">Rentabilidad global</small>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-3">
-                        <div class="card shadow-sm h-100">
-                            <div class="card-body">
-                                <p class="text-muted text-uppercase fs-12 mb-1">Productos bajo stock</p>
-                                <h3 class="mb-0"><?php echo (int) ($resumen['productos_bajo_stock'] ?? 0); ?></h3>
-                                <small class="text-muted">Alertas críticas</small>
                             </div>
                         </div>
                     </div>
@@ -74,8 +94,8 @@
                     <div class="col-xl-7">
                         <div class="card shadow-sm h-100">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Ventas vs precio por producto</h5>
-                                <span class="text-muted fs-12">Top productos vendidos</span>
+                                <h5 class="card-title mb-0">Ventas vs precio unitario</h5>
+                                <span class="text-muted fs-12">Productos con mayor movimiento</span>
                             </div>
                             <div class="card-body">
                                 <div id="ventasPrecioChart" class="apex-charts" style="min-height: 280px;"></div>
@@ -86,7 +106,7 @@
                         <div class="card shadow-sm h-100">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <h5 class="card-title mb-0">Ganancia acumulada</h5>
-                                <span class="text-muted fs-12">Evolución mensual</span>
+                                <span class="text-muted fs-12">Evolución de rentabilidad</span>
                             </div>
                             <div class="card-body">
                                 <div id="gananciaAcumuladaChart" class="apex-charts" style="min-height: 280px;"></div>
@@ -99,8 +119,8 @@
                     <div class="col-xl-5">
                         <div class="card shadow-sm">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Productos con stock bajo</h5>
-                                <span class="text-muted fs-12">Inventario crítico</span>
+                                <h5 class="card-title mb-0">Existencias críticas</h5>
+                                <span class="text-muted fs-12">Alertas de inventario</span>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -137,8 +157,8 @@
                     <div class="col-xl-7">
                         <div class="card shadow-sm">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Ventas, costo y margen por producto</h5>
-                                <span class="text-muted fs-12">Detalle de rentabilidad</span>
+                                <h5 class="card-title mb-0">Rentabilidad por producto</h5>
+                                <span class="text-muted fs-12">Ventas, costos y margen</span>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -229,7 +249,7 @@
                         title: { text: 'Precio venta' },
                     },
                 ],
-                colors: ['#4f46e5', '#22c55e'],
+                colors: ['#0ea5e9', '#10b981'],
                 dataLabels: { enabled: false },
                 tooltip: {
                     shared: true,
@@ -249,7 +269,7 @@
                 },
                 series: [{ name: 'Ganancia acumulada', data: gananciaData }],
                 xaxis: { categories: gananciaLabels },
-                colors: ['#f97316'],
+                colors: ['#f59e0b'],
                 dataLabels: { enabled: false },
                 stroke: { curve: 'smooth', width: 3 },
                 fill: {

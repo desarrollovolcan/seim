@@ -68,6 +68,7 @@
             <?php if ($canDashboard) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarGeneral" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarGeneral" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="layout-dashboard"></i></span>
                         <span class="menu-text">General</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -84,6 +85,7 @@
             <?php if ($showEntradas) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarCompras" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarCompras" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
                         <span class="menu-text">Compras</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -102,6 +104,7 @@
             <?php if ($showSalidas) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarVentas" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarVentas" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="receipt"></i></span>
                         <span class="menu-text">Ventas</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -120,6 +123,7 @@
             <?php if ($showComercial) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarContactos" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarContactos" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="users"></i></span>
                         <span class="menu-text">Contactos</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -143,6 +147,7 @@
             <?php if ($showInventario) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarInventario" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarInventario" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="boxes"></i></span>
                         <span class="menu-text">Inventario</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -186,6 +191,7 @@
             <?php if ($showAdministracion) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarAdministracion" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarAdministracion" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="shield"></i></span>
                         <span class="menu-text">Administración</span>
                         <span class="menu-arrow"></span>
                     </a>
@@ -224,6 +230,7 @@
             <?php if ($showMantenedores) : ?>
                 <li class="side-nav-item">
                     <a href="#sidebarConfiguracion" data-bs-toggle="collapse" aria-expanded="false" aria-controls="sidebarConfiguracion" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="settings"></i></span>
                         <span class="menu-text">Configuración</span>
                         <span class="menu-arrow"></span>
                     </a>
