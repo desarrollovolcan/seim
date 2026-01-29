@@ -1,14 +1,14 @@
 <?php
 require_once __DIR__ . '/../app/bootstrap.php';
 $municipalidad = get_municipalidad();
-$primaryColor = $municipalidad['color_primary'] ?? '#6658dd';
-$secondaryColor = $municipalidad['color_secondary'] ?? '#4a81d4';
+$primaryColor = $municipalidad['color_primary'] ?? '#1d4ed8';
+$secondaryColor = $municipalidad['color_secondary'] ?? '#3b82f6';
 $logoPath = $municipalidad['logo_path'] ?? 'assets/images/logo.png';
 $logoTopbarHeight = $municipalidad['logo_topbar_height'] ?? 56;
 $logoSidenavHeight = $municipalidad['logo_sidenav_height'] ?? 48;
 $logoSidenavHeightSm = $municipalidad['logo_sidenav_height_sm'] ?? 36;
-$primaryRgb = hex_to_rgb($primaryColor) ?? [102, 88, 221];
-$secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
+    $primaryRgb = hex_to_rgb($primaryColor) ?? [29, 78, 216];
+    $secondaryRgb = hex_to_rgb($secondaryColor) ?? [59, 130, 246];
 ?>
 
 <!-- Theme Config Js -->
@@ -240,55 +240,13 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
 
     @media (max-width: 768px) {
         .wrapper .detail-table-wrapper {
-            overflow: visible;
-            border: 0;
-            background-color: transparent;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
         }
 
         .wrapper .detail-table {
-            min-width: 0;
-        }
-
-        .wrapper .detail-table thead {
-            display: none;
-        }
-
-        .wrapper .detail-table tbody tr {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 0.65rem;
-            padding: 0.9rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .wrapper .detail-table tbody tr:last-child {
-            border-bottom: 0;
-        }
-
-        .wrapper .detail-table tbody td {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.35rem;
-            padding: 0;
-            border: 0;
-        }
-
-        .wrapper .detail-table tbody td::before {
-            content: attr(data-label);
-            font-size: 0.68rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #94a3b8;
-        }
-
-        .wrapper .detail-table tbody td:last-child::before {
-            content: "";
-        }
-
-        .wrapper .detail-table tbody td .form-control,
-        .wrapper .detail-table tbody td .form-select {
-            width: 100%;
+            min-width: 720px;
         }
     }
 
