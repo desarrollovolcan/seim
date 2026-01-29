@@ -154,14 +154,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
 
         <div class="content-page">
 
-            <div class="container-fluid">
+            <div class="container-fluid erp-page">
 
                 <?php $subtitle = "Usuarios"; $title = "Editar usuario"; include('partials/page-title.php'); ?>
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="card">
-                            <div class="card-body">
+                        <div class="erp-section">
+                            <div class="erp-section-header">
+                                <div class="erp-toolbar">
+                                    <div>
+                                        <h5 class="card-title mb-0">Editar usuario</h5>
+                                        <p class="text-muted mb-0">Actualiza la información y roles del usuario.</p>
+                                    </div>
+                                    <a href="usuarios-lista.php" class="btn btn-outline-secondary">Volver al listado</a>
+                                </div>
+                            </div>
+                            <div class="erp-section-body">
                                 <?php if (!$usuario) : ?>
                                     <div class="alert alert-warning">Usuario no encontrado.</div>
                                 <?php else : ?>
@@ -180,51 +189,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
                                     <?php endif; ?>
                                     <form method="post" enctype="multipart/form-data">
                                         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                    <div class="row">
-                                        <div class="col-md-4 mb-3">
+                                    <div class="erp-form-grid">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-rut">RUT</label>
                                             <input type="text" id="usuario-edit-rut" name="rut" class="form-control" value="<?php echo htmlspecialchars($usuario['rut'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-nombre">Nombres</label>
                                             <input type="text" id="usuario-edit-nombre" name="nombre" class="form-control" value="<?php echo htmlspecialchars($usuario['nombre'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-apellido">Apellidos</label>
                                             <input type="text" id="usuario-edit-apellido" name="apellido" class="form-control" value="<?php echo htmlspecialchars($usuario['apellido'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-correo">Correo</label>
                                             <input type="email" id="usuario-edit-correo" name="correo" class="form-control" value="<?php echo htmlspecialchars($usuario['correo'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-3 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-telefono">Teléfono</label>
                                             <input type="tel" id="usuario-edit-telefono" name="telefono" class="form-control" value="<?php echo htmlspecialchars($usuario['telefono'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-3 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-estado">Estado</label>
                                             <select id="usuario-edit-estado" name="estado" class="form-select">
                                                 <option value="1" <?php echo (int) $usuario['estado'] === 1 ? 'selected' : ''; ?>>Habilitado</option>
                                                 <option value="0" <?php echo (int) $usuario['estado'] === 0 ? 'selected' : ''; ?>>Deshabilitado</option>
                                             </select>
                                         </div>
-                                        <div class="col-md-8 mb-3">
+                                        <div class="erp-field erp-field--full">
                                             <label class="form-label" for="usuario-edit-direccion">Dirección</label>
                                             <input type="text" id="usuario-edit-direccion" name="direccion" class="form-control" value="<?php echo htmlspecialchars($usuario['direccion'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-4 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-username">Username</label>
                                             <input type="text" id="usuario-edit-username" name="username" class="form-control" value="<?php echo htmlspecialchars($usuario['username'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-password">Nueva contraseña</label>
                                             <input type="password" id="usuario-edit-password" name="password" class="form-control" placeholder="********">
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-password-confirm">Confirmar contraseña</label>
                                             <input type="password" id="usuario-edit-password-confirm" name="password_confirm" class="form-control" placeholder="********">
                                         </div>
-                                        <div class="col-md-6 mb-3">
+                                        <div class="erp-field">
                                             <label class="form-label" for="usuario-edit-avatar">Foto de perfil</label>
                                             <input type="file" id="usuario-edit-avatar" name="avatar" class="form-control" accept="image/png,image/jpeg,image/webp">
                                             <?php if (!empty($usuario['avatar_path'])) : ?>
@@ -234,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
                                             <?php endif; ?>
                                         </div>
                                     </div>
-                                    <div class="mb-3">
+                                    <div class="erp-field erp-field--full">
                                         <label class="form-label">Roles asignados</label>
                                         <div class="d-flex flex-wrap gap-3">
                                             <?php if (empty($roles)) : ?>
@@ -262,13 +271,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <div class="card">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Listado de usuarios</h5>
+                        <div class="erp-section">
+                            <div class="erp-section-header">
+                                <div class="erp-toolbar">
+                                    <div>
+                                        <h5 class="card-title mb-0">Listado de usuarios</h5>
+                                        <p class="text-muted mb-0">Accesos recientes y estado de usuarios activos.</p>
+                                    </div>
+                                    <span class="erp-status-pill"><?php echo count($usuarios); ?> usuarios</span>
+                                </div>
                             </div>
-                            <div class="card-body">
+                            <div class="erp-section-body">
                                 <div class="table-responsive">
-                                    <table class="table table-striped table-centered mb-0">
+                                    <table class="table erp-table table-striped table-centered mb-0">
                                         <thead>
                                             <tr>
                                                 <th>Avatar</th>
@@ -315,12 +330,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
                                                                     <li><a class="dropdown-item" href="usuarios-editar.php?id=<?php echo (int) $usuarioItem['id']; ?>">Editar</a></li>
                                                                     <li><hr class="dropdown-divider"></li>
                                                                     <li>
-                                                                        <form method="post" class="px-3 py-1" data-confirm="¿Estás seguro de eliminar este usuario?">
-                                                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                            <input type="hidden" name="action" value="delete">
-                                                                            <input type="hidden" name="id" value="<?php echo (int) $usuarioItem['id']; ?>">
-                                                                            <button type="submit" class="btn btn-sm btn-outline-danger w-100">Eliminar</button>
-                                                                        </form>
+                                                                        <button type="button" class="dropdown-item text-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-record-id="<?php echo (int) $usuarioItem['id']; ?>" data-record-label="<?php echo htmlspecialchars(trim($usuarioItem['nombre'] . ' ' . $usuarioItem['apellido']), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                            Eliminar
+                                                                        </button>
                                                                     </li>
                                                                 </ul>
                                                             </div>
@@ -338,6 +350,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action']) && verify_
 
             </div>
             <!-- container -->
+
+            <div class="modal fade erp-modal" id="confirmDeleteModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Confirmar eliminación</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p class="mb-0">¿Deseas eliminar a <strong data-delete-label>este usuario</strong>? Esta acción no se puede deshacer.</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                            <form method="post">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="action" value="delete">
+                                <input type="hidden" name="id" id="deleteRecordId" value="">
+                                <button type="submit" class="btn btn-danger">Eliminar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <?php include('partials/footer.php'); ?>
 
