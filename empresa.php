@@ -19,6 +19,11 @@ $fields = [
     'telefono' => '',
     'correo' => '',
     'direccion' => '',
+    'logo_path' => '',
+    'logo_topbar_height' => '',
+    'logo_sidenav_height' => '',
+    'logo_sidenav_height_sm' => '',
+    'logo_auth_height' => '',
 ];
 
 if (isset($_GET['view'])) {
@@ -43,6 +48,11 @@ if (isset($_GET['edit'])) {
             $fields['telefono'] = (string) ($record['telefono'] ?? '');
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
+            $fields['logo_path'] = (string) ($record['logo_path'] ?? '');
+            $fields['logo_topbar_height'] = (string) ($record['logo_topbar_height'] ?? '');
+            $fields['logo_sidenav_height'] = (string) ($record['logo_sidenav_height'] ?? '');
+            $fields['logo_sidenav_height_sm'] = (string) ($record['logo_sidenav_height_sm'] ?? '');
+            $fields['logo_auth_height'] = (string) ($record['logo_auth_height'] ?? '');
         }
     }
 }
@@ -69,6 +79,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         } else {
             foreach ($fields as $key => $value) {
+                if (str_starts_with($key, 'logo_')) {
+                    $fields[$key] = trim((string) ($_POST[$key] ?? $value));
+                    continue;
+                }
                 $fields[$key] = trim((string) ($_POST[$key] ?? ''));
             }
 
@@ -84,12 +98,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$errors) {
                 try {
+                    $logoPath = $fields['logo_path'] !== '' ? $fields['logo_path'] : null;
+                    $logoTopbarHeight = (int) ($fields['logo_topbar_height'] !== '' ? $fields['logo_topbar_height'] : 0);
+                    $logoSidenavHeight = (int) ($fields['logo_sidenav_height'] !== '' ? $fields['logo_sidenav_height'] : 0);
+                    $logoSidenavHeightSm = (int) ($fields['logo_sidenav_height_sm'] !== '' ? $fields['logo_sidenav_height_sm'] : 0);
+                    $logoAuthHeight = (int) ($fields['logo_auth_height'] !== '' ? $fields['logo_auth_height'] : 0);
+
+                    $logoTopbarHeight = $logoTopbarHeight > 0 ? $logoTopbarHeight : null;
+                    $logoSidenavHeight = $logoSidenavHeight > 0 ? $logoSidenavHeight : null;
+                    $logoSidenavHeightSm = $logoSidenavHeightSm > 0 ? $logoSidenavHeightSm : null;
+                    $logoAuthHeight = $logoAuthHeight > 0 ? $logoAuthHeight : null;
+
                     if ($action === 'update' && $recordId > 0) {
                         if (!has_permission('empresas', 'edit')) {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ? WHERE id = ?'
+                            'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ?, logo_path = ?, logo_topbar_height = ?, logo_sidenav_height = ?, logo_sidenav_height_sm = ?, logo_auth_height = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -98,15 +123,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $logoPath,
+                            $logoTopbarHeight,
+                            $logoSidenavHeight,
+                            $logoSidenavHeightSm,
+                            $logoAuthHeight,
                             $recordId,
                         ]);
+                        $empresaId = $recordId;
                         $_SESSION['empresa_flash'] = 'Empresa actualizada correctamente.';
                     } else {
                         if (!has_permission('empresas', 'create')) {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion) VALUES (?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion, logo_path, logo_topbar_height, logo_sidenav_height, logo_sidenav_height_sm, logo_auth_height) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -115,9 +146,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $logoPath,
+                            $logoTopbarHeight,
+                            $logoSidenavHeight,
+                            $logoSidenavHeightSm,
+                            $logoAuthHeight,
                         ]);
+                        $empresaId = (int) db()->lastInsertId();
                         $_SESSION['empresa_flash'] = 'Empresa registrada correctamente.';
                     }
+
+                    if (!empty($_FILES['logo']['name'] ?? '') && $empresaId > 0) {
+                        if (!isset($_FILES['logo']['error']) || $_FILES['logo']['error'] !== UPLOAD_ERR_OK) {
+                            throw new RuntimeException('No se pudo subir el logo.');
+                        }
+
+                        $tmpName = (string) $_FILES['logo']['tmp_name'];
+                        $info = @getimagesize($tmpName);
+                        if (!$info || !isset($info['mime'])) {
+                            throw new RuntimeException('El archivo de logo no es una imagen válida.');
+                        }
+
+                        $allowedMimes = ['image/png', 'image/jpeg', 'image/webp'];
+                        if (!in_array($info['mime'], $allowedMimes, true)) {
+                            throw new RuntimeException('El logo debe ser PNG, JPG o WEBP.');
+                        }
+
+                        $extension = strtolower(pathinfo((string) ($_FILES['logo']['name'] ?? ''), PATHINFO_EXTENSION));
+                        if ($extension === '' || !in_array($extension, ['png', 'jpg', 'jpeg', 'webp'], true)) {
+                            $extension = $info['mime'] === 'image/png' ? 'png' : ($info['mime'] === 'image/webp' ? 'webp' : 'jpg');
+                        }
+
+                        $uploadDir = __DIR__ . '/uploads/empresas';
+                        if (!is_dir($uploadDir)) {
+                            mkdir($uploadDir, 0755, true);
+                        }
+                        $fileName = sprintf('empresa_%d_%s.%s', $empresaId, date('YmdHis'), $extension);
+                        $destination = $uploadDir . '/' . $fileName;
+                        if (!move_uploaded_file($tmpName, $destination)) {
+                            throw new RuntimeException('No se pudo guardar el logo.');
+                        }
+
+                        $relativePath = 'uploads/empresas/' . $fileName;
+                        $stmt = db()->prepare('UPDATE empresas SET logo_path = ? WHERE id = ?');
+                        $stmt->execute([$relativePath, $empresaId]);
+                    }
+
                     redirect('empresa.php');
                 } catch (Exception $e) {
                     $errors[] = 'No se pudo guardar la empresa. Revisa que el nombre o RUC no estén duplicados.';
@@ -197,11 +271,18 @@ include('partials/html.php');
                                             <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-8"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Logo:</span>
+                                                <?php if (!empty($viewRecord['logo_path'])) : ?>
+                                                    <img src="<?php echo htmlspecialchars($viewRecord['logo_path'], ENT_QUOTES, 'UTF-8'); ?>" alt="Logo empresa" style="height: 40px;">
+                                                <?php else : ?>
+                                                    —
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
 
-                                <form method="post" action="empresa.php">
+                                <form method="post" action="empresa.php" enctype="multipart/form-data">
                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                     <input type="hidden" name="action" value="<?php echo $editingId ? 'update' : 'create'; ?>">
                                     <?php if ($editingId) : ?>
@@ -236,6 +317,30 @@ include('partials/html.php');
                                         <div class="col-md-6 col-xl-6">
                                             <label class="form-label">Dirección</label>
                                             <input type="text" name="direccion" class="form-control" value="<?php echo htmlspecialchars($fields['direccion'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Dirección">
+                                        </div>
+
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Logo de la empresa</label>
+                                            <input type="file" name="logo" class="form-control" accept="image/png,image/jpeg,image/webp">
+                                            <?php if ($fields['logo_path'] !== '') : ?>
+                                                <small class="text-muted d-block mt-1">Actual: <?php echo htmlspecialchars($fields['logo_path'], ENT_QUOTES, 'UTF-8'); ?></small>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Altura logo (Topbar)</label>
+                                            <input type="number" name="logo_topbar_height" class="form-control" value="<?php echo htmlspecialchars($fields['logo_topbar_height'], ENT_QUOTES, 'UTF-8'); ?>" min="20" max="200" placeholder="56">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Altura logo (Menú)</label>
+                                            <input type="number" name="logo_sidenav_height" class="form-control" value="<?php echo htmlspecialchars($fields['logo_sidenav_height'], ENT_QUOTES, 'UTF-8'); ?>" min="20" max="200" placeholder="48">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Altura logo (Menú compacto)</label>
+                                            <input type="number" name="logo_sidenav_height_sm" class="form-control" value="<?php echo htmlspecialchars($fields['logo_sidenav_height_sm'], ENT_QUOTES, 'UTF-8'); ?>" min="16" max="120" placeholder="36">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Altura logo (Login)</label>
+                                            <input type="number" name="logo_auth_height" class="form-control" value="<?php echo htmlspecialchars($fields['logo_auth_height'], ENT_QUOTES, 'UTF-8'); ?>" min="20" max="200" placeholder="48">
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">

@@ -60,7 +60,13 @@
     const isStandaloneMode = () =>
         window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
 
-    if (installButton && !isStandaloneMode()) {
+    if (installButton) {
+        if (!isStandaloneMode()) {
+            showInstallButton();
+        } else {
+            hideInstallButton();
+        }
+
         window.addEventListener('beforeinstallprompt', (event) => {
             event.preventDefault();
             deferredInstallPrompt = event;
@@ -69,6 +75,7 @@
 
         installButton.addEventListener('click', async () => {
             if (!deferredInstallPrompt) {
+                alert('Para instalar la app, usa la opción \"Agregar a inicio\" en el menú de tu navegador.');
                 return;
             }
             deferredInstallPrompt.prompt();
@@ -81,7 +88,5 @@
             deferredInstallPrompt = null;
             hideInstallButton();
         });
-    } else {
-        hideInstallButton();
     }
 </script>

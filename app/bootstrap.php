@@ -177,17 +177,7 @@ function validate_rut(string $rut): bool
 
 function get_municipalidad(): array
 {
-    try {
-        $stmt = db()->query('SELECT * FROM municipalidad LIMIT 1');
-        $municipalidad = $stmt->fetch();
-        if (is_array($municipalidad)) {
-            return $municipalidad;
-        }
-    } catch (Exception $e) {
-    } catch (Error $e) {
-    }
-
-    return [
+    $defaults = [
         'nombre' => 'Go Muni',
         'razon_social' => '',
         'moneda' => 'CLP',
@@ -199,6 +189,46 @@ function get_municipalidad(): array
         'color_primary' => '#6658dd',
         'color_secondary' => '#4a81d4',
     ];
+
+    try {
+        $stmt = db()->query('SELECT * FROM municipalidad LIMIT 1');
+        $municipalidad = $stmt->fetch();
+        if (is_array($municipalidad)) {
+            $defaults = array_merge($defaults, $municipalidad);
+        }
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
+
+    try {
+        $empresaId = current_empresa_id();
+        if ($empresaId) {
+            $stmt = db()->prepare(
+                'SELECT nombre, razon_social, logo_path, logo_topbar_height, logo_sidenav_height, logo_sidenav_height_sm, logo_auth_height
+                 FROM empresas
+                 WHERE id = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([$empresaId]);
+            $empresa = $stmt->fetch();
+            if (is_array($empresa)) {
+                foreach (['nombre', 'razon_social', 'logo_path'] as $field) {
+                    if (array_key_exists($field, $empresa) && $empresa[$field] !== null && $empresa[$field] !== '') {
+                        $defaults[$field] = $empresa[$field];
+                    }
+                }
+                foreach (['logo_topbar_height', 'logo_sidenav_height', 'logo_sidenav_height_sm', 'logo_auth_height'] as $field) {
+                    if (array_key_exists($field, $empresa) && is_numeric($empresa[$field]) && (int) $empresa[$field] > 0) {
+                        $defaults[$field] = (int) $empresa[$field];
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
+
+    return $defaults;
 }
 
 function hex_to_rgb(string $hex): ?array
@@ -329,6 +359,11 @@ function ensure_comercial_tables(): void
                 telefono VARCHAR(40) DEFAULT NULL,
                 correo VARCHAR(150) DEFAULT NULL,
                 direccion VARCHAR(200) DEFAULT NULL,
+                logo_path VARCHAR(255) DEFAULT NULL,
+                logo_topbar_height INT DEFAULT NULL,
+                logo_sidenav_height INT DEFAULT NULL,
+                logo_sidenav_height_sm INT DEFAULT NULL,
+                logo_auth_height INT DEFAULT NULL,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE KEY empresas_nombre_unique (nombre),
                 UNIQUE KEY empresas_ruc_unique (ruc)
@@ -574,6 +609,11 @@ function ensure_comercial_tables(): void
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS total DECIMAL(12,2) NOT NULL DEFAULT 0');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS nota VARCHAR(255) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_path VARCHAR(255) DEFAULT NULL');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_topbar_height INT DEFAULT NULL');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height INT DEFAULT NULL');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height_sm INT DEFAULT NULL');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_auth_height INT DEFAULT NULL');
     } catch (Exception $e) {
     } catch (Error $e) {
     }
