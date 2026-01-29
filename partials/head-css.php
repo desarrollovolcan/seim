@@ -221,6 +221,148 @@ $logoSidenavHeightSm = $municipalidad['logo_sidenav_height_sm'] ?? 36;
         background-color: rgba(var(--ins-primary-rgb), 0.05);
     }
 
+    .wrapper .btn-primary {
+        background-color: #1e3a8a;
+        border-color: #1e3a8a;
+    }
+
+    .wrapper .btn-primary:hover,
+    .wrapper .btn-primary:focus {
+        background-color: #1e40af;
+        border-color: #1e40af;
+    }
+
+    .wrapper .btn-outline-primary {
+        color: #1e3a8a;
+        border-color: #1e3a8a;
+    }
+
+    .wrapper .btn-outline-primary:hover,
+    .wrapper .btn-outline-primary:focus {
+        background-color: #1e3a8a;
+        border-color: #1e3a8a;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-secondary {
+        background-color: #1f2937;
+        border-color: #1f2937;
+    }
+
+    .wrapper .btn-secondary:hover,
+    .wrapper .btn-secondary:focus {
+        background-color: #111827;
+        border-color: #111827;
+    }
+
+    .wrapper .btn-outline-secondary {
+        color: #1f2937;
+        border-color: #1f2937;
+    }
+
+    .wrapper .btn-outline-secondary:hover,
+    .wrapper .btn-outline-secondary:focus {
+        background-color: #1f2937;
+        border-color: #1f2937;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-success {
+        background-color: #166534;
+        border-color: #166534;
+    }
+
+    .wrapper .btn-success:hover,
+    .wrapper .btn-success:focus {
+        background-color: #14532d;
+        border-color: #14532d;
+    }
+
+    .wrapper .btn-outline-success {
+        color: #166534;
+        border-color: #166534;
+    }
+
+    .wrapper .btn-outline-success:hover,
+    .wrapper .btn-outline-success:focus {
+        background-color: #166534;
+        border-color: #166534;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-danger {
+        background-color: #991b1b;
+        border-color: #991b1b;
+    }
+
+    .wrapper .btn-danger:hover,
+    .wrapper .btn-danger:focus {
+        background-color: #7f1d1d;
+        border-color: #7f1d1d;
+    }
+
+    .wrapper .btn-outline-danger {
+        color: #991b1b;
+        border-color: #991b1b;
+    }
+
+    .wrapper .btn-outline-danger:hover,
+    .wrapper .btn-outline-danger:focus {
+        background-color: #991b1b;
+        border-color: #991b1b;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-warning {
+        background-color: #a16207;
+        border-color: #a16207;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-warning:hover,
+    .wrapper .btn-warning:focus {
+        background-color: #854d0e;
+        border-color: #854d0e;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-outline-warning {
+        color: #a16207;
+        border-color: #a16207;
+    }
+
+    .wrapper .btn-outline-warning:hover,
+    .wrapper .btn-outline-warning:focus {
+        background-color: #a16207;
+        border-color: #a16207;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-info {
+        background-color: #0e7490;
+        border-color: #0e7490;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-info:hover,
+    .wrapper .btn-info:focus {
+        background-color: #0f4c75;
+        border-color: #0f4c75;
+        color: #ffffff;
+    }
+
+    .wrapper .btn-outline-info {
+        color: #0e7490;
+        border-color: #0e7490;
+    }
+
+    .wrapper .btn-outline-info:hover,
+    .wrapper .btn-outline-info:focus {
+        background-color: #0e7490;
+        border-color: #0e7490;
+        color: #ffffff;
+    }
+
     .wrapper .table-responsive {
         border: 1px solid #e2e8f0;
         border-radius: 0.85rem;
