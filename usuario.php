@@ -7,6 +7,8 @@ require_once __DIR__ . '/app/bootstrap.php';
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
+$editingId = null;
+$viewRecord = null;
 
 $fields = [
     'nombre' => '',
@@ -22,62 +24,138 @@ $fields = [
     'estado' => '1',
 ];
 
+if (isset($_GET['view'])) {
+    $viewId = (int) $_GET['view'];
+    if ($viewId > 0) {
+        $stmt = db()->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$viewId]);
+        $viewRecord = $stmt->fetch() ?: null;
+    }
+}
+
+if (isset($_GET['edit'])) {
+    $editingId = (int) $_GET['edit'];
+    if ($editingId > 0) {
+        $stmt = db()->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
+        $stmt->execute([$editingId]);
+        $record = $stmt->fetch();
+        if ($record) {
+            $fields['nombre'] = (string) ($record['nombre'] ?? '');
+            $fields['apellido'] = (string) ($record['apellido'] ?? '');
+            $fields['rut'] = (string) ($record['rut'] ?? '');
+            $fields['correo'] = (string) ($record['correo'] ?? '');
+            $fields['telefono'] = (string) ($record['telefono'] ?? '');
+            $fields['username'] = (string) ($record['username'] ?? '');
+            $fields['rol'] = (string) ($record['rol'] ?? '');
+            $fields['cargo'] = (string) ($record['cargo'] ?? '');
+            $fields['fecha_nacimiento'] = (string) ($record['fecha_nacimiento'] ?? '');
+            $fields['direccion'] = (string) ($record['direccion'] ?? '');
+            $fields['estado'] = (string) ((int) ($record['estado'] ?? 1));
+        }
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verify_csrf($_POST['csrf_token'] ?? null)) {
         $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
     } else {
-        foreach ($fields as $key => $value) {
-            $fields[$key] = trim((string) ($_POST[$key] ?? ''));
-        }
-        $password = (string) ($_POST['password'] ?? '');
+        $action = (string) ($_POST['action'] ?? 'create');
+        $recordId = (int) ($_POST['id'] ?? 0);
 
-        if ($fields['nombre'] === '') {
-            $errors[] = 'El nombre es obligatorio.';
-        }
-        if ($fields['apellido'] === '') {
-            $errors[] = 'El apellido es obligatorio.';
-        }
-        if ($fields['rut'] === '') {
-            $errors[] = 'El RUT es obligatorio.';
-        }
-        if ($fields['correo'] === '' || !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
-            $errors[] = 'Debes ingresar un correo válido.';
-        }
-        if ($fields['telefono'] === '') {
-            $errors[] = 'El teléfono es obligatorio.';
-        }
-        if ($fields['username'] === '') {
-            $errors[] = 'El usuario es obligatorio.';
-        }
-        if ($password === '') {
-            $errors[] = 'La contraseña es obligatoria.';
-        }
-
-        if (!$errors) {
+        if ($action === 'delete' && $recordId > 0) {
             try {
-                $stmt = db()->prepare(
-                    'INSERT INTO users (empresa_id, rut, nombre, apellido, cargo, fecha_nacimiento, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
-                     VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)'
-                );
-                $stmt->execute([
-                    $fields['rut'],
-                    $fields['nombre'],
-                    $fields['apellido'],
-                    $fields['cargo'] !== '' ? $fields['cargo'] : null,
-                    $fields['fecha_nacimiento'] !== '' ? $fields['fecha_nacimiento'] : null,
-                    $fields['correo'],
-                    $fields['telefono'],
-                    $fields['direccion'] !== '' ? $fields['direccion'] : null,
-                    $fields['username'],
-                    $fields['rol'] !== '' ? $fields['rol'] : null,
-                    password_hash($password, PASSWORD_DEFAULT),
-                    (int) ($fields['estado'] === '1'),
-                ]);
-
-                $_SESSION['usuario_flash'] = 'Usuario registrado correctamente.';
+                $stmt = db()->prepare('DELETE FROM users WHERE id = ?');
+                $stmt->execute([$recordId]);
+                $_SESSION['usuario_flash'] = 'Usuario eliminado correctamente.';
                 redirect('usuario.php');
             } catch (Exception $e) {
-                $errors[] = 'No se pudo guardar el usuario. Revisa que el correo, RUT y usuario no estén duplicados.';
+                $errors[] = 'No se pudo eliminar el usuario.';
+            }
+        } else {
+            foreach ($fields as $key => $value) {
+                $fields[$key] = trim((string) ($_POST[$key] ?? ''));
+            }
+            $password = (string) ($_POST['password'] ?? '');
+
+            if ($fields['nombre'] === '') {
+                $errors[] = 'El nombre es obligatorio.';
+            }
+            if ($fields['apellido'] === '') {
+                $errors[] = 'El apellido es obligatorio.';
+            }
+            if ($fields['rut'] === '') {
+                $errors[] = 'El RUT es obligatorio.';
+            }
+            if ($fields['correo'] === '' || !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
+                $errors[] = 'Debes ingresar un correo válido.';
+            }
+            if ($fields['telefono'] === '') {
+                $errors[] = 'El teléfono es obligatorio.';
+            }
+            if ($fields['username'] === '') {
+                $errors[] = 'El usuario es obligatorio.';
+            }
+            if ($action === 'create' && $password === '') {
+                $errors[] = 'La contraseña es obligatoria.';
+            }
+
+            if (!$errors) {
+                try {
+                    if ($action === 'update' && $recordId > 0) {
+                        $query = 'UPDATE users SET rut = ?, nombre = ?, apellido = ?, cargo = ?, fecha_nacimiento = ?, correo = ?, telefono = ?, direccion = ?, username = ?, rol = ?, estado = ?';
+                        $params = [
+                            $fields['rut'],
+                            $fields['nombre'],
+                            $fields['apellido'],
+                            $fields['cargo'] !== '' ? $fields['cargo'] : null,
+                            $fields['fecha_nacimiento'] !== '' ? $fields['fecha_nacimiento'] : null,
+                            $fields['correo'],
+                            $fields['telefono'],
+                            $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $fields['username'],
+                            $fields['rol'] !== '' ? $fields['rol'] : null,
+                            (int) ($fields['estado'] === '1'),
+                        ];
+
+                        if ($password !== '') {
+                            $query .= ', password_hash = ?';
+                            $params[] = password_hash($password, PASSWORD_DEFAULT);
+                        }
+
+                        $query .= ' WHERE id = ?';
+                        $params[] = $recordId;
+
+                        $stmt = db()->prepare($query);
+                        $stmt->execute($params);
+
+                        $_SESSION['usuario_flash'] = 'Usuario actualizado correctamente.';
+                    } else {
+                        $stmt = db()->prepare(
+                            'INSERT INTO users (empresa_id, rut, nombre, apellido, cargo, fecha_nacimiento, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
+                             VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)'
+                        );
+                        $stmt->execute([
+                            $fields['rut'],
+                            $fields['nombre'],
+                            $fields['apellido'],
+                            $fields['cargo'] !== '' ? $fields['cargo'] : null,
+                            $fields['fecha_nacimiento'] !== '' ? $fields['fecha_nacimiento'] : null,
+                            $fields['correo'],
+                            $fields['telefono'],
+                            $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $fields['username'],
+                            $fields['rol'] !== '' ? $fields['rol'] : null,
+                            password_hash($password, PASSWORD_DEFAULT),
+                            (int) ($fields['estado'] === '1'),
+                        ]);
+
+                        $_SESSION['usuario_flash'] = 'Usuario registrado correctamente.';
+                    }
+
+                    redirect('usuario.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo guardar el usuario. Revisa que el correo, RUT y usuario no estén duplicados.';
+                }
             }
         }
     }
@@ -148,8 +226,27 @@ include('partials/html.php');
                                     </div>
                                 <?php endif; ?>
 
+                                <?php if ($viewRecord) : ?>
+                                    <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
+                                        <h6 class="fw-semibold mb-2">Detalle de usuario</h6>
+                                        <div class="row g-2">
+                                            <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Apellido:</span> <?php echo htmlspecialchars($viewRecord['apellido'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Usuario:</span> <?php echo htmlspecialchars($viewRecord['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Rol:</span> <?php echo htmlspecialchars($viewRecord['rol'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+
                                 <form method="post" action="usuario.php">
                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <input type="hidden" name="action" value="<?php echo $editingId ? 'update' : 'create'; ?>">
+                                    <?php if ($editingId) : ?>
+                                        <input type="hidden" name="id" value="<?php echo (int) $editingId; ?>">
+                                    <?php endif; ?>
+
                                     <div class="row g-3">
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Nombre</label>
@@ -193,8 +290,8 @@ include('partials/html.php');
                                             <input type="date" name="fecha_nacimiento" class="form-control" value="<?php echo htmlspecialchars($fields['fecha_nacimiento'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
                                         <div class="col-md-6 col-xl-3">
-                                            <label class="form-label">Contraseña</label>
-                                            <input type="password" name="password" class="form-control" required>
+                                            <label class="form-label">Contraseña <?php echo $editingId ? '(opcional)' : ''; ?></label>
+                                            <input type="password" name="password" class="form-control" <?php echo $editingId ? '' : 'required'; ?>>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Estado</label>
@@ -208,8 +305,13 @@ include('partials/html.php');
                                             <input type="text" name="direccion" class="form-control" value="<?php echo htmlspecialchars($fields['direccion'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Dirección">
                                         </div>
 
-                                        <div class="col-12">
-                                            <button type="submit" class="btn btn-primary">Guardar usuario</button>
+                                        <div class="col-12 d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary">
+                                                <?php echo $editingId ? 'Actualizar usuario' : 'Guardar usuario'; ?>
+                                            </button>
+                                            <?php if ($editingId) : ?>
+                                                <a href="usuario.php" class="btn btn-outline-secondary">Cancelar edición</a>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </form>
@@ -237,12 +339,13 @@ include('partials/html.php');
                                                 <th>Rol</th>
                                                 <th>Estado</th>
                                                 <th>Creado</th>
+                                                <th class="text-end">Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if (!$usuarios) : ?>
                                                 <tr>
-                                                    <td colspan="8" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="9" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($usuarios as $usuario) : ?>
@@ -259,6 +362,16 @@ include('partials/html.php');
                                                             </span>
                                                         </td>
                                                         <td><?php echo htmlspecialchars((string) ($usuario['fecha_creacion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td class="text-end">
+                                                            <a class="btn btn-sm btn-outline-primary" href="usuario.php?view=<?php echo (int) $usuario['id']; ?>">Ver</a>
+                                                            <a class="btn btn-sm btn-outline-secondary" href="usuario.php?edit=<?php echo (int) $usuario['id']; ?>">Editar</a>
+                                                            <form method="post" action="usuario.php" class="d-inline">
+                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                <input type="hidden" name="action" value="delete">
+                                                                <input type="hidden" name="id" value="<?php echo (int) $usuario['id']; ?>">
+                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este usuario?');">Eliminar</button>
+                                                            </form>
+                                                        </td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
