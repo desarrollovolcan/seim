@@ -59,15 +59,15 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .erp-page .page-title-box {
   border-radius: 1rem;
-  background: linear-gradient(135deg, rgba(var(--ins-primary-rgb), 0.08), rgba(var(--ins-secondary-rgb), 0.12));
-  border: 1px solid rgba(var(--ins-primary-rgb), 0.15);
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
 }
 
 .erp-section {
   border-radius: 1rem;
   border: 1px solid var(--erp-card-border);
   background: var(--erp-surface);
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
 }
 
 .erp-section + .erp-section {
@@ -123,9 +123,9 @@ html[data-menu-color="dark"] .side-nav-title {
 .erp-summary-card {
   border-radius: 1rem;
   padding: 1rem;
-  border: 1px solid rgba(var(--ins-primary-rgb), 0.12);
-  background: #fff;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
 }
 
 .erp-summary-card .icon-circle {
@@ -135,8 +135,8 @@ html[data-menu-color="dark"] .side-nav-title {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--erp-soft);
-  color: var(--ins-primary);
+  background: #e2e8f0;
+  color: #334155;
 }
 
 .erp-summary-card .trend {
@@ -149,7 +149,7 @@ html[data-menu-color="dark"] .side-nav-title {
   padding: 1rem;
   border: 1px solid #e5e7eb;
   background: #ffffff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
 }
 
 .erp-page .erp-section form .row {
@@ -180,7 +180,7 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .erp-page .erp-section .form-label {
   font-weight: 600;
-  color: #475569;
+  color: #1f2937;
   font-size: 0.78rem;
   margin-bottom: 0.35rem;
   text-transform: none;
@@ -206,8 +206,8 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .erp-page .erp-section .form-control:focus,
 .erp-page .erp-section .form-select:focus {
-  border-color: rgba(var(--ins-primary-rgb), 0.65);
-  box-shadow: 0 0 0 0.15rem rgba(var(--ins-primary-rgb), 0.18);
+  border-color: #94a3b8;
+  box-shadow: 0 0 0 0.15rem rgba(148, 163, 184, 0.25);
 }
 
 .erp-page .erp-section .input-group-text {
@@ -222,7 +222,7 @@ html[data-menu-color="dark"] .side-nav-title {
 }
 
 .erp-page .erp-section .form-text {
-  color: #94a3b8;
+  color: #6b7280;
 }
 
 .erp-page .erp-section .btn {
@@ -293,8 +293,8 @@ html[data-menu-color="dark"] .side-nav-title {
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 600;
-  background: rgba(var(--ins-primary-rgb), 0.1);
-  color: var(--ins-primary);
+  background: #e2e8f0;
+  color: #475569;
 }
 
 .erp-pagination {
@@ -461,9 +461,9 @@ html[data-menu-color="dark"] .side-nav-title {
 
 /* Menu & topbar visual refresh */
 .app-topbar {
-  background: linear-gradient(120deg, rgba(var(--ins-primary-rgb), 0.08), rgba(var(--ins-secondary-rgb), 0.16));
-  border-bottom: 1px solid rgba(var(--ins-primary-rgb), 0.18);
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: none;
 }
 
 .app-topbar .topbar-link {
@@ -472,12 +472,12 @@ html[data-menu-color="dark"] .side-nav-title {
 }
 
 .app-topbar .topbar-link:hover {
-  background-color: rgba(var(--ins-primary-rgb), 0.12);
-  color: var(--ins-primary);
+  background-color: #e2e8f0;
+  color: #0f172a;
 }
 
 .sidenav-menu {
-  background: linear-gradient(180deg, rgba(var(--ins-primary-rgb), 0.07), rgba(var(--ins-secondary-rgb), 0.12));
+  background: #ffffff;
 }
 
 .side-nav {
@@ -486,12 +486,16 @@ html[data-menu-color="dark"] .side-nav-title {
 
 .side-nav-title {
   font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #1f2937;
 }
 
 .side-nav .side-nav-item .side-nav-link {
   border-radius: 0.75rem;
   border: 1px solid transparent;
   transition: all 0.2s ease;
+  color: #1f2937;
+  font-weight: 600;
 }
 
 .side-nav .side-nav-item .side-nav-link .menu-icon {
@@ -501,23 +505,25 @@ html[data-menu-color="dark"] .side-nav-title {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(var(--ins-primary-rgb), 0.12);
-  color: var(--ins-primary);
+  background: #e5e7eb;
+  color: #1f2937;
   margin-right: 0.65rem;
 }
 
 .side-nav .side-nav-item .side-nav-link:hover {
-  border-color: rgba(var(--ins-primary-rgb), 0.2);
-  box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08);
+  border-color: #d1d5db;
+  background: #f1f5f9;
+  box-shadow: none;
+  color: #111827;
 }
 
 .side-nav .side-nav-item.active > .side-nav-link {
-  background: linear-gradient(135deg, rgba(var(--ins-primary-rgb), 0.25), rgba(var(--ins-secondary-rgb), 0.25));
-  border-color: rgba(var(--ins-primary-rgb), 0.25);
-  color: #1e293b;
+  background: #e5e7eb;
+  border-color: #cbd5e1;
+  color: #111827;
 }
 
 .side-nav .side-nav-item.active > .side-nav-link .menu-icon {
-  background: rgba(var(--ins-primary-rgb), 0.2);
-  color: var(--ins-primary);
+  background: #cbd5e1;
+  color: #111827;
 }
