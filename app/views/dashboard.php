@@ -13,7 +13,7 @@
 
         <div class="content-page">
             <div class="container-fluid">
-                <?php $subtitle = 'Resumen general'; $title = 'Dashboard'; include('partials/page-title.php'); ?>
+                <?php $subtitle = 'Resumen de ventas y rentabilidad'; $title = 'Dashboard'; include('partials/page-title.php'); ?>
 
                 <?php if (!empty($_SESSION['permission_error'])) : ?>
                     <div class="alert alert-warning">
@@ -23,148 +23,84 @@
                 <?php endif; ?>
 
                 <div class="row g-3">
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Productos</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['productos'] ?? 0); ?></h3>
-                                        <small class="text-muted">Total registrados</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center">
-                                        <i data-lucide="package" class="fs-20"></i>
-                                    </span>
-                                </div>
+                                <p class="text-muted text-uppercase fs-12 mb-1">Ventas totales</p>
+                                <h3 class="mb-0">$<?php echo number_format((float) ($resumen['ventas_total'] ?? 0), 2); ?></h3>
+                                <small class="text-muted">Ingresos registrados</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Categorías</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['categorias'] ?? 0); ?></h3>
-                                        <small class="text-muted">Activas</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-success-subtle text-success d-flex align-items-center justify-content-center">
-                                        <i data-lucide="list" class="fs-20"></i>
-                                    </span>
-                                </div>
+                                <p class="text-muted text-uppercase fs-12 mb-1">Costo total</p>
+                                <h3 class="mb-0">$<?php echo number_format((float) ($resumen['costo_total'] ?? 0), 2); ?></h3>
+                                <small class="text-muted">Costo de inventario vendido</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Unidades</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['unidades'] ?? 0); ?></h3>
-                                        <small class="text-muted">Configuradas</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-warning-subtle text-warning d-flex align-items-center justify-content-center">
-                                        <i data-lucide="ruler" class="fs-20"></i>
-                                    </span>
-                                </div>
+                                <p class="text-muted text-uppercase fs-12 mb-1">Ganancia total</p>
+                                <h3 class="mb-0">$<?php echo number_format((float) ($resumen['ganancia_total'] ?? 0), 2); ?></h3>
+                                <small class="text-muted">Ventas menos costos</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Movimientos</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['movimientos'] ?? 0); ?></h3>
-                                        <small class="text-muted">Registrados</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-info-subtle text-info d-flex align-items-center justify-content-center">
-                                        <i data-lucide="arrow-left-right" class="fs-20"></i>
-                                    </span>
-                                </div>
+                                <p class="text-muted text-uppercase fs-12 mb-1">Margen promedio</p>
+                                <h3 class="mb-0"><?php echo number_format((float) ($resumen['margen_total'] ?? 0), 2); ?>%</h3>
+                                <small class="text-muted">Rentabilidad global</small>
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="card shadow-sm h-100">
                             <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Ventas</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['ventas'] ?? 0); ?></h3>
-                                        <small class="text-muted">Totales</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center">
-                                        <i data-lucide="shopping-cart" class="fs-20"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Clientes</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['clientes'] ?? 0); ?></h3>
-                                        <small class="text-muted">Registrados</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center">
-                                        <i data-lucide="users" class="fs-20"></i>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6 col-xl-4">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <p class="text-muted text-uppercase fs-12 mb-1">Bajo stock</p>
-                                        <h3 class="mb-0"><?php echo (int) ($metrics['bajo_stock'] ?? 0); ?></h3>
-                                        <small class="text-muted">Productos críticos</small>
-                                    </div>
-                                    <span class="avatar-sm rounded-circle bg-danger-subtle text-danger d-flex align-items-center justify-content-center">
-                                        <i data-lucide="alert-triangle" class="fs-20"></i>
-                                    </span>
-                                </div>
+                                <p class="text-muted text-uppercase fs-12 mb-1">Productos bajo stock</p>
+                                <h3 class="mb-0"><?php echo (int) ($resumen['productos_bajo_stock'] ?? 0); ?></h3>
+                                <small class="text-muted">Alertas críticas</small>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row g-3 mt-1">
-                    <div class="col-xl-6">
+                    <div class="col-xl-7">
                         <div class="card shadow-sm h-100">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Ventas por mes</h5>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">Ventas vs precio por producto</h5>
+                                <span class="text-muted fs-12">Top productos vendidos</span>
                             </div>
                             <div class="card-body">
-                                <div id="ventasMensualesChart" class="apex-charts" style="min-height: 240px;"></div>
+                                <div id="ventasPrecioChart" class="apex-charts" style="min-height: 280px;"></div>
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-6">
+                    <div class="col-xl-5">
                         <div class="card shadow-sm h-100">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Margen de ganancia por producto</h5>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">Ganancia acumulada</h5>
+                                <span class="text-muted fs-12">Evolución mensual</span>
                             </div>
                             <div class="card-body">
-                                <div id="margenProductosChart" class="apex-charts" style="min-height: 240px;"></div>
+                                <div id="gananciaAcumuladaChart" class="apex-charts" style="min-height: 280px;"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="row g-3 mt-1">
-                    <div class="col-xl-6">
+                    <div class="col-xl-5">
                         <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Stock bajo</h5>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">Productos con stock bajo</h5>
+                                <span class="text-muted fs-12">Inventario crítico</span>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -173,13 +109,14 @@
                                             <tr>
                                                 <th>Producto</th>
                                                 <th>Stock actual</th>
-                                                <th>Stock mínimo</th>
+                                                <th>Mínimo</th>
+                                                <th>Precio venta</th>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php if (!$lowStock) : ?>
                                                 <tr>
-                                                    <td colspan="3" class="text-center text-muted">Sin alertas críticas.</td>
+                                                    <td colspan="4" class="text-center text-muted">Sin alertas de stock.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($lowStock as $item) : ?>
@@ -187,6 +124,7 @@
                                                         <td><?php echo htmlspecialchars($item['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($item['stock_actual'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($item['stock_minimo'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>$<?php echo number_format((float) ($item['precio_venta'] ?? 0), 2); ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
@@ -196,66 +134,11 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-xl-6">
+                    <div class="col-xl-7">
                         <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Ventas recientes</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-striped align-middle mb-0">
-                                        <thead>
-                                            <tr>
-                                                <th>Cliente</th>
-                                                <th>Fecha</th>
-                                                <th>Total</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if (!$recentSales) : ?>
-                                                <tr>
-                                                    <td colspan="3" class="text-center text-muted">Sin ventas recientes.</td>
-                                                </tr>
-                                            <?php else : ?>
-                                                <?php foreach ($recentSales as $sale) : ?>
-                                                    <tr>
-                                                        <td><?php echo htmlspecialchars($sale['cliente'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($sale['fecha'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($sale['total'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
-                                                    </tr>
-                                                <?php endforeach; ?>
-                                            <?php endif; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row g-3 mt-1">
-                    <div class="col-xl-4">
-                        <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Acciones rápidas</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="d-grid gap-2">
-                                    <a href="compras.php" class="btn btn-outline-warning">Registrar compra</a>
-                                    <a href="inventario-categorias.php" class="btn btn-outline-info">Nueva familia</a>
-                                    <a href="inventario-productos.php" class="btn btn-outline-primary">Nuevo producto</a>
-                                    <a href="inventario-movimientos.php" class="btn btn-outline-secondary">Registrar movimiento</a>
-                                    <a href="clientes.php" class="btn btn-outline-info">Nuevo cliente</a>
-                                    <a href="ventas.php" class="btn btn-outline-success">Registrar venta</a>
-                                    <a href="inventario-stock.php" class="btn btn-outline-danger">Revisar stock</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-xl-8">
-                        <div class="card shadow-sm">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">Top margen por producto</h5>
+                            <div class="card-header d-flex align-items-center justify-content-between">
+                                <h5 class="card-title mb-0">Ventas, costo y margen por producto</h5>
+                                <span class="text-muted fs-12">Detalle de rentabilidad</span>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -263,23 +146,36 @@
                                         <thead>
                                             <tr>
                                                 <th>Producto</th>
-                                                <th>Compra</th>
-                                                <th>Venta</th>
-                                                <th>Margen</th>
+                                                <th>Unidades</th>
+                                                <th>Ventas</th>
+                                                <th>Costo</th>
+                                                <th>Precio venta</th>
+                                                <th>Margen %</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if (!$profitMargins) : ?>
+                                            <?php if (!$ventasProductos) : ?>
                                                 <tr>
-                                                    <td colspan="4" class="text-center text-muted">Sin datos de margen aún.</td>
+                                                    <td colspan="6" class="text-center text-muted">Sin ventas registradas.</td>
                                                 </tr>
                                             <?php else : ?>
-                                                <?php foreach ($profitMargins as $margin) : ?>
+                                                <?php foreach ($ventasProductos as $producto) : ?>
+                                                    <?php
+                                                        $precioCompra = (float) ($producto['precio_compra'] ?? 0);
+                                                        $precioVenta = (float) ($producto['precio_venta'] ?? 0);
+                                                        $margen = $precioCompra > 0
+                                                            ? round((($precioVenta - $precioCompra) / $precioCompra) * 100, 2)
+                                                            : 0;
+                                                        $unidades = (float) ($producto['unidades'] ?? 0);
+                                                        $costoTotal = $unidades * $precioCompra;
+                                                    ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($margin['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($margin['precio_compra'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($margin['precio_venta'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($margin['margen'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?>%</td>
+                                                        <td><?php echo htmlspecialchars($producto['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo number_format($unidades, 2); ?></td>
+                                                        <td>$<?php echo number_format((float) ($producto['ventas_total'] ?? 0), 2); ?></td>
+                                                        <td>$<?php echo number_format($costoTotal, 2); ?></td>
+                                                        <td>$<?php echo number_format($precioVenta, 2); ?></td>
+                                                        <td><?php echo number_format($margen, 2); ?>%</td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
@@ -303,37 +199,70 @@
                 return;
             }
 
-            const ventasLabels = <?php echo json_encode(array_column($ventasMensuales, 'periodo'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
-            const ventasData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['total'] ?? 0), $ventasMensuales), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const productosLabels = <?php echo json_encode(array_column($ventasProductos, 'nombre'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const ventasProductoData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['ventas_total'] ?? 0), $ventasProductos), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const precioProductoData = <?php echo json_encode(array_map(static fn($item) => (float) (($item['precio_venta'] ?? $item['precio_promedio'] ?? 0)), $ventasProductos), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 
-            const ventasChart = new ApexCharts(document.querySelector('#ventasMensualesChart'), {
+            const ventasPrecioChart = new ApexCharts(document.querySelector('#ventasPrecioChart'), {
                 chart: {
-                    type: 'bar',
-                    height: 240,
+                    type: 'line',
+                    height: 280,
                     toolbar: { show: false },
                 },
-                series: [{ name: 'Ventas', data: ventasData }],
-                xaxis: { categories: ventasLabels },
-                colors: ['#4f46e5'],
+                series: [
+                    { name: 'Ventas ($)', type: 'column', data: ventasProductoData },
+                    { name: 'Precio venta ($)', type: 'line', data: precioProductoData },
+                ],
+                stroke: {
+                    width: [0, 3],
+                    curve: 'smooth',
+                },
+                xaxis: {
+                    categories: productosLabels,
+                },
+                yaxis: [
+                    {
+                        title: { text: 'Ventas' },
+                    },
+                    {
+                        opposite: true,
+                        title: { text: 'Precio venta' },
+                    },
+                ],
+                colors: ['#4f46e5', '#22c55e'],
                 dataLabels: { enabled: false },
+                tooltip: {
+                    shared: true,
+                    intersect: false,
+                },
             });
-            ventasChart.render();
+            ventasPrecioChart.render();
 
-            const margenLabels = <?php echo json_encode(array_column($profitMargins, 'nombre'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
-            const margenData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['margen'] ?? 0), $profitMargins), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const gananciaLabels = <?php echo json_encode(array_column($gananciaAcumulada, 'periodo'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const gananciaData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['ganancia_acumulada'] ?? 0), $gananciaAcumulada), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 
-            const margenChart = new ApexCharts(document.querySelector('#margenProductosChart'), {
+            const gananciaChart = new ApexCharts(document.querySelector('#gananciaAcumuladaChart'), {
                 chart: {
-                    type: 'bar',
-                    height: 240,
+                    type: 'area',
+                    height: 280,
                     toolbar: { show: false },
                 },
-                series: [{ name: 'Margen %', data: margenData }],
-                xaxis: { categories: margenLabels },
-                colors: ['#22c55e'],
+                series: [{ name: 'Ganancia acumulada', data: gananciaData }],
+                xaxis: { categories: gananciaLabels },
+                colors: ['#f97316'],
                 dataLabels: { enabled: false },
+                stroke: { curve: 'smooth', width: 3 },
+                fill: {
+                    type: 'gradient',
+                    gradient: {
+                        shadeIntensity: 1,
+                        opacityFrom: 0.4,
+                        opacityTo: 0.1,
+                        stops: [0, 90, 100],
+                    },
+                },
             });
-            margenChart.render();
+            gananciaChart.render();
         })();
     </script>
 </body>

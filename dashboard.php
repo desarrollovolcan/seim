@@ -9,10 +9,9 @@ require_permission('dashboard', 'view');
 
 $controller = new DashboardController();
 $data = $controller->show();
-$metrics = $data['metrics'];
-$recentSales = $data['recentSales'];
+$resumen = $data['resumen'];
 $lowStock = $data['lowStock'];
-$profitMargins = $data['profitMargins'];
-$ventasMensuales = $data['ventasMensuales'];
+$ventasProductos = $data['ventasProductos'];
+$gananciaAcumulada = $data['gananciaAcumulada'];
 
 include __DIR__ . '/app/views/dashboard.php';
