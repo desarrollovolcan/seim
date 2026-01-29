@@ -4,24 +4,33 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('compras', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
+$empresaId = current_empresa_id();
 
 $fields = [
-    'proveedor' => '',
+    'proveedor_id' => '',
     'tipo_documento' => '',
     'numero_documento' => '',
     'fecha' => date('Y-m-d'),
     'nota' => '',
 ];
 
+$proveedores = [];
 $productos = [];
 [$lineItems, $lineErrors] = [[['producto_id' => '', 'cantidad' => '', 'precio_unitario' => '']], []];
 try {
-    $productos = db()->query('SELECT id, nombre, sku, stock_actual FROM inventario_productos ORDER BY nombre')->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, razon_social, rut FROM proveedores WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $proveedores = $stmt->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, sku, stock_actual FROM inventario_productos WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $productos = $stmt->fetchAll();
 } catch (Exception $e) {
-    $errors[] = 'No se pudo cargar la lista de productos.';
+    $errors[] = 'No se pudo cargar los catálogos de compras.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -45,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ];
         }
 
-        if ($fields['proveedor'] === '') {
+        if ($fields['proveedor_id'] === '') {
             $errors[] = 'El proveedor es obligatorio.';
         }
         if ($fields['tipo_documento'] === '') {
@@ -86,30 +95,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             try {
+                if (!has_permission('compras', 'create')) {
+                    throw new RuntimeException('Sin permisos.');
+                }
                 $total = $lineTotal;
 
                 db()->beginTransaction();
 
+                $stmt = db()->prepare('SELECT nombre, razon_social FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+                $stmt->execute([(int) $fields['proveedor_id'], $empresaId]);
+                $proveedor = $stmt->fetch();
+                if (!$proveedor) {
+                    throw new RuntimeException('Proveedor no encontrado.');
+                }
+
+                $proveedorNombre = $proveedor['razon_social'] ?: $proveedor['nombre'];
+
                 $stmt = db()->prepare(
-                    'INSERT INTO inventario_compras (proveedor, tipo_documento, numero_documento, fecha, total, nota) VALUES (?, ?, ?, ?, ?, ?)'
+                    'INSERT INTO inventario_compras (proveedor, tipo_documento, numero_documento, fecha, total, nota, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
                 );
                 $stmt->execute([
-                    $fields['proveedor'],
+                    $proveedorNombre,
                     $fields['tipo_documento'],
                     $fields['numero_documento'],
                     $fields['fecha'],
                     $total,
                     $fields['nota'] !== '' ? $fields['nota'] : null,
+                    $empresaId,
                 ]);
                 $compraId = (int) db()->lastInsertId();
 
                 $insertItem = db()->prepare(
-                    'INSERT INTO inventario_compra_items (compra_id, producto_id, cantidad, precio_unitario, total)
-                     VALUES (?, ?, ?, ?, ?)'
+                    'INSERT INTO inventario_compra_items (compra_id, producto_id, cantidad, precio_unitario, total, empresa_id)
+                     VALUES (?, ?, ?, ?, ?, ?)'
                 );
                 $updateStock = db()->prepare('UPDATE inventario_productos SET stock_actual = stock_actual + ? WHERE id = ?');
                 $insertMovimiento = db()->prepare(
-                    'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion) VALUES (?, ?, ?, ?)'
+                    'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion, empresa_id) VALUES (?, ?, ?, ?, ?)'
                 );
 
                 foreach ($lineItems as $line) {
@@ -131,6 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $cantidad,
                         $precioUnitario,
                         $lineTotalValue,
+                        $empresaId,
                     ]);
 
                     $updateStock->execute([$cantidad, (int) $line['producto_id']]);
@@ -140,6 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'entrada',
                         $cantidad,
                         'Ingreso por compra',
+                        $empresaId,
                     ]);
                 }
 
@@ -164,7 +188,9 @@ if (isset($_SESSION['compra_flash'])) {
 
 $compras = [];
 try {
-    $compras = db()->query('SELECT * FROM inventario_compras ORDER BY created_at DESC')->fetchAll();
+    $stmt = db()->prepare('SELECT * FROM inventario_compras WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY created_at DESC');
+    $stmt->execute([$empresaId]);
+    $compras = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de compras.';
 }
@@ -218,7 +244,18 @@ include('partials/html.php');
                                     <div class="row g-3">
                                         <div class="col-md-6 col-xl-4">
                                             <label class="form-label">Proveedor</label>
-                                            <input type="text" name="proveedor" class="form-control" value="<?php echo htmlspecialchars($fields['proveedor'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <select name="proveedor_id" class="form-select" required>
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($proveedores as $proveedor) : ?>
+                                                    <option value="<?php echo (int) $proveedor['id']; ?>" <?php echo $fields['proveedor_id'] === (string) $proveedor['id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($proveedor['nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                        <?php if (!empty($proveedor['rut'])) : ?>
+                                                            (<?php echo htmlspecialchars($proveedor['rut'], ENT_QUOTES, 'UTF-8'); ?>)
+                                                        <?php endif; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            <div class="form-text">¿No aparece? <a href="proveedores.php">Registra un proveedor</a>.</div>
                                         </div>
                                         <div class="col-md-6 col-xl-2">
                                             <label class="form-label">Tipo documento</label>
@@ -292,7 +329,12 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">Guardar compra</button>
+                                            <button type="submit" class="btn btn-primary" <?php echo !$proveedores || !has_permission('compras', 'create') ? 'disabled' : ''; ?>>Guardar compra</button>
+                                            <?php if (!$proveedores) : ?>
+                                                <span class="text-muted align-self-center">Necesitas registrar al menos un proveedor.</span>
+                                            <?php elseif (!has_permission('compras', 'create')) : ?>
+                                                <span class="text-muted align-self-center">No tienes permisos para registrar compras.</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </form>

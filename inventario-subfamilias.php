@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('subfamilias', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'categoria_id' => '',
@@ -18,7 +21,9 @@ $fields = [
 
 $familias = [];
 try {
-    $familias = db()->query('SELECT id, nombre FROM inventario_categorias ORDER BY nombre')->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre FROM inventario_categorias WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $familias = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar la lista de familias.';
 }
@@ -30,9 +35,9 @@ if (isset($_GET['view'])) {
             'SELECT s.*, c.nombre AS familia_nombre
              FROM inventario_subfamilias s
              LEFT JOIN inventario_categorias c ON c.id = s.categoria_id
-             WHERE s.id = ? LIMIT 1'
+             WHERE s.id = ? AND (s.empresa_id = ? OR s.empresa_id IS NULL) LIMIT 1'
         );
-        $stmt->execute([$viewId]);
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -40,8 +45,8 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_subfamilias WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM inventario_subfamilias WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['categoria_id'] = (string) ($record['categoria_id'] ?? '');
@@ -59,13 +64,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM inventario_subfamilias WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['subfamilia_flash'] = 'Subfamilia eliminada correctamente.';
-                redirect('inventario-subfamilias.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar la subfamilia.';
+            if (!has_permission('subfamilias', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar subfamilias.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM inventario_subfamilias WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['subfamilia_flash'] = 'Subfamilia eliminada correctamente.';
+                    redirect('inventario-subfamilias.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar la subfamilia.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -82,24 +91,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('subfamilias', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'UPDATE inventario_subfamilias SET categoria_id = ?, nombre = ?, descripcion = ? WHERE id = ?'
+                            'UPDATE inventario_subfamilias SET categoria_id = ?, nombre = ?, descripcion = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             (int) $fields['categoria_id'],
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
                         $_SESSION['subfamilia_flash'] = 'Subfamilia actualizada correctamente.';
                     } else {
+                        if (!has_permission('subfamilias', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'INSERT INTO inventario_subfamilias (categoria_id, nombre, descripcion) VALUES (?, ?, ?)'
+                            'INSERT INTO inventario_subfamilias (categoria_id, nombre, descripcion, empresa_id) VALUES (?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             (int) $fields['categoria_id'],
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                         ]);
                         $_SESSION['subfamilia_flash'] = 'Subfamilia creada correctamente.';
                     }
@@ -119,12 +136,15 @@ if (isset($_SESSION['subfamilia_flash'])) {
 
 $subfamilias = [];
 try {
-    $subfamilias = db()->query(
+    $stmt = db()->prepare(
         'SELECT s.*, c.nombre AS familia_nombre
          FROM inventario_subfamilias s
          LEFT JOIN inventario_categorias c ON c.id = s.categoria_id
+         WHERE s.empresa_id = ? OR s.empresa_id IS NULL
          ORDER BY s.created_at DESC'
-    )->fetchAll();
+    );
+    $stmt->execute([$empresaId]);
+    $subfamilias = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de subfamilias.';
 }
@@ -212,7 +232,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('subfamilias', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar subfamilia' : 'Guardar subfamilia'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -258,13 +278,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($subfamilia['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="inventario-subfamilias.php?view=<?php echo (int) $subfamilia['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="inventario-subfamilias.php?edit=<?php echo (int) $subfamilia['id']; ?>">Editar</a>
-                                                            <form method="post" action="inventario-subfamilias.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $subfamilia['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta subfamilia?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('subfamilias', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="inventario-subfamilias.php?edit=<?php echo (int) $subfamilia['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('subfamilias', 'delete')) : ?>
+                                                                <form method="post" action="inventario-subfamilias.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $subfamilia['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta subfamilia?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

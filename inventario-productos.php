@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('productos', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'nombre' => '',
@@ -27,9 +30,15 @@ $categorias = [];
 $subfamilias = [];
 $unidades = [];
 try {
-    $categorias = db()->query('SELECT id, nombre FROM inventario_categorias ORDER BY nombre')->fetchAll();
-    $subfamilias = db()->query('SELECT id, categoria_id, nombre FROM inventario_subfamilias ORDER BY nombre')->fetchAll();
-    $unidades = db()->query('SELECT id, nombre, abreviatura FROM inventario_unidades ORDER BY nombre')->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre FROM inventario_categorias WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $categorias = $stmt->fetchAll();
+    $stmt = db()->prepare('SELECT id, categoria_id, nombre FROM inventario_subfamilias WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $subfamilias = $stmt->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, abreviatura FROM inventario_unidades WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $unidades = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar catálogos de inventario.';
 }
@@ -37,8 +46,8 @@ try {
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_productos WHERE id = ? LIMIT 1');
-        $stmt->execute([$viewId]);
+        $stmt = db()->prepare('SELECT * FROM inventario_productos WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -46,8 +55,8 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_productos WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM inventario_productos WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
@@ -72,13 +81,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM inventario_productos WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['producto_flash'] = 'Producto eliminado correctamente.';
-                redirect('inventario-productos.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar el producto.';
+            if (!has_permission('productos', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar productos.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM inventario_productos WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['producto_flash'] = 'Producto eliminado correctamente.';
+                    redirect('inventario-productos.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar el producto.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -104,8 +117,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('productos', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'UPDATE inventario_productos SET nombre = ?, sku = ?, categoria_id = ?, subfamilia_id = ?, unidad_id = ?, precio_compra = ?, precio_venta = ?, stock_minimo = ?, stock_actual = ?, descripcion = ? WHERE id = ?'
+                            'UPDATE inventario_productos SET nombre = ?, sku = ?, categoria_id = ?, subfamilia_id = ?, unidad_id = ?, precio_compra = ?, precio_venta = ?, stock_minimo = ?, stock_actual = ?, descripcion = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -118,13 +134,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
                             (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
                         $_SESSION['producto_flash'] = 'Producto actualizado correctamente.';
                     } else {
+                        if (!has_permission('productos', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'INSERT INTO inventario_productos (nombre, sku, categoria_id, subfamilia_id, unidad_id, precio_compra, precio_venta, stock_minimo, stock_actual, descripcion)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO inventario_productos (nombre, sku, categoria_id, subfamilia_id, unidad_id, precio_compra, precio_venta, stock_minimo, stock_actual, descripcion, empresa_id)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -137,6 +157,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
                             (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                         ]);
                         $_SESSION['producto_flash'] = 'Producto registrado correctamente.';
                     }
@@ -156,14 +177,16 @@ if (isset($_SESSION['producto_flash'])) {
 
 $productos = [];
 try {
-    $stmt = db()->query(
+    $stmt = db()->prepare(
         'SELECT p.*, c.nombre AS categoria_nombre, s.nombre AS subfamilia_nombre, u.nombre AS unidad_nombre, u.abreviatura AS unidad_abreviatura
          FROM inventario_productos p
          LEFT JOIN inventario_categorias c ON c.id = p.categoria_id
          LEFT JOIN inventario_subfamilias s ON s.id = p.subfamilia_id
          LEFT JOIN inventario_unidades u ON u.id = p.unidad_id
+         WHERE p.empresa_id = ? OR p.empresa_id IS NULL
          ORDER BY p.created_at DESC'
     );
+    $stmt->execute([$empresaId]);
     $productos = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de productos.';
@@ -296,7 +319,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !$categorias || !$subfamilias || !$unidades || !has_permission('productos', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar producto' : 'Guardar producto'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -350,13 +373,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($producto['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="inventario-productos.php?view=<?php echo (int) $producto['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="inventario-productos.php?edit=<?php echo (int) $producto['id']; ?>">Editar</a>
-                                                            <form method="post" action="inventario-productos.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $producto['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este producto?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('productos', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="inventario-productos.php?edit=<?php echo (int) $producto['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('productos', 'delete')) : ?>
+                                                                <form method="post" action="inventario-productos.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $producto['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este producto?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
