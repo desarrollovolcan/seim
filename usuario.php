@@ -1,8 +1,106 @@
 <?php
+
+declare(strict_types=1);
+
 require_once __DIR__ . '/app/bootstrap.php';
+
 $municipalidad = get_municipalidad();
+$errors = [];
+$successMessage = '';
+
+$fields = [
+    'nombre' => '',
+    'apellido' => '',
+    'rut' => '',
+    'correo' => '',
+    'telefono' => '',
+    'username' => '',
+    'rol' => '',
+    'cargo' => '',
+    'fecha_nacimiento' => '',
+    'direccion' => '',
+    'estado' => '1',
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf($_POST['csrf_token'] ?? null)) {
+        $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
+    } else {
+        foreach ($fields as $key => $value) {
+            $fields[$key] = trim((string) ($_POST[$key] ?? ''));
+        }
+        $password = (string) ($_POST['password'] ?? '');
+
+        if ($fields['nombre'] === '') {
+            $errors[] = 'El nombre es obligatorio.';
+        }
+        if ($fields['apellido'] === '') {
+            $errors[] = 'El apellido es obligatorio.';
+        }
+        if ($fields['rut'] === '') {
+            $errors[] = 'El RUT es obligatorio.';
+        }
+        if ($fields['correo'] === '' || !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
+            $errors[] = 'Debes ingresar un correo válido.';
+        }
+        if ($fields['telefono'] === '') {
+            $errors[] = 'El teléfono es obligatorio.';
+        }
+        if ($fields['username'] === '') {
+            $errors[] = 'El usuario es obligatorio.';
+        }
+        if ($password === '') {
+            $errors[] = 'La contraseña es obligatoria.';
+        }
+
+        if (!$errors) {
+            try {
+                $stmt = db()->prepare(
+                    'INSERT INTO users (empresa_id, rut, nombre, apellido, cargo, fecha_nacimiento, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
+                     VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)'
+                );
+                $stmt->execute([
+                    $fields['rut'],
+                    $fields['nombre'],
+                    $fields['apellido'],
+                    $fields['cargo'] !== '' ? $fields['cargo'] : null,
+                    $fields['fecha_nacimiento'] !== '' ? $fields['fecha_nacimiento'] : null,
+                    $fields['correo'],
+                    $fields['telefono'],
+                    $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                    $fields['username'],
+                    $fields['rol'] !== '' ? $fields['rol'] : null,
+                    password_hash($password, PASSWORD_DEFAULT),
+                    (int) ($fields['estado'] === '1'),
+                ]);
+
+                $_SESSION['usuario_flash'] = 'Usuario registrado correctamente.';
+                redirect('usuario.php');
+            } catch (Exception $e) {
+                $errors[] = 'No se pudo guardar el usuario. Revisa que el correo, RUT y usuario no estén duplicados.';
+            }
+        }
+    }
+}
+
+if (isset($_SESSION['usuario_flash'])) {
+    $successMessage = (string) $_SESSION['usuario_flash'];
+    unset($_SESSION['usuario_flash']);
+}
+
+$usuarios = [];
+try {
+    $usuarios = db()->query(
+        'SELECT id, nombre, apellido, correo, telefono, username, rol, estado, fecha_creacion
+         FROM users
+         ORDER BY fecha_creacion DESC'
+    )->fetchAll();
+} catch (Exception $e) {
+    $errors[] = 'No se pudo cargar el listado de usuarios.';
+}
+
+include('partials/html.php');
 ?>
-<?php include('partials/html.php'); ?>
 
 <head>
     <?php $title = 'Usuario'; include('partials/title-meta.php'); ?>
@@ -37,104 +135,135 @@ $municipalidad = get_municipalidad();
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Basic Input</label>
-                                        <input type="text" class="form-control">
+                                <?php if ($successMessage !== '') : ?>
+                                    <div class="alert alert-success"><?php echo htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8'); ?></div>
+                                <?php endif; ?>
+                                <?php if ($errors) : ?>
+                                    <div class="alert alert-danger">
+                                        <ul class="mb-0">
+                                            <?php foreach ($errors as $error) : ?>
+                                                <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
                                     </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input with Label</label>
-                                        <input type="text" class="form-control" placeholder="Name">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input with Placeholder</label>
-                                        <input type="text" class="form-control" placeholder="Placeholder">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input with Value</label>
-                                        <input type="text" class="form-control" value="Input value">
-                                    </div>
+                                <?php endif; ?>
 
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Readonly Plain Text Input</label>
-                                        <input type="text" class="form-control" value="Readonly input" readonly>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Readonly Input</label>
-                                        <input type="text" class="form-control" value="Readonly input" readonly>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Disabled Input</label>
-                                        <input type="text" class="form-control" value="Disabled input" disabled>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input with Icon</label>
-                                        <div class="app-search">
-                                            <input type="text" class="form-control" placeholder="example@gmail.com">
-                                            <i data-lucide="mail" class="app-search-icon text-muted"></i>
+                                <form method="post" action="usuario.php">
+                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                    <div class="row g-3">
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Nombre</label>
+                                            <input type="text" name="nombre" class="form-control" value="<?php echo htmlspecialchars($fields['nombre'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Apellido</label>
+                                            <input type="text" name="apellido" class="form-control" value="<?php echo htmlspecialchars($fields['apellido'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">RUT</label>
+                                            <input type="text" name="rut" class="form-control" value="<?php echo htmlspecialchars($fields['rut'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="12.345.678-9" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Correo</label>
+                                            <div class="app-search">
+                                                <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($fields['correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="usuario@correo.com" required>
+                                                <i data-lucide="mail" class="app-search-icon text-muted"></i>
+                                            </div>
+                                        </div>
+
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Teléfono</label>
+                                            <input type="text" name="telefono" class="form-control" value="<?php echo htmlspecialchars($fields['telefono'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Usuario</label>
+                                            <input type="text" name="username" class="form-control" value="<?php echo htmlspecialchars($fields['username'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Rol</label>
+                                            <input type="text" name="rol" class="form-control" value="<?php echo htmlspecialchars($fields['rol'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Administrador">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Cargo</label>
+                                            <input type="text" name="cargo" class="form-control" value="<?php echo htmlspecialchars($fields['cargo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Cargo del usuario">
+                                        </div>
+
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Fecha nacimiento</label>
+                                            <input type="date" name="fecha_nacimiento" class="form-control" value="<?php echo htmlspecialchars($fields['fecha_nacimiento'], ENT_QUOTES, 'UTF-8'); ?>">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Contraseña</label>
+                                            <input type="password" name="password" class="form-control" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Estado</label>
+                                            <select name="estado" class="form-select">
+                                                <option value="1" <?php echo $fields['estado'] === '1' ? 'selected' : ''; ?>>Activo</option>
+                                                <option value="0" <?php echo $fields['estado'] === '0' ? 'selected' : ''; ?>>Inactivo</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Dirección</label>
+                                            <input type="text" name="direccion" class="form-control" value="<?php echo htmlspecialchars($fields['direccion'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Dirección">
+                                        </div>
+
+                                        <div class="col-12">
+                                            <button type="submit" class="btn btn-primary">Guardar usuario</button>
                                         </div>
                                     </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input with Icon Right</label>
-                                        <div class="app-search">
-                                            <input type="text" class="form-control" placeholder="example@gmail.com">
-                                            <i data-lucide="mail" class="app-search-icon text-muted"></i>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input Date</label>
-                                        <input type="text" class="form-control" placeholder="dd/mm/aaaa">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input Time</label>
-                                        <input type="text" class="form-control" placeholder="--:--">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input Password</label>
-                                        <input type="password" class="form-control" value="password">
-                                    </div>
-
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Example Textarea</label>
-                                        <textarea class="form-control" rows="3"></textarea>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Form Text</label>
-                                        <input type="text" class="form-control">
-                                        <small class="text-muted">Must be 8-20 characters long.</small>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Color Picker</label>
-                                        <input type="color" class="form-control form-control-color" value="#1f2d5c">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Input Border Style</label>
-                                        <input type="text" class="form-control border-dashed" placeholder="Enter your name">
-                                    </div>
-
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Datalist example</label>
-                                        <input class="form-control" list="datalistOptions" placeholder="Search your country...">
-                                        <datalist id="datalistOptions">
-                                            <option value="Argentina"></option>
-                                            <option value="Chile"></option>
-                                            <option value="Colombia"></option>
-                                            <option value="México"></option>
-                                            <option value="Perú"></option>
-                                        </datalist>
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Rounded Input</label>
-                                        <input type="text" class="form-control rounded-pill" placeholder="Enter your name">
-                                    </div>
-                                    <div class="col-md-6 col-xl-3">
-                                        <label class="form-label">Floating Input</label>
-                                        <div class="form-floating">
-                                            <input type="text" class="form-control" id="floatingInput" placeholder="name">
-                                            <label for="floatingInput">Floating Input</label>
-                                        </div>
-                                    </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Usuarios registrados</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Nombre</th>
+                                                <th>Apellido</th>
+                                                <th>Correo</th>
+                                                <th>Teléfono</th>
+                                                <th>Usuario</th>
+                                                <th>Rol</th>
+                                                <th>Estado</th>
+                                                <th>Creado</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!$usuarios) : ?>
+                                                <tr>
+                                                    <td colspan="8" class="text-center text-muted">Sin registros aún.</td>
+                                                </tr>
+                                            <?php else : ?>
+                                                <?php foreach ($usuarios as $usuario) : ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($usuario['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($usuario['apellido'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($usuario['correo'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($usuario['telefono'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($usuario['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($usuario['rol'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>
+                                                            <span class="badge <?php echo (int) ($usuario['estado'] ?? 0) === 1 ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'; ?>">
+                                                                <?php echo (int) ($usuario['estado'] ?? 0) === 1 ? 'Activo' : 'Inactivo'; ?>
+                                                            </span>
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars((string) ($usuario['fecha_creacion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
