@@ -22,12 +22,14 @@
     $canClientes = has_permission('clientes', 'view');
     $canProveedores = has_permission('proveedores', 'view');
     $canUsuariosEmpresas = has_permission('usuarios_empresas', 'view');
+    $canNotificacionesImap = has_permission('notificaciones_imap', 'view');
 
     $showEntradas = $canCompras;
     $showSalidas = $canVentas;
     $showInventario = $canCategorias || $canSubfamilias || $canProductos || $canStock || $canMovimientos || $canUnidades;
     $showComercial = $canClientes || $canProveedores;
     $showAdministracion = $canEmpresas || $canUsuarios || $canUsuariosEmpresas || $canRoles || $canPermisos;
+    $showMantenedores = $canNotificacionesImap;
     ?>
     <a href="index.php" class="logo">
         <span class="logo logo-light">
@@ -63,7 +65,7 @@
 
         <!--- Sidenav Menu -->
         <ul class="side-nav">
-            <li class="side-nav-title mt-2" data-lang="menu-title">Inicio</li>
+            <li class="side-nav-title mt-2" data-lang="menu-title">General</li>
 
             <?php if ($canDashboard) : ?>
                 <li class="side-nav-item">
@@ -75,7 +77,7 @@
             <?php endif; ?>
 
             <?php if ($showEntradas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Entradas</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Compras</li>
 
                 <?php if ($canCompras) : ?>
                     <li class="side-nav-item">
@@ -88,7 +90,7 @@
             <?php endif; ?>
 
             <?php if ($showSalidas) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Salidas</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
 
                 <?php if ($canVentas) : ?>
                     <li class="side-nav-item">
@@ -101,7 +103,7 @@
             <?php endif; ?>
 
             <?php if ($showComercial) : ?>
-                <li class="side-nav-title mt-3" data-lang="menu-title">Comercial</li>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Contactos</li>
 
                 <?php if ($canClientes) : ?>
                     <li class="side-nav-item">
@@ -219,6 +221,19 @@
                         <a href="roles-permisos.php" class="side-nav-link">
                             <span class="menu-icon"><i data-lucide="key-round"></i></span>
                             <span class="menu-text">Permisos</span>
+                        </a>
+                    </li>
+                <?php endif; ?>
+            <?php endif; ?>
+
+            <?php if ($showMantenedores) : ?>
+                <li class="side-nav-title mt-3" data-lang="menu-title">Configuración</li>
+
+                <?php if ($canNotificacionesImap) : ?>
+                    <li class="side-nav-item">
+                        <a href="configuracion-imap.php" class="side-nav-link">
+                            <span class="menu-icon"><i data-lucide="mail"></i></span>
+                            <span class="menu-text">Configuración IMAP</span>
                         </a>
                     </li>
                 <?php endif; ?>
