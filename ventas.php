@@ -19,6 +19,13 @@ $fields = [
 
 $clientes = [];
 $productos = [];
+$hasClienteNombreColumn = column_exists('ventas', 'cliente_nombre');
+$hasClienteIdColumn = column_exists('ventas', 'cliente_id');
+$hasClienteLegacyColumn = column_exists('ventas', 'cliente');
+$hasBodegaColumn = column_exists('ventas', 'bodega_id');
+$hasEmpresaColumn = column_exists('ventas', 'empresa_id');
+$hasNotaColumn = column_exists('ventas', 'nota');
+$hasObservacionColumn = column_exists('ventas', 'observacion');
 try {
     $clientes = db()->query('SELECT id, nombre, documento FROM clientes ORDER BY nombre')->fetchAll();
     $productos = db()->query('SELECT id, nombre, sku, precio_venta, stock_actual FROM inventario_productos ORDER BY nombre')->fetchAll();
@@ -62,14 +69,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new RuntimeException('Cliente no encontrado.');
                 }
 
-                $stmt = db()->prepare('INSERT INTO ventas (cliente_id, cliente_nombre, fecha, total, nota) VALUES (?, ?, ?, ?, ?)');
-                $stmt->execute([
-                    (int) $fields['cliente_id'],
-                    $clienteNombre,
-                    $fields['fecha'],
-                    $total,
-                    $fields['nota'] !== '' ? $fields['nota'] : null,
-                ]);
+                $columns = [];
+                $values = [];
+
+                if ($hasClienteIdColumn) {
+                    $columns[] = 'cliente_id';
+                    $values[] = (int) $fields['cliente_id'];
+                }
+                if ($hasClienteNombreColumn) {
+                    $columns[] = 'cliente_nombre';
+                    $values[] = $clienteNombre;
+                }
+                if ($hasClienteLegacyColumn) {
+                    $columns[] = 'cliente';
+                    $values[] = $clienteNombre;
+                }
+
+                if ($hasBodegaColumn) {
+                    $bodegaId = get_default_bodega_id();
+                    if (!$bodegaId) {
+                        throw new RuntimeException('No se encontró una bodega configurada.');
+                    }
+                    $columns[] = 'bodega_id';
+                    $values[] = $bodegaId;
+                }
+
+                if ($hasEmpresaColumn) {
+                    $empresaId = get_default_empresa_id();
+                    $columns[] = 'empresa_id';
+                    $values[] = $empresaId;
+                }
+
+                $columns[] = 'fecha';
+                $values[] = $fields['fecha'];
+                $columns[] = 'total';
+                $values[] = $total;
+
+                if ($hasNotaColumn) {
+                    $columns[] = 'nota';
+                    $values[] = $fields['nota'] !== '' ? $fields['nota'] : null;
+                } elseif ($hasObservacionColumn) {
+                    $columns[] = 'observacion';
+                    $values[] = $fields['nota'] !== '' ? $fields['nota'] : null;
+                }
+
+                $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+                $stmt = db()->prepare(
+                    sprintf('INSERT INTO ventas (%s) VALUES (%s)', implode(', ', $columns), $placeholders)
+                );
+                $stmt->execute($values);
                 $ventaId = (int) db()->lastInsertId();
 
                 $stmt = db()->prepare('INSERT INTO venta_items (venta_id, producto_id, cantidad, precio_unitario, total) VALUES (?, ?, ?, ?, ?)');
@@ -105,12 +153,33 @@ if (isset($_SESSION['venta_flash'])) {
 
 $ventas = [];
 try {
-    $ventas = db()->query(
-        'SELECT v.*, COALESCE(c.nombre, v.cliente_nombre) AS cliente_nombre
-         FROM ventas v
-         LEFT JOIN clientes c ON c.id = v.cliente_id
-         ORDER BY v.created_at DESC'
-    )->fetchAll();
+    if ($hasClienteIdColumn) {
+        if ($hasClienteNombreColumn) {
+            $clienteNombreSelect = 'COALESCE(c.nombre, v.cliente_nombre) AS cliente_nombre';
+        } elseif ($hasClienteLegacyColumn) {
+            $clienteNombreSelect = 'COALESCE(c.nombre, v.cliente) AS cliente_nombre';
+        } else {
+            $clienteNombreSelect = 'c.nombre AS cliente_nombre';
+        }
+
+        $ventas = db()->query(
+            sprintf(
+                'SELECT v.*, %s
+                 FROM ventas v
+                 LEFT JOIN clientes c ON c.id = v.cliente_id
+                 ORDER BY v.created_at DESC',
+                $clienteNombreSelect
+            )
+        )->fetchAll();
+    } else {
+        $clienteNombreSelect = $hasClienteNombreColumn ? 'v.cliente_nombre AS cliente_nombre' : 'v.cliente AS cliente_nombre';
+        $ventas = db()->query(
+            sprintf(
+                'SELECT v.*, %s FROM ventas v ORDER BY v.created_at DESC',
+                $clienteNombreSelect
+            )
+        )->fetchAll();
+    }
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de ventas.';
 }

@@ -29,12 +29,39 @@ class DashboardController
 
         $recentSales = [];
         try {
-            $recentSales = db()->query(
-                'SELECT COALESCE(c.nombre, v.cliente_nombre) AS cliente, v.fecha, v.total
-                 FROM ventas v
-                 LEFT JOIN clientes c ON c.id = v.cliente_id
-                 ORDER BY v.created_at DESC LIMIT 5'
-            )->fetchAll();
+            $hasClienteNombreColumn = column_exists('ventas', 'cliente_nombre');
+            $hasClienteLegacyColumn = column_exists('ventas', 'cliente');
+            $hasClienteIdColumn = column_exists('ventas', 'cliente_id');
+
+            if ($hasClienteIdColumn) {
+                if ($hasClienteNombreColumn) {
+                    $clienteSelect = 'COALESCE(c.nombre, v.cliente_nombre) AS cliente';
+                } elseif ($hasClienteLegacyColumn) {
+                    $clienteSelect = 'COALESCE(c.nombre, v.cliente) AS cliente';
+                } else {
+                    $clienteSelect = 'c.nombre AS cliente';
+                }
+
+                $recentSales = db()->query(
+                    sprintf(
+                        'SELECT %s, v.fecha, v.total
+                         FROM ventas v
+                         LEFT JOIN clientes c ON c.id = v.cliente_id
+                         ORDER BY v.created_at DESC LIMIT 5',
+                        $clienteSelect
+                    )
+                )->fetchAll();
+            } else {
+                $clienteSelect = $hasClienteNombreColumn ? 'v.cliente_nombre AS cliente' : 'v.cliente AS cliente';
+                $recentSales = db()->query(
+                    sprintf(
+                        'SELECT %s, v.fecha, v.total
+                         FROM ventas v
+                         ORDER BY v.created_at DESC LIMIT 5',
+                        $clienteSelect
+                    )
+                )->fetchAll();
+            }
         } catch (Exception $e) {
         }
 

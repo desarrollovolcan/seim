@@ -162,6 +162,71 @@ function ensure_event_types(): array
     return $defaults;
 }
 
+function table_exists(string $table): bool
+{
+    try {
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = ? AND table_name = ?'
+        );
+        $stmt->execute([$GLOBALS['config']['db']['name'], $table]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Exception $e) {
+        return false;
+    } catch (Error $e) {
+        return false;
+    }
+}
+
+function column_exists(string $table, string $column): bool
+{
+    try {
+        $stmt = db()->prepare(
+            'SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = ? AND table_name = ? AND column_name = ?'
+        );
+        $stmt->execute([$GLOBALS['config']['db']['name'], $table, $column]);
+        return (int) $stmt->fetchColumn() > 0;
+    } catch (Exception $e) {
+        return false;
+    } catch (Error $e) {
+        return false;
+    }
+}
+
+function get_default_empresa_id(): ?int
+{
+    try {
+        $empresaId = db()->query('SELECT id FROM empresas ORDER BY id LIMIT 1')->fetchColumn();
+        return $empresaId ? (int) $empresaId : null;
+    } catch (Exception $e) {
+        return null;
+    } catch (Error $e) {
+        return null;
+    }
+}
+
+function get_default_bodega_id(): ?int
+{
+    if (!table_exists('bodegas')) {
+        return null;
+    }
+
+    try {
+        $bodegaId = db()->query('SELECT id FROM bodegas ORDER BY id LIMIT 1')->fetchColumn();
+        if ($bodegaId) {
+            return (int) $bodegaId;
+        }
+
+        $empresaId = get_default_empresa_id();
+        $stmt = db()->prepare('INSERT INTO bodegas (nombre, empresa_id) VALUES (?, ?)');
+        $stmt->execute(['Bodega principal', $empresaId]);
+        return (int) db()->lastInsertId();
+    } catch (Exception $e) {
+        return null;
+    } catch (Error $e) {
+        return null;
+    }
+}
+
 function ensure_comercial_tables(): void
 {
     try {
