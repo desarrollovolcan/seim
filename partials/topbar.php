@@ -50,6 +50,24 @@
                 <i data-lucide="search" class="app-search-icon text-muted"></i>
             </form>
 
+            <?php if (!empty($_SESSION['user']['empresas'])) : ?>
+                <form class="d-none d-md-flex align-items-center" method="post" action="empresa-switch.php">
+                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                    <select class="form-select form-select-sm" name="empresa_id" onchange="this.form.submit()">
+                        <?php
+                        $currentEmpresaId = current_empresa_id();
+                        foreach ($_SESSION['user']['empresas'] as $empresa) :
+                            $empresaId = (int) ($empresa['id'] ?? 0);
+                            $empresaNombre = $empresa['razon_social'] ?: $empresa['nombre'];
+                        ?>
+                            <option value="<?php echo $empresaId; ?>" <?php echo $currentEmpresaId === $empresaId ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($empresaNombre, ENT_QUOTES, 'UTF-8'); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
+                </form>
+            <?php endif; ?>
+
             <!-- Theme Mode Dropdown -->
             <div class="topbar-item">
                 <div class="dropdown">

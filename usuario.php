@@ -4,11 +4,17 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('usuarios', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresas = load_empresas();
+$roles = [];
+$userEmpresas = [];
+$viewEmpresas = [];
 
 $fields = [
     'nombre' => '',
@@ -30,6 +36,20 @@ if (isset($_GET['view'])) {
         $stmt = db()->prepare('SELECT * FROM users WHERE id = ? LIMIT 1');
         $stmt->execute([$viewId]);
         $viewRecord = $stmt->fetch() ?: null;
+        if ($viewRecord) {
+            try {
+                $stmt = db()->prepare(
+                    'SELECT e.nombre, e.razon_social
+                     FROM user_empresas ue
+                     INNER JOIN empresas e ON e.id = ue.empresa_id
+                     WHERE ue.user_id = ?
+                     ORDER BY e.nombre'
+                );
+                $stmt->execute([$viewId]);
+                $viewEmpresas = $stmt->fetchAll();
+            } catch (Exception $e) {
+            }
+        }
     }
 }
 
@@ -52,6 +72,13 @@ if (isset($_GET['edit'])) {
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
             $fields['estado'] = (string) ((int) ($record['estado'] ?? 1));
         }
+
+        try {
+            $stmt = db()->prepare('SELECT empresa_id FROM user_empresas WHERE user_id = ?');
+            $stmt->execute([$editingId]);
+            $userEmpresas = array_map('intval', array_column($stmt->fetchAll(), 'empresa_id'));
+        } catch (Exception $e) {
+        }
     }
 }
 
@@ -63,19 +90,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM users WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['usuario_flash'] = 'Usuario eliminado correctamente.';
-                redirect('usuario.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar el usuario.';
+            if (!has_permission('usuarios', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar usuarios.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM users WHERE id = ?');
+                    $stmt->execute([$recordId]);
+                    $_SESSION['usuario_flash'] = 'Usuario eliminado correctamente.';
+                    redirect('usuario.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar el usuario.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
                 $fields[$key] = trim((string) ($_POST[$key] ?? ''));
             }
             $password = (string) ($_POST['password'] ?? '');
+            $empresaIds = $_POST['empresa_ids'] ?? [];
+            $empresaIds = array_values(array_unique(array_filter(array_map('intval', (array) $empresaIds))));
+            $userEmpresas = $empresaIds;
 
             if ($fields['nombre'] === '') {
                 $errors[] = 'El nombre es obligatorio.';
@@ -95,6 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['username'] === '') {
                 $errors[] = 'El usuario es obligatorio.';
             }
+            if (!$empresaIds) {
+                $errors[] = 'Debes asociar el usuario a al menos una empresa.';
+            }
             if ($action === 'create' && $password === '') {
                 $errors[] = 'La contraseña es obligatoria.';
             }
@@ -102,6 +139,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('usuarios', 'edit')) {
+                            throw new RuntimeException('Sin permisos para editar.');
+                        }
                         $query = 'UPDATE users SET rut = ?, nombre = ?, apellido = ?, cargo = ?, fecha_nacimiento = ?, correo = ?, telefono = ?, direccion = ?, username = ?, rol = ?, estado = ?';
                         $params = [
                             $fields['rut'],
@@ -128,8 +168,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = db()->prepare($query);
                         $stmt->execute($params);
 
+                        $stmtDelete = db()->prepare('DELETE FROM user_empresas WHERE user_id = ?');
+                        $stmtDelete->execute([$recordId]);
+                        $stmtInsert = db()->prepare('INSERT INTO user_empresas (user_id, empresa_id) VALUES (?, ?)');
+                        foreach ($empresaIds as $empresaId) {
+                            $stmtInsert->execute([$recordId, $empresaId]);
+                        }
+
                         $_SESSION['usuario_flash'] = 'Usuario actualizado correctamente.';
                     } else {
+                        if (!has_permission('usuarios', 'create')) {
+                            throw new RuntimeException('Sin permisos para crear.');
+                        }
                         $stmt = db()->prepare(
                             'INSERT INTO users (empresa_id, rut, nombre, apellido, cargo, fecha_nacimiento, correo, telefono, direccion, username, rol, password_hash, password_locked, is_superadmin, estado)
                              VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?)'
@@ -148,6 +198,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             password_hash($password, PASSWORD_DEFAULT),
                             (int) ($fields['estado'] === '1'),
                         ]);
+
+                        $userId = (int) db()->lastInsertId();
+                        $stmtInsert = db()->prepare('INSERT INTO user_empresas (user_id, empresa_id) VALUES (?, ?)');
+                        foreach ($empresaIds as $empresaId) {
+                            $stmtInsert->execute([$userId, $empresaId]);
+                        }
 
                         $_SESSION['usuario_flash'] = 'Usuario registrado correctamente.';
                     }
@@ -168,6 +224,7 @@ if (isset($_SESSION['usuario_flash'])) {
 
 $usuarios = [];
 try {
+    $roles = db()->query('SELECT nombre FROM roles ORDER BY nombre')->fetchAll();
     $usuarios = db()->query(
         'SELECT id, nombre, apellido, correo, telefono, username, rol, estado, fecha_creacion
          FROM users
@@ -236,6 +293,20 @@ include('partials/html.php');
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Usuario:</span> <?php echo htmlspecialchars($viewRecord['username'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Rol:</span> <?php echo htmlspecialchars($viewRecord['rol'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-8">
+                                                <span class="text-muted">Empresas:</span>
+                                                <?php if ($viewEmpresas) : ?>
+                                                    <?php
+                                                        $empresasNombres = array_map(
+                                                            fn(array $empresa) => $empresa['razon_social'] ?: $empresa['nombre'],
+                                                            $viewEmpresas
+                                                        );
+                                                    ?>
+                                                    <?php echo htmlspecialchars(implode(', ', $empresasNombres), ENT_QUOTES, 'UTF-8'); ?>
+                                                <?php else : ?>
+                                                    —
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -278,11 +349,40 @@ include('partials/html.php');
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Rol</label>
-                                            <input type="text" name="rol" class="form-control" value="<?php echo htmlspecialchars($fields['rol'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Administrador">
+                                            <select name="rol" class="form-select">
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($roles as $rol) : ?>
+                                                    <?php $rolNombre = (string) ($rol['nombre'] ?? ''); ?>
+                                                    <option value="<?php echo htmlspecialchars($rolNombre, ENT_QUOTES, 'UTF-8'); ?>" <?php echo $fields['rol'] === $rolNombre ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($rolNombre, ENT_QUOTES, 'UTF-8'); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Cargo</label>
                                             <input type="text" name="cargo" class="form-control" value="<?php echo htmlspecialchars($fields['cargo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Cargo del usuario">
+                                        </div>
+
+                                        <div class="col-md-12">
+                                            <label class="form-label">Empresas asociadas</label>
+                                            <div class="row g-2">
+                                                <?php foreach ($empresas as $empresa) : ?>
+                                                    <?php
+                                                        $empresaId = (int) ($empresa['id'] ?? 0);
+                                                        $empresaNombre = $empresa['razon_social'] ?: $empresa['nombre'];
+                                                        $checked = in_array($empresaId, $userEmpresas, true);
+                                                    ?>
+                                                    <div class="col-md-4">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="empresa_ids[]" value="<?php echo $empresaId; ?>" id="usuario-empresa-<?php echo $empresaId; ?>" <?php echo $checked ? 'checked' : ''; ?>>
+                                                            <label class="form-check-label" for="usuario-empresa-<?php echo $empresaId; ?>">
+                                                                <?php echo htmlspecialchars($empresaNombre, ENT_QUOTES, 'UTF-8'); ?>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            </div>
                                         </div>
 
                                         <div class="col-md-6 col-xl-3">
@@ -306,7 +406,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('usuarios', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar usuario' : 'Guardar usuario'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -364,13 +464,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($usuario['fecha_creacion'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="usuario.php?view=<?php echo (int) $usuario['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="usuario.php?edit=<?php echo (int) $usuario['id']; ?>">Editar</a>
-                                                            <form method="post" action="usuario.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $usuario['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este usuario?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('usuarios', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="usuario.php?edit=<?php echo (int) $usuario['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('usuarios', 'delete')) : ?>
+                                                                <form method="post" action="usuario.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $usuario['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este usuario?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>
