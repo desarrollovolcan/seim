@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/app/bootstrap.php';
+$municipalidad = get_municipalidad();
+?>
 <?php include('partials/html.php'); ?>
 
 <head>
