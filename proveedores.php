@@ -40,7 +40,7 @@ if (isset($_GET['edit'])) {
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
             $fields['razon_social'] = (string) ($record['razon_social'] ?? '');
-            $fields['rut'] = (string) ($record['rut'] ?? '');
+            $fields['rut'] = format_rut((string) ($record['rut'] ?? ''));
             $fields['telefono'] = (string) ($record['telefono'] ?? '');
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
@@ -80,6 +80,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'El RUT es obligatorio.';
             } elseif (!validate_rut($fields['rut'])) {
                 $errors[] = 'El RUT ingresado no es válido.';
+            } else {
+                $fields['rut'] = format_rut($fields['rut']);
             }
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Debes ingresar un correo válido.';
@@ -195,7 +197,7 @@ include('partials/html.php');
                                         <div class="row g-2">
                                             <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Razón social:</span> <?php echo htmlspecialchars($viewRecord['razon_social'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
-                                            <div class="col-md-4"><span class="text-muted">RUT:</span> <?php echo htmlspecialchars($viewRecord['rut'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">RUT:</span> <?php echo htmlspecialchars(format_rut((string) ($viewRecord['rut'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
@@ -288,7 +290,7 @@ include('partials/html.php');
                                                                 <div class="text-muted small"><?php echo htmlspecialchars($proveedor['razon_social'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                             <?php endif; ?>
                                                         </td>
-                                                        <td><?php echo htmlspecialchars($proveedor['rut'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars(format_rut((string) ($proveedor['rut'] ?? '')), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($proveedor['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($proveedor['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($proveedor['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
