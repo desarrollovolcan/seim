@@ -68,6 +68,12 @@
                 </form>
             <?php endif; ?>
 
+            <div class="topbar-item">
+                <button class="btn btn-primary btn-sm d-none" type="button" id="installAppButton">
+                    Instalar APP
+                </button>
+            </div>
+
             <!-- Theme Mode Dropdown -->
             <div class="topbar-item">
                 <div class="dropdown">
