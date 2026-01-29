@@ -100,12 +100,6 @@
                     <span class="menu-text">Stock actual</span>
                 </a>
             </li>
-            <li class="side-nav-item">
-                <a href="inventario-movimientos.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
-                    <span class="menu-text">Movimientos</span>
-                </a>
-            </li>
 
             <li class="side-nav-title mt-3" data-lang="menu-title">Mantenedores</li>
 
@@ -120,6 +114,12 @@
                 <a href="usuario.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="user"></i></span>
                     <span class="menu-text">Usuarios</span>
+                </a>
+            </li>
+            <li class="side-nav-item">
+                <a href="inventario-movimientos.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
+                    <span class="menu-text">Movimientos</span>
                 </a>
             </li>
 
