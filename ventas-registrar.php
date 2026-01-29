@@ -47,7 +47,7 @@ $moduleFields = [
             'cliente_demo' => 'Cliente demo',
             'cliente_plus' => 'Cliente Plus',
         ],
-        'col' => 'erp-field erp-field--two-thirds',
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'name' => 'proyecto',
@@ -92,7 +92,7 @@ $moduleFields = [
         'required' => true,
         'default' => '19',
         'step' => '0.01',
-        'col' => 'erp-field erp-field--sixth',
+        'col' => 'erp-field erp-field--quarter',
     ],
     [
         'name' => 'monto_exento',
@@ -101,7 +101,7 @@ $moduleFields = [
         'required' => false,
         'step' => '0.01',
         'default' => '0',
-        'col' => 'erp-field erp-field--sixth',
+        'col' => 'erp-field erp-field--quarter',
     ],
     [
         'name' => 'rut_receptor',
@@ -141,7 +141,7 @@ $moduleFields = [
         'type' => 'text',
         'required' => false,
         'placeholder' => 'Dirección',
-        'col' => 'erp-field erp-field--two-thirds',
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'name' => 'comuna',
@@ -149,7 +149,7 @@ $moduleFields = [
         'type' => 'text',
         'required' => false,
         'placeholder' => 'Comuna',
-        'col' => 'erp-field erp-field--quarter',
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'name' => 'ciudad',
@@ -157,7 +157,7 @@ $moduleFields = [
         'type' => 'text',
         'required' => false,
         'placeholder' => 'Ciudad',
-        'col' => 'erp-field erp-field--quarter',
+        'col' => 'erp-field erp-field--third',
     ],
     [
         'type' => 'group_end',
