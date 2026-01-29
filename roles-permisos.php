@@ -4,6 +4,10 @@ require __DIR__ . '/app/bootstrap.php';
 $modules = [
     ['key' => 'usuarios', 'label' => 'Usuarios', 'permisos' => ['view', 'create', 'edit', 'delete']],
     ['key' => 'roles', 'label' => 'Roles', 'permisos' => ['view', 'create', 'edit', 'delete']],
+    ['key' => 'contabilidad', 'label' => 'Contabilidad', 'permisos' => ['view', 'create', 'edit', 'delete']],
+    ['key' => 'proveedores', 'label' => 'Proveedores', 'permisos' => ['view', 'create', 'edit', 'delete']],
+    ['key' => 'clientes', 'label' => 'Clientes', 'permisos' => ['view', 'create', 'edit', 'delete']],
+    ['key' => 'reportes', 'label' => 'Reportes', 'permisos' => ['view', 'export']],
     ['key' => 'eventos', 'label' => 'Eventos', 'permisos' => ['view', 'create', 'edit', 'delete', 'publish']],
     ['key' => 'autoridades', 'label' => 'Autoridades', 'permisos' => ['view', 'create', 'edit', 'delete', 'export']],
     ['key' => 'mantenedores', 'label' => 'Mantenedores', 'permisos' => ['view', 'edit']],
@@ -143,14 +147,23 @@ $updated = isset($_GET['updated']) && $_GET['updated'] === '1';
 
         <div class="content-page">
 
-            <div class="container-fluid">
+            <div class="container-fluid erp-page">
 
                 <?php $subtitle = "Roles y Permisos"; $title = "Matriz de permisos"; include('partials/page-title.php'); ?>
 
                 <div class="row">
                     <div class="col-12">
-                        <div class="card gm-section">
-                            <div class="card-body">
+                        <div class="erp-section">
+                            <div class="erp-section-header">
+                                <div class="erp-toolbar">
+                                    <div>
+                                        <h5 class="card-title mb-0">Matriz de permisos</h5>
+                                        <p class="text-muted mb-0">Controla el acceso de cada rol a los módulos del ERP.</p>
+                                    </div>
+                                    <span class="erp-status-pill">Permisos por rol</span>
+                                </div>
+                            </div>
+                            <div class="erp-section-body">
                                 <?php if ($updated) : ?>
                                     <div class="alert alert-success">Los permisos se actualizaron correctamente.</div>
                                 <?php endif; ?>
@@ -181,25 +194,23 @@ $updated = isset($_GET['updated']) && $_GET['updated'] === '1';
                                             <?php foreach ($modules as $module) : ?>
                                                 <?php $moduleKey = $module['key']; ?>
                                                 <div class="col-md-6 col-xl-4">
-                                                    <div class="card h-100 border">
-                                                        <div class="card-body">
-                                                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                                                <h6 class="mb-0"><?php echo htmlspecialchars($module['label'], ENT_QUOTES, 'UTF-8'); ?></h6>
-                                                                <span class="badge text-bg-light"><?php echo htmlspecialchars($moduleKey, ENT_QUOTES, 'UTF-8'); ?></span>
-                                                            </div>
-                                                            <p class="text-muted small mb-3">Define qué acciones puede ejecutar este rol en el módulo.</p>
-                                                            <div class="d-flex flex-column gap-2">
-                                                                <?php foreach ($module['permisos'] as $permisoKey) : ?>
-                                                                    <?php $permisoLabel = $permisosDisponibles[$permisoKey] ?? $permisoKey; ?>
-                                                                    <?php $checked = !empty($permisosRol[$moduleKey][$permisoKey]); ?>
-                                                                    <div class="form-check form-switch">
-                                                                        <input class="form-check-input" type="checkbox" role="switch" id="perm-<?php echo htmlspecialchars($moduleKey . '-' . $permisoKey, ENT_QUOTES, 'UTF-8'); ?>" name="permisos[<?php echo htmlspecialchars($moduleKey, ENT_QUOTES, 'UTF-8'); ?>][<?php echo htmlspecialchars($permisoKey, ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $checked ? 'checked' : ''; ?>>
-                                                                        <label class="form-check-label" for="perm-<?php echo htmlspecialchars($moduleKey . '-' . $permisoKey, ENT_QUOTES, 'UTF-8'); ?>">
-                                                                            <?php echo htmlspecialchars($permisoLabel, ENT_QUOTES, 'UTF-8'); ?>
-                                                                        </label>
-                                                                    </div>
-                                                                <?php endforeach; ?>
-                                                            </div>
+                                                    <div class="erp-permission-card h-100">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <h6 class="mb-0"><?php echo htmlspecialchars($module['label'], ENT_QUOTES, 'UTF-8'); ?></h6>
+                                                            <span class="badge text-bg-light"><?php echo htmlspecialchars($moduleKey, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                        </div>
+                                                        <p class="text-muted small mb-3">Define qué acciones puede ejecutar este rol en el módulo.</p>
+                                                        <div class="d-flex flex-column gap-2">
+                                                            <?php foreach ($module['permisos'] as $permisoKey) : ?>
+                                                                <?php $permisoLabel = $permisosDisponibles[$permisoKey] ?? $permisoKey; ?>
+                                                                <?php $checked = !empty($permisosRol[$moduleKey][$permisoKey]); ?>
+                                                                <div class="form-check form-switch">
+                                                                    <input class="form-check-input" type="checkbox" role="switch" id="perm-<?php echo htmlspecialchars($moduleKey . '-' . $permisoKey, ENT_QUOTES, 'UTF-8'); ?>" name="permisos[<?php echo htmlspecialchars($moduleKey, ENT_QUOTES, 'UTF-8'); ?>][<?php echo htmlspecialchars($permisoKey, ENT_QUOTES, 'UTF-8'); ?>]" value="1" <?php echo $checked ? 'checked' : ''; ?>>
+                                                                    <label class="form-check-label" for="perm-<?php echo htmlspecialchars($moduleKey . '-' . $permisoKey, ENT_QUOTES, 'UTF-8'); ?>">
+                                                                        <?php echo htmlspecialchars($permisoLabel, ENT_QUOTES, 'UTF-8'); ?>
+                                                                    </label>
+                                                                </div>
+                                                            <?php endforeach; ?>
                                                         </div>
                                                     </div>
                                                 </div>

@@ -1,8 +1,8 @@
 <?php
-$pageTitle = 'Reporte de ventas';
-$pageSubtitle = 'Reportes';
-$pageDescription = 'Reporte detallado de ventas.';
-$moduleKey = 'reportes-ventas';
+$pageTitle = 'Libro diario';
+$pageSubtitle = 'Contabilidad';
+$pageDescription = 'Detalle cronológico de operaciones contables.';
+$moduleKey = 'libro-diario';
 $moduleMode = 'report';
 $moduleFields = [
     [
@@ -20,44 +20,41 @@ $moduleFields = [
         'col' => 'erp-field erp-field--third',
     ],
     [
-        'name' => 'canal',
-        'label' => 'Canal de venta',
-        'type' => 'select',
-        'required' => false,
-        'options' => [
-            'presencial' => 'Presencial',
-            'online' => 'Online',
-            'mayorista' => 'Mayorista',
-        ],
-        'col' => 'erp-field erp-field--third',
-    ],
-    [
-        'name' => 'vendedor',
-        'label' => 'Vendedor',
+        'name' => 'cuenta',
+        'label' => 'Cuenta contable',
         'type' => 'text',
         'required' => false,
-        'placeholder' => 'Nombre del vendedor',
+        'placeholder' => '1.01.001',
         'col' => 'erp-field erp-field--third',
     ],
     [
-        'name' => 'estado',
-        'label' => 'Estado',
+        'name' => 'centro_costo',
+        'label' => 'Centro de costo',
+        'type' => 'text',
+        'required' => false,
+        'placeholder' => 'Administración',
+        'col' => 'erp-field erp-field--third',
+    ],
+    [
+        'name' => 'tipo_asiento',
+        'label' => 'Tipo de asiento',
         'type' => 'select',
         'required' => false,
         'options' => [
-            'pagada' => 'Pagada',
-            'pendiente' => 'Pendiente',
-            'anulada' => 'Anulada',
+            'ingreso' => 'Ingreso',
+            'egreso' => 'Egreso',
+            'ajuste' => 'Ajuste',
         ],
         'col' => 'erp-field erp-field--third',
     ],
 ];
 $moduleListColumns = [
     ['key' => 'fecha_desde', 'label' => 'Fecha'],
-    ['key' => 'canal', 'label' => 'Canal'],
-    ['key' => 'vendedor', 'label' => 'Vendedor'],
-    ['key' => 'estado', 'label' => 'Estado'],
-    ['key' => 'monto', 'label' => 'Total'],
+    ['key' => 'tipo_asiento', 'label' => 'Tipo'],
+    ['key' => 'cuenta', 'label' => 'Cuenta'],
+    ['key' => 'descripcion', 'label' => 'Detalle'],
+    ['key' => 'debe', 'label' => 'Debe'],
+    ['key' => 'haber', 'label' => 'Haber'],
 ];
 
 include('partials/generic-page.php');

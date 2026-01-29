@@ -177,6 +177,35 @@
                 </li>
             <?php endif; ?>
 
+            <?php if (has_permission('contabilidad', 'view')) : ?>
+                <li class="side-nav-item">
+                    <a href="#modulo-contabilidad" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false" aria-controls="modulo-contabilidad">
+                        <span class="menu-icon"><i data-lucide="book-open"></i></span>
+                        <span class="menu-text">Contabilidad</span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="modulo-contabilidad">
+                        <ul class="side-nav sub-menu">
+                            <li class="side-nav-item">
+                                <a href="plan-cuentas.php" class="side-nav-link">Plan de cuentas</a>
+                            </li>
+                            <li class="side-nav-item">
+                                <a href="asientos-contables.php" class="side-nav-link">Asientos contables</a>
+                            </li>
+                            <li class="side-nav-item">
+                                <a href="libro-diario.php" class="side-nav-link">Libro diario</a>
+                            </li>
+                            <li class="side-nav-item">
+                                <a href="libro-mayor.php" class="side-nav-link">Libro mayor</a>
+                            </li>
+                            <li class="side-nav-item">
+                                <a href="documentos-comprobantes.php" class="side-nav-link">Documentos y comprobantes</a>
+                            </li>
+                        </ul>
+                    </div>
+                </li>
+            <?php endif; ?>
+
             <?php if (has_permission('clientes', 'view')) : ?>
                 <li class="side-nav-item">
                     <a href="#modulo-clientes" class="side-nav-link" data-bs-toggle="collapse" aria-expanded="false" aria-controls="modulo-clientes">
@@ -197,6 +226,15 @@
                             </li>
                         </ul>
                     </div>
+                </li>
+            <?php endif; ?>
+
+            <?php if (has_permission('proveedores', 'view')) : ?>
+                <li class="side-nav-item">
+                    <a href="proveedores-listado.php" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="briefcase"></i></span>
+                        <span class="menu-text">Proveedores</span>
+                    </a>
                 </li>
             <?php endif; ?>
 

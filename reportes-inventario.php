@@ -3,6 +3,7 @@ $pageTitle = 'Reporte de inventario';
 $pageSubtitle = 'Reportes';
 $pageDescription = 'Reporte consolidado de inventario.';
 $moduleKey = 'reportes';
+$moduleMode = 'report';
 $moduleTitleField = 'tipo_reporte';
 $moduleFields = [
     [
