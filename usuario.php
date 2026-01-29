@@ -258,7 +258,7 @@ include('partials/html.php');
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">RUT</label>
-                                            <input type="text" name="rut" class="form-control" value="<?php echo htmlspecialchars($fields['rut'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="12.345.678-9" required>
+                                            <input type="text" name="rut" class="form-control rut-field" value="<?php echo htmlspecialchars($fields['rut'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="12.345.678-9" required>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Correo</label>
@@ -393,5 +393,29 @@ include('partials/html.php');
     <!-- End page -->
 
     <?php include('partials/footer-scripts.php'); ?>
+
+    <script>
+        function formatRut(value) {
+            const clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+            if (clean.length === 0) {
+                return '';
+            }
+            const body = clean.slice(0, -1);
+            const dv = clean.slice(-1);
+            const reversed = body.split('').reverse();
+            const grouped = [];
+            for (let i = 0; i < reversed.length; i += 3) {
+                grouped.push(reversed.slice(i, i + 3).reverse().join(''));
+            }
+            const formattedBody = grouped.reverse().join('.');
+            return `${formattedBody}-${dv}`;
+        }
+
+        document.querySelectorAll('.rut-field').forEach((input) => {
+            input.addEventListener('blur', (event) => {
+                event.target.value = formatRut(event.target.value);
+            });
+        });
+    </script>
 </body>
 </html>
