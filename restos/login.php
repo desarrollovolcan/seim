@@ -12,8 +12,9 @@
 
         <?php include('partials/menu.php'); ?>
         <?php
-        $municipalidad = get_municipalidad();
-        $logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
+        $authLogo = get_auth_logo_context();
+        $logoAuthHeight = (int) ($authLogo['logo_auth_height'] ?? 48);
+        $logoPath = $authLogo['logo_path'] ?? 'assets/images/logo.png';
         ?>
 
         <!-- ============================================================== -->
@@ -31,7 +32,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <div class="text-center mb-4">
-                                    <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" class="img-fluid" style="max-height: <?php echo $logoAuthHeight; ?>px;">
+                                    <img src="<?php echo htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" class="img-fluid" style="max-height: <?php echo $logoAuthHeight; ?>px;">
                                 </div>
                                 <form>
                                     <div class="mb-3">

@@ -253,6 +253,35 @@ function get_municipalidad(): array
     return $defaults;
 }
 
+function get_auth_logo_context(): array
+{
+    $municipalidad = get_municipalidad();
+    $logoPath = $municipalidad['logo_path'] ?? 'assets/images/logo.png';
+    $logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
+
+    try {
+        if (column_exists('empresas', 'logo_default')) {
+            $stmt = db()->query('SELECT logo_path, logo_auth_height FROM empresas WHERE logo_default = 1 ORDER BY id LIMIT 1');
+            $empresa = $stmt->fetch();
+            if (is_array($empresa)) {
+                if (!empty($empresa['logo_path'])) {
+                    $logoPath = (string) $empresa['logo_path'];
+                }
+                if (!empty($empresa['logo_auth_height']) && (int) $empresa['logo_auth_height'] > 0) {
+                    $logoAuthHeight = (int) $empresa['logo_auth_height'];
+                }
+            }
+        }
+    } catch (Exception $e) {
+    } catch (Error $e) {
+    }
+
+    return [
+        'logo_path' => $logoPath,
+        'logo_auth_height' => $logoAuthHeight,
+    ];
+}
+
 function hex_to_rgb(string $hex): ?array
 {
     $hex = ltrim($hex, '#');
@@ -382,6 +411,7 @@ function ensure_comercial_tables(): void
                 correo VARCHAR(150) DEFAULT NULL,
                 direccion VARCHAR(200) DEFAULT NULL,
                 logo_path VARCHAR(255) DEFAULT NULL,
+                logo_default TINYINT(1) NOT NULL DEFAULT 0,
                 logo_topbar_height INT DEFAULT NULL,
                 logo_sidenav_height INT DEFAULT NULL,
                 logo_sidenav_height_sm INT DEFAULT NULL,
@@ -640,6 +670,7 @@ function ensure_comercial_tables(): void
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS nota VARCHAR(255) DEFAULT NULL');
         db()->exec('ALTER TABLE ventas ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_path VARCHAR(255) DEFAULT NULL');
+        db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_default TINYINT(1) NOT NULL DEFAULT 0');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_topbar_height INT DEFAULT NULL');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height INT DEFAULT NULL');
         db()->exec('ALTER TABLE empresas ADD COLUMN IF NOT EXISTS logo_sidenav_height_sm INT DEFAULT NULL');

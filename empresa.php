@@ -8,6 +8,7 @@ require_permission('empresas', 'view');
 
 $municipalidad = get_municipalidad();
 $errors = [];
+$warnings = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
@@ -20,6 +21,7 @@ $fields = [
     'correo' => '',
     'direccion' => '',
     'logo_path' => '',
+    'logo_default' => '0',
     'logo_topbar_height' => '',
     'logo_sidenav_height' => '',
     'logo_sidenav_height_sm' => '',
@@ -49,6 +51,7 @@ if (isset($_GET['edit'])) {
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
             $fields['logo_path'] = (string) ($record['logo_path'] ?? '');
+            $fields['logo_default'] = (string) ((int) ($record['logo_default'] ?? 0));
             $fields['logo_topbar_height'] = (string) ($record['logo_topbar_height'] ?? '');
             $fields['logo_sidenav_height'] = (string) ($record['logo_sidenav_height'] ?? '');
             $fields['logo_sidenav_height_sm'] = (string) ($record['logo_sidenav_height_sm'] ?? '');
@@ -80,6 +83,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $rutInput = $_POST['rut'] ?? $_POST['ruc'] ?? '';
             foreach ($fields as $key => $value) {
+                if ($key === 'logo_default') {
+                    $fields[$key] = isset($_POST['logo_default']) ? '1' : '0';
+                    continue;
+                }
                 if (str_starts_with($key, 'logo_')) {
                     $fields[$key] = trim((string) ($_POST[$key] ?? $value));
                     continue;
@@ -141,6 +148,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoSidenavHeight = (int) ($fields['logo_sidenav_height'] !== '' ? $fields['logo_sidenav_height'] : 0);
                     $logoSidenavHeightSm = (int) ($fields['logo_sidenav_height_sm'] !== '' ? $fields['logo_sidenav_height_sm'] : 0);
                     $logoAuthHeight = (int) ($fields['logo_auth_height'] !== '' ? $fields['logo_auth_height'] : 0);
+                    $logoDefault = $fields['logo_default'] === '1' ? 1 : 0;
 
                     $logoTopbarHeight = $logoTopbarHeight > 0 ? $logoTopbarHeight : null;
                     $logoSidenavHeight = $logoSidenavHeight > 0 ? $logoSidenavHeight : null;
@@ -148,6 +156,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $logoAuthHeight = $logoAuthHeight > 0 ? $logoAuthHeight : null;
                     $logoColumns = [
                         'logo_path' => $logoPath,
+                        'logo_default' => $logoDefault,
                         'logo_topbar_height' => $logoTopbarHeight,
                         'logo_sidenav_height' => $logoSidenavHeight,
                         'logo_sidenav_height_sm' => $logoSidenavHeightSm,
@@ -214,6 +223,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute($values);
                         $empresaId = (int) db()->lastInsertId();
                         $_SESSION['empresa_flash'] = 'Empresa registrada correctamente.';
+                    }
+
+                    if ($logoDefault === 1 && $empresaId > 0 && column_exists('empresas', 'logo_default')) {
+                        $stmt = db()->prepare('UPDATE empresas SET logo_default = 0 WHERE id <> ?');
+                        $stmt->execute([$empresaId]);
                     }
 
                     if (!empty($_FILES['logo']['name'] ?? '') && $empresaId > 0) {
@@ -284,6 +298,17 @@ try {
     $errors[] = 'No se pudo cargar el listado de empresas.';
 }
 
+try {
+    if (column_exists('empresas', 'logo_default')) {
+        $defaultCount = (int) db()->query('SELECT COUNT(*) FROM empresas WHERE logo_default = 1')->fetchColumn();
+        if ($defaultCount > 1) {
+            $warnings[] = 'Hay más de una empresa marcada como logo predeterminado. Solo una puede estar activa.';
+        }
+    }
+} catch (Exception $e) {
+} catch (Error $e) {
+}
+
 include('partials/html.php');
 ?>
 
@@ -317,6 +342,15 @@ include('partials/html.php');
                             <div class="card-body">
                                 <?php if ($successMessage !== '') : ?>
                                     <div class="alert alert-success"><?php echo htmlspecialchars($successMessage, ENT_QUOTES, 'UTF-8'); ?></div>
+                                <?php endif; ?>
+                                <?php if ($warnings) : ?>
+                                    <div class="alert alert-warning">
+                                        <ul class="mb-0">
+                                            <?php foreach ($warnings as $warning) : ?>
+                                                <li><?php echo htmlspecialchars($warning, ENT_QUOTES, 'UTF-8'); ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
                                 <?php endif; ?>
                                 <?php if ($errors) : ?>
                                     <div class="alert alert-danger">
@@ -392,6 +426,14 @@ include('partials/html.php');
                                                 <small class="text-muted d-block mt-1">Actual: <?php echo htmlspecialchars($fields['logo_path'], ENT_QUOTES, 'UTF-8'); ?></small>
                                             <?php endif; ?>
                                         </div>
+                                        <?php if (column_exists('empresas', 'logo_default')) : ?>
+                                            <div class="col-md-6 col-xl-3 d-flex align-items-end">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" name="logo_default" id="logo_default" value="1" <?php echo $fields['logo_default'] === '1' ? 'checked' : ''; ?>>
+                                                    <label class="form-check-label" for="logo_default">Usar este logo como predeterminado</label>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Altura logo (Topbar)</label>
                                             <input type="number" name="logo_topbar_height" class="form-control" value="<?php echo htmlspecialchars($fields['logo_topbar_height'], ENT_QUOTES, 'UTF-8'); ?>" min="20" max="200" placeholder="56">
@@ -440,6 +482,7 @@ include('partials/html.php');
                                                 <th>Teléfono</th>
                                                 <th>Correo</th>
                                                 <th>Dirección</th>
+                                                <th>Logo predeterminado</th>
                                                 <th>Creado</th>
                                                 <th class="text-end">Acciones</th>
                                             </tr>
@@ -447,7 +490,7 @@ include('partials/html.php');
                                         <tbody>
                                             <?php if (!$empresas) : ?>
                                                 <tr>
-                                                    <td colspan="7" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="8" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($empresas as $empresa) : ?>
@@ -457,6 +500,13 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars($empresa['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($empresa['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($empresa['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>
+                                                            <?php if (!empty($empresa['logo_default'])) : ?>
+                                                                <span class="badge bg-success-subtle text-success">Predeterminado</span>
+                                                            <?php else : ?>
+                                                                <span class="text-muted">—</span>
+                                                            <?php endif; ?>
+                                                        </td>
                                                         <td><?php echo htmlspecialchars((string) ($empresa['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="empresa.php?view=<?php echo (int) $empresa['id']; ?>">Ver</a>

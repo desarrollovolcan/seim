@@ -11,8 +11,9 @@ if (isset($_SESSION['user'])) {
 
 $errors = [];
 $success = false;
-$municipalidad = get_municipalidad();
-$logoAuthHeight = (int) ($municipalidad['logo_auth_height'] ?? 48);
+$authLogo = get_auth_logo_context();
+$logoAuthHeight = (int) ($authLogo['logo_auth_height'] ?? 48);
+$logoPath = $authLogo['logo_path'] ?? 'assets/images/logo.png';
 $values = [
     'nombre' => '',
     'apellido' => '',
@@ -159,10 +160,10 @@ include('partials/html.php');
                     <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
                         <div class="auth-brand mb-0 text-center">
                             <a href="index.php" class="logo-dark">
-                                <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" style="height: <?php echo $logoAuthHeight; ?>px;">
+                                <img src="<?php echo htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" style="height: <?php echo $logoAuthHeight; ?>px;">
                             </a>
                             <a href="index.php" class="logo-light">
-                                <img src="<?php echo htmlspecialchars($municipalidad['logo_path'] ?? 'assets/images/logo.png', ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" style="height: <?php echo $logoAuthHeight; ?>px;">
+                                <img src="<?php echo htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo municipalidad" style="height: <?php echo $logoAuthHeight; ?>px;">
                             </a>
                         </div>
 
