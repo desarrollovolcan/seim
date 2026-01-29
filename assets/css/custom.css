@@ -94,6 +94,72 @@
   color: var(--erp-muted);
 }
 
+.erp-page .erp-section form {
+  border-radius: 0.9rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+}
+
+.erp-page .erp-section form .border.rounded-3.bg-light-subtle {
+  border-color: #e5e7eb !important;
+  background: #ffffff !important;
+  box-shadow: none;
+}
+
+.erp-page .erp-section .form-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.78rem;
+  margin-bottom: 0.35rem;
+  text-transform: none;
+}
+
+.erp-page .erp-section .form-control,
+.erp-page .erp-section .form-select {
+  border-radius: 0.6rem;
+  border-color: #e2e8f0;
+  background-color: #ffffff;
+  box-shadow: none;
+  min-height: 38px;
+  padding: 0.45rem 0.75rem;
+}
+
+.erp-page .erp-section textarea.form-control {
+  min-height: 110px;
+}
+
+.erp-page .erp-section .form-control::placeholder {
+  color: #94a3b8;
+}
+
+.erp-page .erp-section .form-control:focus,
+.erp-page .erp-section .form-select:focus {
+  border-color: rgba(var(--ins-primary-rgb), 0.65);
+  box-shadow: 0 0 0 0.15rem rgba(var(--ins-primary-rgb), 0.18);
+}
+
+.erp-page .erp-section .input-group-text {
+  border-radius: 0.6rem 0 0 0.6rem;
+  border-color: #e2e8f0;
+  background: #ffffff;
+  color: #64748b;
+}
+
+.erp-page .erp-section .form-check-input {
+  border-color: #d1d5f5;
+}
+
+.erp-page .erp-section .form-text {
+  color: #94a3b8;
+}
+
+.erp-page .erp-section .btn {
+  border-radius: 0.6rem;
+  font-weight: 600;
+}
+
 .erp-form-grid {
   display: grid;
   grid-template-columns: repeat(12, 1fr);
