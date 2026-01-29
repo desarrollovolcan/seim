@@ -23,6 +23,7 @@ $clientes = [];
 $productos = [];
 $lineItems = [['producto_id' => '', 'cantidad' => '', 'precio_unitario' => '']];
 $lineErrors = [];
+$productoPrecioMap = [];
 $hasClienteNombreColumn = column_exists('ventas', 'cliente_nombre');
 $hasClienteIdColumn = column_exists('ventas', 'cliente_id');
 $hasClienteLegacyColumn = column_exists('ventas', 'cliente');
@@ -39,6 +40,9 @@ try {
     $stmt = db()->prepare('SELECT id, nombre, sku, precio_venta, stock_actual FROM inventario_productos WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
     $stmt->execute([$empresaId]);
     $productos = $stmt->fetchAll();
+    foreach ($productos as $producto) {
+        $productoPrecioMap[(string) ($producto['id'] ?? '')] = (float) ($producto['precio_venta'] ?? 0);
+    }
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar los catálogos de venta.';
 }
@@ -57,10 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $lineItems = [];
         foreach ($productoIds as $index => $productoId) {
+            $productoIdValue = trim((string) $productoId);
+            $precioUnitario = trim((string) ($precios[$index] ?? ''));
+            if ($precioUnitario === '' && $productoIdValue !== '' && isset($productoPrecioMap[$productoIdValue])) {
+                $precioUnitario = (string) $productoPrecioMap[$productoIdValue];
+            }
             $lineItems[] = [
-                'producto_id' => trim((string) $productoId),
+                'producto_id' => $productoIdValue,
                 'cantidad' => trim((string) ($cantidades[$index] ?? '')),
-                'precio_unitario' => trim((string) ($precios[$index] ?? '')),
+                'precio_unitario' => $precioUnitario,
             ];
         }
 
@@ -378,7 +387,7 @@ include('partials/html.php');
                                                                     <select name="producto_id[]" class="form-select">
                                                                         <option value="">Selecciona</option>
                                                                         <?php foreach ($productos as $producto) : ?>
-                                                                            <option value="<?php echo (int) $producto['id']; ?>" <?php echo $line['producto_id'] === (string) $producto['id'] ? 'selected' : ''; ?>>
+                                                                            <option value="<?php echo (int) $producto['id']; ?>" data-precio="<?php echo htmlspecialchars((string) ($producto['precio_venta'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" <?php echo $line['producto_id'] === (string) $producto['id'] ? 'selected' : ''; ?>>
                                                                                 <?php echo htmlspecialchars($producto['nombre'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($producto['sku'], ENT_QUOTES, 'UTF-8'); ?>)
                                                                             </option>
                                                                         <?php endforeach; ?>
@@ -492,7 +501,8 @@ include('partials/html.php');
                             <option value="">Selecciona</option>
                             ${<?php echo json_encode($productos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>.map((producto) => {
                                 const label = `${producto.nombre} (${producto.sku})`;
-                                return `<option value="${producto.id}">${label}</option>`;
+                                const precio = producto.precio_venta ?? '';
+                                return `<option value="${producto.id}" data-precio="${precio}">${label}</option>`;
                             }).join('')}
                         </select>
                     </td>
@@ -503,6 +513,32 @@ include('partials/html.php');
                     </td>
                 `;
                 tableBody.appendChild(row);
+            });
+
+            tableBody.addEventListener('change', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLSelectElement)) {
+                    return;
+                }
+                if (!target.name || target.name !== 'producto_id[]') {
+                    return;
+                }
+                const selectedOption = target.selectedOptions[0];
+                if (!selectedOption) {
+                    return;
+                }
+                const precio = selectedOption.getAttribute('data-precio');
+                if (!precio) {
+                    return;
+                }
+                const row = target.closest('tr');
+                if (!row) {
+                    return;
+                }
+                const precioInput = row.querySelector('input[name="precio_unitario[]"]');
+                if (precioInput instanceof HTMLInputElement && precioInput.value.trim() === '') {
+                    precioInput.value = precio;
+                }
             });
 
             tableBody.addEventListener('click', (event) => {
