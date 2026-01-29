@@ -50,17 +50,19 @@
                 </a>
             </li>
 
-            <li class="side-nav-item">
-                <a href="usuario.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="user"></i></span>
-                    <span class="menu-text">Usuario</span>
-                </a>
-            </li>
+            <li class="side-nav-title mt-3" data-lang="menu-title">Administración</li>
 
             <li class="side-nav-item">
                 <a href="empresa.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="building-2"></i></span>
                     <span class="menu-text">Empresa</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
+                <a href="usuario.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="user"></i></span>
+                    <span class="menu-text">Usuarios</span>
                 </a>
             </li>
 
@@ -85,19 +87,26 @@
                 </a>
             </li>
             <li class="side-nav-item">
-                <a href="inventario-movimientos.php" class="side-nav-link">
-                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
-                    <span class="menu-text">Movimientos</span>
-                </a>
-            </li>
-            <li class="side-nav-item">
                 <a href="inventario-stock.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="layers"></i></span>
                     <span class="menu-text">Stock actual</span>
                 </a>
             </li>
+            <li class="side-nav-item">
+                <a href="inventario-movimientos.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="arrow-left-right"></i></span>
+                    <span class="menu-text">Movimientos</span>
+                </a>
+            </li>
 
-            <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
+            <li class="side-nav-title mt-3" data-lang="menu-title">Comercial</li>
+
+            <li class="side-nav-item">
+                <a href="clientes.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="users"></i></span>
+                    <span class="menu-text">Clientes</span>
+                </a>
+            </li>
 
             <li class="side-nav-item">
                 <a href="ventas.php" class="side-nav-link">
