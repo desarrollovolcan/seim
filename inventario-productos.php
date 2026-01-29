@@ -14,6 +14,7 @@ $fields = [
     'nombre' => '',
     'sku' => '',
     'categoria_id' => '',
+    'subfamilia_id' => '',
     'unidad_id' => '',
     'precio_compra' => '',
     'precio_venta' => '',
@@ -23,9 +24,11 @@ $fields = [
 ];
 
 $categorias = [];
+$subfamilias = [];
 $unidades = [];
 try {
     $categorias = db()->query('SELECT id, nombre FROM inventario_categorias ORDER BY nombre')->fetchAll();
+    $subfamilias = db()->query('SELECT id, categoria_id, nombre FROM inventario_subfamilias ORDER BY nombre')->fetchAll();
     $unidades = db()->query('SELECT id, nombre, abreviatura FROM inventario_unidades ORDER BY nombre')->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar catálogos de inventario.';
@@ -50,6 +53,7 @@ if (isset($_GET['edit'])) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
             $fields['sku'] = (string) ($record['sku'] ?? '');
             $fields['categoria_id'] = (string) ($record['categoria_id'] ?? '');
+            $fields['subfamilia_id'] = (string) ($record['subfamilia_id'] ?? '');
             $fields['unidad_id'] = (string) ($record['unidad_id'] ?? '');
             $fields['precio_compra'] = (string) ($record['precio_compra'] ?? '');
             $fields['precio_venta'] = (string) ($record['precio_venta'] ?? '');
@@ -88,7 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $errors[] = 'El SKU es obligatorio.';
             }
             if ($fields['categoria_id'] === '') {
-                $errors[] = 'La categoría es obligatoria.';
+                $errors[] = 'La familia es obligatoria.';
+            }
+            if ($fields['subfamilia_id'] === '') {
+                $errors[] = 'La subfamilia es obligatoria.';
             }
             if ($fields['unidad_id'] === '') {
                 $errors[] = 'La unidad es obligatoria.';
@@ -98,12 +105,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 try {
                     if ($action === 'update' && $recordId > 0) {
                         $stmt = db()->prepare(
-                            'UPDATE inventario_productos SET nombre = ?, sku = ?, categoria_id = ?, unidad_id = ?, precio_compra = ?, precio_venta = ?, stock_minimo = ?, stock_actual = ?, descripcion = ? WHERE id = ?'
+                            'UPDATE inventario_productos SET nombre = ?, sku = ?, categoria_id = ?, subfamilia_id = ?, unidad_id = ?, precio_compra = ?, precio_venta = ?, stock_minimo = ?, stock_actual = ?, descripcion = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['sku'],
                             (int) $fields['categoria_id'],
+                            (int) $fields['subfamilia_id'],
                             (int) $fields['unidad_id'],
                             $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
                             $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
@@ -115,13 +123,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $_SESSION['producto_flash'] = 'Producto actualizado correctamente.';
                     } else {
                         $stmt = db()->prepare(
-                            'INSERT INTO inventario_productos (nombre, sku, categoria_id, unidad_id, precio_compra, precio_venta, stock_minimo, stock_actual, descripcion)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO inventario_productos (nombre, sku, categoria_id, subfamilia_id, unidad_id, precio_compra, precio_venta, stock_minimo, stock_actual, descripcion)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['sku'],
                             (int) $fields['categoria_id'],
+                            (int) $fields['subfamilia_id'],
                             (int) $fields['unidad_id'],
                             $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
                             $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
@@ -148,9 +157,10 @@ if (isset($_SESSION['producto_flash'])) {
 $productos = [];
 try {
     $stmt = db()->query(
-        'SELECT p.*, c.nombre AS categoria_nombre, u.nombre AS unidad_nombre, u.abreviatura AS unidad_abreviatura
+        'SELECT p.*, c.nombre AS categoria_nombre, s.nombre AS subfamilia_nombre, u.nombre AS unidad_nombre, u.abreviatura AS unidad_abreviatura
          FROM inventario_productos p
          LEFT JOIN inventario_categorias c ON c.id = p.categoria_id
+         LEFT JOIN inventario_subfamilias s ON s.id = p.subfamilia_id
          LEFT JOIN inventario_unidades u ON u.id = p.unidad_id
          ORDER BY p.created_at DESC'
     );
@@ -230,12 +240,23 @@ include('partials/html.php');
                                             <input type="text" name="sku" class="form-control" value="<?php echo htmlspecialchars($fields['sku'], ENT_QUOTES, 'UTF-8'); ?>" required>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
-                                            <label class="form-label">Categoría</label>
+                                            <label class="form-label">Familia</label>
                                             <select name="categoria_id" class="form-select" required>
                                                 <option value="">Selecciona</option>
                                                 <?php foreach ($categorias as $categoria) : ?>
                                                     <option value="<?php echo (int) $categoria['id']; ?>" <?php echo $fields['categoria_id'] === (string) $categoria['id'] ? 'selected' : ''; ?>>
                                                         <?php echo htmlspecialchars($categoria['nombre'], ENT_QUOTES, 'UTF-8'); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Subfamilia</label>
+                                            <select name="subfamilia_id" class="form-select" required>
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($subfamilias as $subfamilia) : ?>
+                                                    <option value="<?php echo (int) $subfamilia['id']; ?>" <?php echo $fields['subfamilia_id'] === (string) $subfamilia['id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($subfamilia['nombre'], ENT_QUOTES, 'UTF-8'); ?>
                                                     </option>
                                                 <?php endforeach; ?>
                                             </select>
@@ -302,7 +323,8 @@ include('partials/html.php');
                                             <tr>
                                                 <th>Nombre</th>
                                                 <th>SKU</th>
-                                                <th>Categoría</th>
+                                                <th>Familia</th>
+                                                <th>Subfamilia</th>
                                                 <th>Unidad</th>
                                                 <th>Stock</th>
                                                 <th>Precio venta</th>
@@ -321,6 +343,7 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars($producto['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['sku'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($producto['subfamilia_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['unidad_abreviatura'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($producto['stock_actual'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($producto['precio_venta'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>

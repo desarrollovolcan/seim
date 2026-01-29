@@ -10,9 +10,10 @@ $errors = [];
 $productos = [];
 try {
     $productos = db()->query(
-        'SELECT p.*, c.nombre AS categoria_nombre, u.abreviatura AS unidad_abreviatura
+        'SELECT p.*, c.nombre AS categoria_nombre, s.nombre AS subfamilia_nombre, u.abreviatura AS unidad_abreviatura
          FROM inventario_productos p
          LEFT JOIN inventario_categorias c ON c.id = p.categoria_id
+         LEFT JOIN inventario_subfamilias s ON s.id = p.subfamilia_id
          LEFT JOIN inventario_unidades u ON u.id = p.unidad_id
          ORDER BY p.nombre'
     )->fetchAll();
@@ -59,7 +60,8 @@ include('partials/html.php');
                                         <thead>
                                             <tr>
                                                 <th>Producto</th>
-                                                <th>Categoría</th>
+                                                <th>Familia</th>
+                                                <th>Subfamilia</th>
                                                 <th>Unidad</th>
                                                 <th>Stock actual</th>
                                                 <th>Stock mínimo</th>
@@ -69,7 +71,7 @@ include('partials/html.php');
                                         <tbody>
                                             <?php if (!$productos) : ?>
                                                 <tr>
-                                                    <td colspan="6" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="7" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($productos as $producto) : ?>
@@ -82,6 +84,7 @@ include('partials/html.php');
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($producto['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($producto['subfamilia_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['unidad_abreviatura'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) $stockActual, ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) $stockMin, ENT_QUOTES, 'UTF-8'); ?></td>
