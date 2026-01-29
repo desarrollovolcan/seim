@@ -16,6 +16,8 @@ $formAppendHtml = $formAppendHtml ?? '';
 $pageSummaryCards = $pageSummaryCards ?? [];
 $pageActivityRows = $pageActivityRows ?? [];
 $pageActivityTitle = $pageActivityTitle ?? 'Últimos movimientos';
+$hideModuleIntro = $hideModuleIntro ?? false;
+$hideModuleTable = $hideModuleTable ?? false;
 
 $errors = [];
 $successMessage = '';
@@ -234,19 +236,21 @@ include('partials/html.php');
                     </div>
                 <?php endif; ?>
 
-                <div class="row">
-                    <div class="col-12">
-                        <div class="erp-section">
-                            <div class="erp-section-header">
-                                <h5 class="card-title mb-1"><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></h5>
-                                <p class="text-muted mb-0"><?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?></p>
-                            </div>
-                            <div class="erp-section-body">
-                                <p class="mb-0">Gestiona registros con formularios estructurados, filtros y acciones rápidas.</p>
+                <?php if (!$hideModuleIntro) : ?>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="erp-section">
+                                <div class="erp-section-header">
+                                    <h5 class="card-title mb-1"><?php echo htmlspecialchars($pageTitle, ENT_QUOTES, 'UTF-8'); ?></h5>
+                                    <p class="text-muted mb-0"><?php echo htmlspecialchars($pageDescription, ENT_QUOTES, 'UTF-8'); ?></p>
+                                </div>
+                                <div class="erp-section-body">
+                                    <p class="mb-0">Gestiona registros con formularios estructurados, filtros y acciones rápidas.</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
 
                 <?php if (!empty($pageActivityRows)) : ?>
                     <div class="row">
@@ -335,11 +339,42 @@ include('partials/html.php');
                                         <input type="hidden" name="id" value="<?php echo (int) ($editingRecord['id'] ?? 0); ?>">
                                     <?php endif; ?>
                                     <div class="erp-form-grid">
+                                        <?php $groupOpen = false; ?>
                                         <?php foreach ($moduleFields as $field) : ?>
                                             <?php
                                                 $fieldName = $field['name'] ?? '';
                                                 if ($fieldName === '') {
                                                     $fieldType = $field['type'] ?? '';
+                                                    if ($fieldType === 'group_start') {
+                                                        $groupTitle = $field['label'] ?? '';
+                                                        $groupDescription = $field['description'] ?? '';
+                                                        if ($groupOpen) {
+                                                            echo '</div></div></div></div>';
+                                                        }
+                                                        $groupOpen = true;
+                                                        ?>
+                                                        <div class="erp-field erp-field--full">
+                                                            <div class="erp-form-card">
+                                                                <div class="erp-form-card__header">
+                                                                    <div>
+                                                                        <div class="fw-semibold"><?php echo htmlspecialchars($groupTitle, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                        <?php if ($groupDescription !== '') : ?>
+                                                                            <div class="text-muted small"><?php echo htmlspecialchars($groupDescription, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="erp-form-card__body">
+                                                                    <div class="erp-form-grid erp-form-grid--nested">
+                                                        <?php
+                                                        continue;
+                                                    }
+                                                    if ($fieldType === 'group_end') {
+                                                        if ($groupOpen) {
+                                                            echo '</div></div></div></div>';
+                                                            $groupOpen = false;
+                                                        }
+                                                        continue;
+                                                    }
                                                     if ($fieldType === 'section') {
                                                         $sectionTitle = $field['label'] ?? '';
                                                         $sectionDescription = $field['description'] ?? '';
@@ -406,6 +441,9 @@ include('partials/html.php');
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
+                                        <?php if ($groupOpen) : ?>
+                                            </div></div></div></div>
+                                        <?php endif; ?>
                                     </div>
                                     <?php if ($formAppendHtml !== '') : ?>
                                         <div class="mt-3">
@@ -424,105 +462,107 @@ include('partials/html.php');
                             </div>
                         </div>
                     </div>
-                    <div class="col-12">
-                        <div class="erp-section">
-                            <div class="erp-section-header">
-                                <div class="erp-toolbar">
-                                    <div>
-                                        <h5 class="card-title mb-0">
-                                            <?php echo $moduleMode === 'report' ? 'Resultados del reporte' : 'Registros disponibles'; ?>
-                                        </h5>
-                                        <p class="text-muted mb-0">
-                                            <?php echo $moduleMode === 'report' ? 'Vista consolidada según los filtros aplicados.' : 'Listado de elementos registrados en el módulo.'; ?>
-                                        </p>
-                                    </div>
-                                    <span class="erp-status-pill"><?php echo count($records); ?> elemento(s)</span>
-                                </div>
-                            </div>
-                            <div class="erp-section-body">
-                                <?php if ($showTableFilters) : ?>
-                                    <div class="erp-filters mb-3">
-                                        <div class="input-group">
-                                            <span class="input-group-text"><i class="ti ti-search"></i></span>
-                                            <input type="text" class="form-control" placeholder="Buscar por nombre, código o referencia">
+                    <?php if (!$hideModuleTable) : ?>
+                        <div class="col-12">
+                            <div class="erp-section">
+                                <div class="erp-section-header">
+                                    <div class="erp-toolbar">
+                                        <div>
+                                            <h5 class="card-title mb-0">
+                                                <?php echo $moduleMode === 'report' ? 'Resultados del reporte' : 'Registros disponibles'; ?>
+                                            </h5>
+                                            <p class="text-muted mb-0">
+                                                <?php echo $moduleMode === 'report' ? 'Vista consolidada según los filtros aplicados.' : 'Listado de elementos registrados en el módulo.'; ?>
+                                            </p>
                                         </div>
-                                        <select class="form-select">
-                                            <option value="">Estado</option>
-                                            <option>Activo</option>
-                                            <option>Inactivo</option>
-                                        </select>
-                                        <select class="form-select">
-                                            <option value="">Categoría</option>
-                                            <option>Operativo</option>
-                                            <option>Administrativo</option>
-                                            <option>Contable</option>
-                                        </select>
-                                        <button class="btn btn-outline-secondary" type="button">Limpiar</button>
+                                        <span class="erp-status-pill"><?php echo count($records); ?> elemento(s)</span>
                                     </div>
-                                <?php endif; ?>
-                                <div class="table-responsive">
-                                    <table class="table erp-table table-striped table-centered align-middle mb-0">
-                                        <thead>
-                                            <tr>
-                                                <?php foreach ($moduleListColumns as $column) : ?>
-                                                    <th><?php echo htmlspecialchars($column['label'] ?? (string) $column['key'], ENT_QUOTES, 'UTF-8'); ?></th>
-                                                <?php endforeach; ?>
-                                                <th class="text-end">Acciones</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php if (!$records) : ?>
-                                                <tr>
-                                                    <td colspan="<?php echo count($moduleListColumns) + 1; ?>">
-                                                        <div class="erp-empty">No hay registros para mostrar todavía.</div>
-                                                    </td>
-                                                </tr>
-                                            <?php endif; ?>
-                                            <?php foreach ($records as $record) : ?>
+                                </div>
+                                <div class="erp-section-body">
+                                    <?php if ($showTableFilters) : ?>
+                                        <div class="erp-filters mb-3">
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="ti ti-search"></i></span>
+                                                <input type="text" class="form-control" placeholder="Buscar por nombre, código o referencia">
+                                            </div>
+                                            <select class="form-select">
+                                                <option value="">Estado</option>
+                                                <option>Activo</option>
+                                                <option>Inactivo</option>
+                                            </select>
+                                            <select class="form-select">
+                                                <option value="">Categoría</option>
+                                                <option>Operativo</option>
+                                                <option>Administrativo</option>
+                                                <option>Contable</option>
+                                            </select>
+                                            <button class="btn btn-outline-secondary" type="button">Limpiar</button>
+                                        </div>
+                                    <?php endif; ?>
+                                    <div class="table-responsive">
+                                        <table class="table erp-table table-striped table-centered align-middle mb-0">
+                                            <thead>
                                                 <tr>
                                                     <?php foreach ($moduleListColumns as $column) : ?>
-                                                        <?php
-                                                            $columnKey = $column['key'] ?? '';
-                                                            $value = $columnKey !== '' ? ($record[$columnKey] ?? '') : '';
-                                                            $fieldConfig = $fieldMap[$columnKey] ?? null;
-                                                            if ($fieldConfig && ($fieldConfig['type'] ?? '') === 'select') {
-                                                                $options = $fieldConfig['options'] ?? [];
-                                                                if ($value !== '' && isset($options[$value])) {
-                                                                    $value = $options[$value];
-                                                                }
-                                                            }
-                                                        ?>
-                                                        <td><?php echo htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <th><?php echo htmlspecialchars($column['label'] ?? (string) $column['key'], ENT_QUOTES, 'UTF-8'); ?></th>
                                                     <?php endforeach; ?>
-                                                    <td class="text-end">
-                                                        <div class="d-inline-flex gap-2 erp-table-actions">
-                                                            <a class="btn btn-sm btn-outline-primary" href="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>?edit=<?php echo (int) $record['id']; ?>">Editar</a>
-                                                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-record-id="<?php echo (int) $record['id']; ?>" data-record-label="<?php echo htmlspecialchars((string) ($record[$moduleTitleField] ?? $record['nombre'] ?? 'registro'), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                Eliminar
-                                                            </button>
-                                                        </div>
-                                                    </td>
+                                                    <th class="text-end">Acciones</th>
                                                 </tr>
-                                            <?php endforeach; ?>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <?php if ($showTablePagination) : ?>
-                                    <div class="erp-pagination">
-                                        <div class="text-muted small">Mostrando <?php echo count($records); ?> de <?php echo count($records); ?> registros</div>
-                                        <nav>
-                                            <ul class="pagination pagination-sm mb-0">
-                                                <li class="page-item disabled"><span class="page-link">Anterior</span></li>
-                                                <li class="page-item active"><span class="page-link">1</span></li>
-                                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                                <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
-                                            </ul>
-                                        </nav>
+                                            </thead>
+                                            <tbody>
+                                                <?php if (!$records) : ?>
+                                                    <tr>
+                                                        <td colspan="<?php echo count($moduleListColumns) + 1; ?>">
+                                                            <div class="erp-empty">No hay registros para mostrar todavía.</div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endif; ?>
+                                                <?php foreach ($records as $record) : ?>
+                                                    <tr>
+                                                        <?php foreach ($moduleListColumns as $column) : ?>
+                                                            <?php
+                                                                $columnKey = $column['key'] ?? '';
+                                                                $value = $columnKey !== '' ? ($record[$columnKey] ?? '') : '';
+                                                                $fieldConfig = $fieldMap[$columnKey] ?? null;
+                                                                if ($fieldConfig && ($fieldConfig['type'] ?? '') === 'select') {
+                                                                    $options = $fieldConfig['options'] ?? [];
+                                                                    if ($value !== '' && isset($options[$value])) {
+                                                                        $value = $options[$value];
+                                                                    }
+                                                                }
+                                                            ?>
+                                                            <td><?php echo htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <?php endforeach; ?>
+                                                        <td class="text-end">
+                                                            <div class="d-inline-flex gap-2 erp-table-actions">
+                                                                <a class="btn btn-sm btn-outline-primary" href="<?php echo htmlspecialchars(basename((string) ($_SERVER['SCRIPT_NAME'] ?? '')), ENT_QUOTES, 'UTF-8'); ?>?edit=<?php echo (int) $record['id']; ?>">Editar</a>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal" data-record-id="<?php echo (int) $record['id']; ?>" data-record-label="<?php echo htmlspecialchars((string) ($record[$moduleTitleField] ?? $record['nombre'] ?? 'registro'), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    Eliminar
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            </tbody>
+                                        </table>
                                     </div>
-                                <?php endif; ?>
+                                    <?php if ($showTablePagination) : ?>
+                                        <div class="erp-pagination">
+                                            <div class="text-muted small">Mostrando <?php echo count($records); ?> de <?php echo count($records); ?> registros</div>
+                                            <nav>
+                                                <ul class="pagination pagination-sm mb-0">
+                                                    <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+                                                    <li class="page-item active"><span class="page-link">1</span></li>
+                                                    <li class="page-item"><a class="page-link" href="#">2</a></li>
+                                                    <li class="page-item"><a class="page-link" href="#">Siguiente</a></li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    <?php endif; ?>
                 </div>
                 <?php endif; ?>
 
