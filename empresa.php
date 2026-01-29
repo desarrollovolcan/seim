@@ -148,6 +148,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (!has_permission('empresas', 'edit')) {
                             throw new RuntimeException('Sin permisos.');
                         }
+                        $stmt = db()->prepare('SELECT ruc FROM empresas WHERE id = ? LIMIT 1');
+                        $stmt->execute([$recordId]);
+                        $currentRuc = $stmt->fetchColumn();
+                        if ($currentRuc !== false && normalize_rut((string) $currentRuc) === $rutForDb) {
+                            $rutForDb = (string) $currentRuc;
+                        }
                         $stmt = db()->prepare(
                             'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ?, logo_path = ?, logo_topbar_height = ?, logo_sidenav_height = ?, logo_sidenav_height_sm = ?, logo_auth_height = ? WHERE id = ?'
                         );
