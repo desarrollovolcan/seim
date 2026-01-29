@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('proveedores', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'nombre' => '',
@@ -22,8 +25,8 @@ $fields = [
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? LIMIT 1');
-        $stmt->execute([$viewId]);
+        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -31,8 +34,8 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
@@ -53,13 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM proveedores WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['proveedor_flash'] = 'Proveedor eliminado correctamente.';
-                redirect('proveedores.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar el proveedor.';
+            if (!has_permission('proveedores', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar proveedores.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['proveedor_flash'] = 'Proveedor eliminado correctamente.';
+                    redirect('proveedores.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar el proveedor.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -81,8 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('proveedores', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'UPDATE proveedores SET nombre = ?, razon_social = ?, rut = ?, telefono = ?, correo = ?, direccion = ? WHERE id = ?'
+                            'UPDATE proveedores SET nombre = ?, razon_social = ?, rut = ?, telefono = ?, correo = ?, direccion = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -91,12 +101,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
                         $_SESSION['proveedor_flash'] = 'Proveedor actualizado correctamente.';
                     } else {
+                        if (!has_permission('proveedores', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'INSERT INTO proveedores (nombre, razon_social, rut, telefono, correo, direccion) VALUES (?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO proveedores (nombre, razon_social, rut, telefono, correo, direccion, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -105,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $empresaId,
                         ]);
                         $_SESSION['proveedor_flash'] = 'Proveedor registrado correctamente.';
                     }
@@ -124,7 +139,9 @@ if (isset($_SESSION['proveedor_flash'])) {
 
 $proveedores = [];
 try {
-    $proveedores = db()->query('SELECT * FROM proveedores ORDER BY created_at DESC')->fetchAll();
+    $stmt = db()->prepare('SELECT * FROM proveedores WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY created_at DESC');
+    $stmt->execute([$empresaId]);
+    $proveedores = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de proveedores.';
 }
@@ -224,7 +241,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('proveedores', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar proveedor' : 'Guardar proveedor'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -277,13 +294,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars($proveedor['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-nowrap">
                                                             <a href="proveedores.php?view=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-info btn-sm">Ver</a>
-                                                            <a href="proveedores.php?edit=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-primary btn-sm">Editar</a>
-                                                            <form method="post" action="proveedores.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $proveedor['id']; ?>">
-                                                                <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar proveedor?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('proveedores', 'edit')) : ?>
+                                                                <a href="proveedores.php?edit=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-primary btn-sm">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('proveedores', 'delete')) : ?>
+                                                                <form method="post" action="proveedores.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $proveedor['id']; ?>">
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar proveedor?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

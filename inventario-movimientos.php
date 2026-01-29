@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('movimientos', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'producto_id' => '',
@@ -18,7 +21,9 @@ $fields = [
 
 $productos = [];
 try {
-    $productos = db()->query('SELECT id, nombre, sku FROM inventario_productos ORDER BY nombre')->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, sku FROM inventario_productos WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $productos = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de productos.';
 }
@@ -30,9 +35,9 @@ if (isset($_GET['view'])) {
             'SELECT m.*, p.nombre AS producto_nombre, p.sku AS producto_sku
              FROM inventario_movimientos m
              JOIN inventario_productos p ON p.id = m.producto_id
-             WHERE m.id = ? LIMIT 1'
+             WHERE m.id = ? AND (m.empresa_id = ? OR m.empresa_id IS NULL) LIMIT 1'
         );
-        $stmt->execute([$viewId]);
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -63,20 +68,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$errors) {
                 try {
+                    if (!has_permission('movimientos', 'create')) {
+                        throw new RuntimeException('Sin permisos.');
+                    }
                     $cantidad = (float) $fields['cantidad'];
                     if ($fields['tipo'] === 'salida') {
                         $cantidad = -abs($cantidad);
                     }
 
                     $stmt = db()->prepare(
-                        'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion)
-                         VALUES (?, ?, ?, ?)'
+                        'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion, empresa_id)
+                         VALUES (?, ?, ?, ?, ?)'
                     );
                     $stmt->execute([
                         (int) $fields['producto_id'],
                         $fields['tipo'],
                         $cantidad,
                         $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                        $empresaId,
                     ]);
 
                     $stmt = db()->prepare('UPDATE inventario_productos SET stock_actual = stock_actual + ? WHERE id = ?');
@@ -99,12 +108,15 @@ if (isset($_SESSION['movimiento_flash'])) {
 
 $movimientos = [];
 try {
-    $movimientos = db()->query(
+    $stmt = db()->prepare(
         'SELECT m.*, p.nombre AS producto_nombre, p.sku AS producto_sku
          FROM inventario_movimientos m
          JOIN inventario_productos p ON p.id = m.producto_id
+         WHERE m.empresa_id = ? OR m.empresa_id IS NULL
          ORDER BY m.created_at DESC'
-    )->fetchAll();
+    );
+    $stmt->execute([$empresaId]);
+    $movimientos = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el historial de movimientos.';
 }
@@ -197,7 +209,10 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('movimientos', 'create') ? 'disabled' : ''; ?>>Guardar movimiento</button>
+                                            <?php if (!has_permission('movimientos', 'create')) : ?>
+                                                <span class="text-muted align-self-center">No tienes permisos para registrar movimientos.</span>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </form>

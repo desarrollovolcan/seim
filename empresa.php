@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('empresas', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
@@ -53,13 +55,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM empresas WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['empresa_flash'] = 'Empresa eliminada correctamente.';
-                redirect('empresa.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar la empresa.';
+            if (!has_permission('empresas', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar empresas.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM empresas WHERE id = ?');
+                    $stmt->execute([$recordId]);
+                    $_SESSION['empresa_flash'] = 'Empresa eliminada correctamente.';
+                    redirect('empresa.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar la empresa.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -79,6 +85,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('empresas', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
                             'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ? WHERE id = ?'
                         );
@@ -93,6 +102,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         ]);
                         $_SESSION['empresa_flash'] = 'Empresa actualizada correctamente.';
                     } else {
+                        if (!has_permission('empresas', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
                             'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion) VALUES (?, ?, ?, ?, ?, ?)'
                         );
@@ -227,7 +239,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('empresas', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar empresa' : 'Guardar empresa'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -277,13 +289,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($empresa['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="empresa.php?view=<?php echo (int) $empresa['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="empresa.php?edit=<?php echo (int) $empresa['id']; ?>">Editar</a>
-                                                            <form method="post" action="empresa.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $empresa['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta empresa?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('empresas', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="empresa.php?edit=<?php echo (int) $empresa['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('empresas', 'delete')) : ?>
+                                                                <form method="post" action="empresa.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $empresa['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta empresa?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

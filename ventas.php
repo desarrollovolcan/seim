@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('ventas', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
+$empresaId = current_empresa_id();
 
 $fields = [
     'cliente_id' => '',
@@ -26,8 +29,12 @@ $hasEmpresaColumn = column_exists('ventas', 'empresa_id');
 $hasNotaColumn = column_exists('ventas', 'nota');
 $hasObservacionColumn = column_exists('ventas', 'observacion');
 try {
-    $clientes = db()->query('SELECT id, nombre, documento FROM clientes ORDER BY nombre')->fetchAll();
-    $productos = db()->query('SELECT id, nombre, sku, precio_venta, stock_actual FROM inventario_productos ORDER BY nombre')->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, documento FROM clientes WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $clientes = $stmt->fetchAll();
+    $stmt = db()->prepare('SELECT id, nombre, sku, precio_venta, stock_actual FROM inventario_productos WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
+    $stmt->execute([$empresaId]);
+    $productos = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar los catálogos de venta.';
 }
@@ -88,12 +95,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (!$errors) {
             try {
+                if (!has_permission('ventas', 'create')) {
+                    throw new RuntimeException('Sin permisos.');
+                }
                 $total = $lineTotal;
 
                 db()->beginTransaction();
 
-                $stmt = db()->prepare('SELECT nombre FROM clientes WHERE id = ? LIMIT 1');
-                $stmt->execute([(int) $fields['cliente_id']]);
+                $stmt = db()->prepare('SELECT nombre FROM clientes WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+                $stmt->execute([(int) $fields['cliente_id'], $empresaId]);
                 $clienteNombre = $stmt->fetchColumn();
                 if (!$clienteNombre) {
                     throw new RuntimeException('Cliente no encontrado.');
@@ -125,7 +135,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($hasEmpresaColumn) {
-                    $empresaId = get_default_empresa_id();
                     $columns[] = 'empresa_id';
                     $values[] = $empresaId;
                 }
@@ -155,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 );
                 $updateStock = db()->prepare('UPDATE inventario_productos SET stock_actual = stock_actual - ? WHERE id = ?');
                 $insertMovimiento = db()->prepare(
-                    'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion) VALUES (?, ?, ?, ?)'
+                    'INSERT INTO inventario_movimientos (producto_id, tipo, cantidad, descripcion, empresa_id) VALUES (?, ?, ?, ?, ?)'
                 );
 
                 foreach ($lineItems as $line) {
@@ -186,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'salida',
                         $cantidad,
                         'Salida por venta',
+                        $empresaId,
                     ]);
                 }
 
@@ -219,23 +229,28 @@ try {
             $clienteNombreSelect = 'c.nombre AS cliente_nombre';
         }
 
-        $ventas = db()->query(
+        $stmt = db()->prepare(
             sprintf(
                 'SELECT v.*, %s
                  FROM ventas v
                  LEFT JOIN clientes c ON c.id = v.cliente_id
+                 WHERE v.empresa_id = ? OR v.empresa_id IS NULL
                  ORDER BY v.created_at DESC',
                 $clienteNombreSelect
             )
-        )->fetchAll();
+        );
+        $stmt->execute([$empresaId]);
+        $ventas = $stmt->fetchAll();
     } else {
         $clienteNombreSelect = $hasClienteNombreColumn ? 'v.cliente_nombre AS cliente_nombre' : 'v.cliente AS cliente_nombre';
-        $ventas = db()->query(
+        $stmt = db()->prepare(
             sprintf(
-                'SELECT v.*, %s FROM ventas v ORDER BY v.created_at DESC',
+                'SELECT v.*, %s FROM ventas v WHERE v.empresa_id = ? OR v.empresa_id IS NULL ORDER BY v.created_at DESC',
                 $clienteNombreSelect
             )
-        )->fetchAll();
+        );
+        $stmt->execute([$empresaId]);
+        $ventas = $stmt->fetchAll();
     }
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de ventas.';
@@ -357,9 +372,11 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary" <?php echo !$clientes ? 'disabled' : ''; ?>>Guardar venta</button>
+                                            <button type="submit" class="btn btn-primary" <?php echo !$clientes || !has_permission('ventas', 'create') ? 'disabled' : ''; ?>>Guardar venta</button>
                                             <?php if (!$clientes) : ?>
                                                 <span class="text-muted align-self-center">Necesitas registrar al menos un cliente.</span>
+                                            <?php elseif (!has_permission('ventas', 'create')) : ?>
+                                                <span class="text-muted align-self-center">No tienes permisos para registrar ventas.</span>
                                             <?php endif; ?>
                                         </div>
                                     </div>

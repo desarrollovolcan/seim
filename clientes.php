@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('clientes', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'nombre' => '',
@@ -22,8 +25,8 @@ $fields = [
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM clientes WHERE id = ? LIMIT 1');
-        $stmt->execute([$viewId]);
+        $stmt = db()->prepare('SELECT * FROM clientes WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -31,8 +34,8 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM clientes WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM clientes WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
@@ -53,13 +56,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM clientes WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['cliente_flash'] = 'Cliente eliminado correctamente.';
-                redirect('clientes.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar el cliente.';
+            if (!has_permission('clientes', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar clientes.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM clientes WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['cliente_flash'] = 'Cliente eliminado correctamente.';
+                    redirect('clientes.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar el cliente.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -81,8 +88,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
+                        if (!has_permission('clientes', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'UPDATE clientes SET nombre = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, notas = ? WHERE id = ?'
+                            'UPDATE clientes SET nombre = ?, documento = ?, correo = ?, telefono = ?, direccion = ?, notas = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -91,12 +101,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
                             $fields['notas'] !== '' ? $fields['notas'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
                         $_SESSION['cliente_flash'] = 'Cliente actualizado correctamente.';
                     } else {
+                        if (!has_permission('clientes', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
                         $stmt = db()->prepare(
-                            'INSERT INTO clientes (nombre, documento, correo, telefono, direccion, notas) VALUES (?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO clientes (nombre, documento, correo, telefono, direccion, notas, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
@@ -105,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
                             $fields['notas'] !== '' ? $fields['notas'] : null,
+                            $empresaId,
                         ]);
                         $_SESSION['cliente_flash'] = 'Cliente registrado correctamente.';
                     }
@@ -124,7 +139,9 @@ if (isset($_SESSION['cliente_flash'])) {
 
 $clientes = [];
 try {
-    $clientes = db()->query('SELECT * FROM clientes ORDER BY created_at DESC')->fetchAll();
+    $stmt = db()->prepare('SELECT * FROM clientes WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY created_at DESC');
+    $stmt->execute([$empresaId]);
+    $clientes = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de clientes.';
 }
@@ -220,7 +237,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('clientes', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar cliente' : 'Guardar cliente'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -268,13 +285,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($cliente['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="clientes.php?view=<?php echo (int) $cliente['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="clientes.php?edit=<?php echo (int) $cliente['id']; ?>">Editar</a>
-                                                            <form method="post" action="clientes.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $cliente['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este cliente?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('clientes', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="clientes.php?edit=<?php echo (int) $cliente['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('clientes', 'delete')) : ?>
+                                                                <form method="post" action="clientes.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $cliente['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar este cliente?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

@@ -15,6 +15,13 @@
             <div class="container-fluid">
                 <?php $subtitle = 'Resumen general'; $title = 'Dashboard'; include('partials/page-title.php'); ?>
 
+                <?php if (!empty($_SESSION['permission_error'])) : ?>
+                    <div class="alert alert-warning">
+                        <?php echo htmlspecialchars((string) $_SESSION['permission_error'], ENT_QUOTES, 'UTF-8'); ?>
+                    </div>
+                    <?php unset($_SESSION['permission_error']); ?>
+                <?php endif; ?>
+
                 <div class="row g-3">
                     <div class="col-md-6 col-xl-4">
                         <div class="card shadow-sm">
@@ -131,7 +138,65 @@
                 </div>
 
                 <div class="row g-3 mt-1">
-                    <div class="col-xl-8">
+                    <div class="col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Ventas por mes</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="ventasMensualesChart" class="apex-charts" style="min-height: 240px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Margen de ganancia por producto</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="margenProductosChart" class="apex-charts" style="min-height: 240px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-xl-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Stock bajo</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Stock actual</th>
+                                                <th>Stock mínimo</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!$lowStock) : ?>
+                                                <tr>
+                                                    <td colspan="3" class="text-center text-muted">Sin alertas críticas.</td>
+                                                </tr>
+                                            <?php else : ?>
+                                                <?php foreach ($lowStock as $item) : ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($item['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($item['stock_actual'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($item['stock_minimo'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-6">
                         <div class="card shadow-sm">
                             <div class="card-header">
                                 <h5 class="card-title mb-0">Ventas recientes</h5>
@@ -166,6 +231,9 @@
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="row g-3 mt-1">
                     <div class="col-xl-4">
                         <div class="card shadow-sm">
                             <div class="card-header">
@@ -184,6 +252,43 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-xl-8">
+                        <div class="card shadow-sm">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Top margen por producto</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-striped align-middle mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Producto</th>
+                                                <th>Compra</th>
+                                                <th>Venta</th>
+                                                <th>Margen</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php if (!$profitMargins) : ?>
+                                                <tr>
+                                                    <td colspan="4" class="text-center text-muted">Sin datos de margen aún.</td>
+                                                </tr>
+                                            <?php else : ?>
+                                                <?php foreach ($profitMargins as $margin) : ?>
+                                                    <tr>
+                                                        <td><?php echo htmlspecialchars($margin['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($margin['precio_compra'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($margin['precio_venta'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($margin['margen'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?>%</td>
+                                                    </tr>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -192,5 +297,44 @@
     </div>
 
     <?php include('partials/footer-scripts.php'); ?>
+    <script>
+        (() => {
+            if (typeof ApexCharts === 'undefined') {
+                return;
+            }
+
+            const ventasLabels = <?php echo json_encode(array_column($ventasMensuales, 'periodo'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const ventasData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['total'] ?? 0), $ventasMensuales), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+
+            const ventasChart = new ApexCharts(document.querySelector('#ventasMensualesChart'), {
+                chart: {
+                    type: 'bar',
+                    height: 240,
+                    toolbar: { show: false },
+                },
+                series: [{ name: 'Ventas', data: ventasData }],
+                xaxis: { categories: ventasLabels },
+                colors: ['#4f46e5'],
+                dataLabels: { enabled: false },
+            });
+            ventasChart.render();
+
+            const margenLabels = <?php echo json_encode(array_column($profitMargins, 'nombre'), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+            const margenData = <?php echo json_encode(array_map(static fn($item) => (float) ($item['margen'] ?? 0), $profitMargins), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+
+            const margenChart = new ApexCharts(document.querySelector('#margenProductosChart'), {
+                chart: {
+                    type: 'bar',
+                    height: 240,
+                    toolbar: { show: false },
+                },
+                series: [{ name: 'Margen %', data: margenData }],
+                xaxis: { categories: margenLabels },
+                colors: ['#22c55e'],
+                dataLabels: { enabled: false },
+            });
+            margenChart.render();
+        })();
+    </script>
 </body>
 </html>

@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('categorias', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'nombre' => '',
@@ -18,8 +21,8 @@ $fields = [
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? LIMIT 1');
-        $stmt->execute([$viewId]);
+        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -27,8 +30,8 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
@@ -45,13 +48,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            try {
-                $stmt = db()->prepare('DELETE FROM inventario_categorias WHERE id = ?');
-                $stmt->execute([$recordId]);
-                $_SESSION['categoria_flash'] = 'Familia eliminada correctamente.';
-                redirect('inventario-categorias.php');
-            } catch (Exception $e) {
-                $errors[] = 'No se pudo eliminar la categoría.';
+            if (!has_permission('categorias', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar familias.';
+            } else {
+                try {
+                    $stmt = db()->prepare('DELETE FROM inventario_categorias WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['categoria_flash'] = 'Familia eliminada correctamente.';
+                    redirect('inventario-categorias.php');
+                } catch (Exception $e) {
+                    $errors[] = 'No se pudo eliminar la categoría.';
+                }
             }
         } else {
             foreach ($fields as $key => $value) {
@@ -65,18 +72,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
-                        $stmt = db()->prepare('UPDATE inventario_categorias SET nombre = ?, descripcion = ? WHERE id = ?');
+                        if (!has_permission('categorias', 'edit')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
+                        $stmt = db()->prepare('UPDATE inventario_categorias SET nombre = ?, descripcion = ?, empresa_id = ? WHERE id = ?');
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
                         $_SESSION['categoria_flash'] = 'Familia actualizada correctamente.';
                     } else {
-                        $stmt = db()->prepare('INSERT INTO inventario_categorias (nombre, descripcion) VALUES (?, ?)');
+                        if (!has_permission('categorias', 'create')) {
+                            throw new RuntimeException('Sin permisos.');
+                        }
+                        $stmt = db()->prepare('INSERT INTO inventario_categorias (nombre, descripcion, empresa_id) VALUES (?, ?, ?)');
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            $empresaId,
                         ]);
                         $_SESSION['categoria_flash'] = 'Familia creada correctamente.';
                     }
@@ -96,7 +111,9 @@ if (isset($_SESSION['categoria_flash'])) {
 
 $categorias = [];
 try {
-    $categorias = db()->query('SELECT * FROM inventario_categorias ORDER BY created_at DESC')->fetchAll();
+    $stmt = db()->prepare('SELECT * FROM inventario_categorias WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY created_at DESC');
+    $stmt->execute([$empresaId]);
+    $categorias = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el listado de familias.';
 }
@@ -172,7 +189,7 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary">
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('categorias', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
                                                 <?php echo $editingId ? 'Actualizar familia' : 'Guardar familia'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
@@ -216,13 +233,17 @@ include('partials/html.php');
                                                         <td><?php echo htmlspecialchars((string) ($categoria['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
                                                             <a class="btn btn-sm btn-outline-primary" href="inventario-categorias.php?view=<?php echo (int) $categoria['id']; ?>">Ver</a>
-                                                            <a class="btn btn-sm btn-outline-secondary" href="inventario-categorias.php?edit=<?php echo (int) $categoria['id']; ?>">Editar</a>
-                                                            <form method="post" action="inventario-categorias.php" class="d-inline">
-                                                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
-                                                                <input type="hidden" name="action" value="delete">
-                                                                <input type="hidden" name="id" value="<?php echo (int) $categoria['id']; ?>">
-                                                                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta categoría?');">Eliminar</button>
-                                                            </form>
+                                                            <?php if (has_permission('categorias', 'edit')) : ?>
+                                                                <a class="btn btn-sm btn-outline-secondary" href="inventario-categorias.php?edit=<?php echo (int) $categoria['id']; ?>">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('categorias', 'delete')) : ?>
+                                                                <form method="post" action="inventario-categorias.php" class="d-inline">
+                                                                    <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                                                                    <input type="hidden" name="action" value="delete">
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $categoria['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta categoría?');">Eliminar</button>
+                                                                </form>
+                                                            <?php endif; ?>
                                                         </td>
                                                     </tr>
                                                 <?php endforeach; ?>

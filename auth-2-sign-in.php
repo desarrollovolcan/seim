@@ -43,6 +43,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'rol' => $user['rol'],
                 'avatar_path' => $user['avatar_path'] ?? null,
             ];
+            $empresasUsuario = load_user_empresas((int) $user['id']);
+            if (!$empresasUsuario && is_superuser()) {
+                $empresasUsuario = load_empresas();
+            }
+            $_SESSION['user']['empresas'] = $empresasUsuario;
+            if ($empresasUsuario) {
+                $_SESSION['empresa_id'] = (int) $empresasUsuario[0]['id'];
+            }
             redirect('dashboard.php');
         }
     }
