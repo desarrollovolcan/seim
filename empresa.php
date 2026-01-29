@@ -116,14 +116,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['nombre'] === '') {
                 $errors[] = 'El nombre es obligatorio.';
             }
+            $rutForDb = '';
             if ($fields['ruc'] === '') {
                 $errors[] = 'El RUT es obligatorio.';
             } else {
-                $normalizedRut = normalize_rut($fields['ruc']);
-                if ($normalizedRut === '' || strlen($normalizedRut) < 2) {
+                $rutForDb = normalize_rut($fields['ruc']);
+                if ($rutForDb === '' || strlen($rutForDb) < 2) {
                     $errors[] = 'El RUT no es válido.';
                 } else {
-                    $fields['ruc'] = format_rut($normalizedRut);
+                    $fields['ruc'] = format_rut($rutForDb);
                 }
             }
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
@@ -153,7 +154,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
-                            $fields['ruc'],
+                            $rutForDb,
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
@@ -176,7 +177,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
-                            $fields['ruc'],
+                            $rutForDb,
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
