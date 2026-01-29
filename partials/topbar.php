@@ -126,6 +126,14 @@
                 </button>
             </div>
 
+            <!-- Install App -->
+            <div class="topbar-item d-none" id="installAppItem">
+                <button class="topbar-link" type="button" id="installAppButton" aria-label="Instalar aplicación">
+                    <i data-lucide="download" class="fs-xxl"></i>
+                    <span class="d-none d-md-inline ms-1 small">Instalar</span>
+                </button>
+            </div>
+
             <!-- Light/Dark Mode Button -->
             <div class="topbar-item d-none">
                 <button class="topbar-link" id="light-dark-mode" type="button">
