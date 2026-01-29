@@ -42,4 +42,33 @@
         });
     }
 
+    const installAppItem = document.getElementById('installAppItem');
+    const installAppButton = document.getElementById('installAppButton');
+    let deferredInstallPrompt = null;
+
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+    if (installAppItem && installAppButton && !isStandalone) {
+        window.addEventListener('beforeinstallprompt', (event) => {
+            event.preventDefault();
+            deferredInstallPrompt = event;
+            installAppItem.classList.remove('d-none');
+        });
+
+        installAppButton.addEventListener('click', async () => {
+            if (!deferredInstallPrompt) {
+                return;
+            }
+            deferredInstallPrompt.prompt();
+            await deferredInstallPrompt.userChoice;
+            deferredInstallPrompt = null;
+            installAppItem.classList.add('d-none');
+        });
+
+        window.addEventListener('appinstalled', () => {
+            deferredInstallPrompt = null;
+            installAppItem.classList.add('d-none');
+        });
+    }
+
 </script>
