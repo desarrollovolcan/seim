@@ -93,3 +93,28 @@ CREATE TABLE inventario_movimientos (
     KEY inventario_movimientos_producto_idx (producto_id),
     CONSTRAINT inventario_movimientos_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE ventas (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    cliente VARCHAR(150) NOT NULL,
+    fecha DATE NOT NULL,
+    total DECIMAL(12,2) NOT NULL DEFAULT 0,
+    nota VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE venta_items (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    venta_id INT UNSIGNED NOT NULL,
+    producto_id INT UNSIGNED NOT NULL,
+    cantidad DECIMAL(12,2) NOT NULL,
+    precio_unitario DECIMAL(12,2) NOT NULL,
+    total DECIMAL(12,2) NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY venta_items_venta_idx (venta_id),
+    KEY venta_items_producto_idx (producto_id),
+    CONSTRAINT venta_items_venta_fk FOREIGN KEY (venta_id) REFERENCES ventas (id) ON DELETE CASCADE,
+    CONSTRAINT venta_items_producto_fk FOREIGN KEY (producto_id) REFERENCES inventario_productos (id) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -89,6 +89,15 @@
                     <span class="menu-text">Stock actual</span>
                 </a>
             </li>
+
+            <li class="side-nav-title mt-3" data-lang="menu-title">Ventas</li>
+
+            <li class="side-nav-item">
+                <a href="ventas.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
+                    <span class="menu-text">Control de ventas</span>
+                </a>
+            </li>
         </ul>
     </div>
 </div>
