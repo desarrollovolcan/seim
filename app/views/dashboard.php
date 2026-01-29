@@ -101,6 +101,22 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div>
+                                        <p class="text-muted text-uppercase fs-12 mb-1">Clientes</p>
+                                        <h3 class="mb-0"><?php echo (int) ($metrics['clientes'] ?? 0); ?></h3>
+                                        <small class="text-muted">Registrados</small>
+                                    </div>
+                                    <span class="avatar-sm rounded-circle bg-secondary-subtle text-secondary d-flex align-items-center justify-content-center">
+                                        <i data-lucide="users" class="fs-20"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 col-xl-4">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
                                         <p class="text-muted text-uppercase fs-12 mb-1">Bajo stock</p>
                                         <h3 class="mb-0"><?php echo (int) ($metrics['bajo_stock'] ?? 0); ?></h3>
                                         <small class="text-muted">Productos críticos</small>
@@ -157,8 +173,11 @@
                             </div>
                             <div class="card-body">
                                 <div class="d-grid gap-2">
+                                    <a href="compras.php" class="btn btn-outline-warning">Registrar compra</a>
+                                    <a href="inventario-categorias.php" class="btn btn-outline-info">Nueva familia</a>
                                     <a href="inventario-productos.php" class="btn btn-outline-primary">Nuevo producto</a>
                                     <a href="inventario-movimientos.php" class="btn btn-outline-secondary">Registrar movimiento</a>
+                                    <a href="clientes.php" class="btn btn-outline-info">Nuevo cliente</a>
                                     <a href="ventas.php" class="btn btn-outline-success">Registrar venta</a>
                                     <a href="inventario-stock.php" class="btn btn-outline-danger">Revisar stock</a>
                                 </div>
