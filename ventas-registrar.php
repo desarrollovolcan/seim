@@ -92,7 +92,7 @@ $moduleFields = [
         'required' => true,
         'default' => '19',
         'step' => '0.01',
-        'col' => 'erp-field erp-field--quarter',
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'monto_exento',
@@ -101,7 +101,7 @@ $moduleFields = [
         'required' => false,
         'step' => '0.01',
         'default' => '0',
-        'col' => 'erp-field erp-field--quarter',
+        'col' => 'erp-field erp-field--sixth',
     ],
     [
         'name' => 'rut_receptor',
