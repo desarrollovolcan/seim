@@ -44,6 +44,13 @@
             <li class="side-nav-title mt-2" data-lang="menu-title">Menú principal</li>
 
             <li class="side-nav-item">
+                <a href="dashboard.php" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="layout-dashboard"></i></span>
+                    <span class="menu-text">Dashboard</span>
+                </a>
+            </li>
+
+            <li class="side-nav-item">
                 <a href="usuario.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="user"></i></span>
                     <span class="menu-text">Usuario</span>

@@ -45,7 +45,7 @@
         <div class="d-flex align-items-center gap-2 flex-wrap justify-content-end">
 
             <!-- Search -->
-            <form class="app-search d-none d-md-flex me-2 flex-grow-1 flex-lg-grow-0" action="busqueda.php" method="get">
+            <form class="app-search d-none d-md-flex me-2 flex-grow-1 flex-lg-grow-0" action="dashboard.php" method="get">
                 <input type="search" class="form-control topbar-search rounded-pill" name="q" placeholder="Buscar en el sistema" aria-label="Buscar en el sistema">
                 <i data-lucide="search" class="app-search-icon text-muted"></i>
             </form>
@@ -137,15 +137,9 @@
                         </div>
 
                         <!-- Edit Profile -->
-                        <a href="usuarios-editar.php?id=<?php echo (int) ($_SESSION['user']['id'] ?? 0); ?>" class="dropdown-item">
+                        <a href="usuario.php" class="dropdown-item">
                             <i class="ti ti-user-circle me-1 fs-17 align-middle"></i>
                             <span class="align-middle">Editar perfil</span>
-                        </a>
-
-                        <!-- Change Password -->
-                        <a href="auth-new-pass.php" class="dropdown-item">
-                            <i class="ti ti-lock me-1 fs-17 align-middle"></i>
-                            <span class="align-middle">Cambiar contraseña</span>
                         </a>
 
                         <!-- Divider -->
