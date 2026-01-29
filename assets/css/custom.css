@@ -102,6 +102,16 @@
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
 }
 
+.erp-page .erp-section form .row {
+  --bs-gutter-x: 1.25rem;
+  --bs-gutter-y: 0.85rem;
+}
+
+.erp-page .erp-section form .row > [class*="col-"] {
+  display: flex;
+  flex-direction: column;
+}
+
 .erp-page .erp-section form .border.rounded-3.bg-light-subtle {
   border-color: #e5e7eb !important;
   background: #ffffff !important;
