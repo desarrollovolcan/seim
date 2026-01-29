@@ -1,8 +1,8 @@
 <?php
-$municipalidadName = $municipalidad['nombre'] ?? 'Go Muni';
+$municipalidadName = $municipalidad['nombre'] ?? 'Seim Inventario';
 $logoPath = $municipalidad['logo_path'] ?? 'assets/images/logo.png';
-$pageTitle = isset($title) ? $title : 'Go Muni';
-$metaDescription = 'Go Muni · tecnologia escalable para la gestión de eventos, autoridades y validaciones ciudadanas.';
+$pageTitle = isset($title) ? $title : 'Seim Inventario';
+$metaDescription = 'Seim Inventario · tecnologia escalable para la gestión de eventos, autoridades y validaciones ciudadanas.';
 $metaKeywords = 'municipalidad, gestión municipal, eventos municipales, autoridades, validación ciudadana, administración pública, gobierno local';
 ?>
 <meta charset="utf-8">
