@@ -112,6 +112,16 @@
   flex-direction: column;
 }
 
+.erp-page .erp-section form .row > .col-12,
+.erp-page .erp-section form .row > .col-sm-12,
+.erp-page .erp-section form .row > .col-md-12,
+.erp-page .erp-section form .row > .col-lg-12,
+.erp-page .erp-section form .row > .col-xl-12 {
+  flex: 1 1 240px;
+  max-width: 100%;
+  width: auto;
+}
+
 .erp-page .erp-section form .border.rounded-3.bg-light-subtle {
   border-color: #e5e7eb !important;
   background: #ffffff !important;
