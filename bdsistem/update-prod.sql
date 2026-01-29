@@ -114,6 +114,11 @@ CREATE TABLE IF NOT EXISTS `inventario_productos` (
   `categoria_id` INT DEFAULT NULL,
   `subfamilia_id` INT DEFAULT NULL,
   `unidad_id` INT DEFAULT NULL,
+  `codigo_competencia` VARCHAR(80) DEFAULT NULL,
+  `codigo_proveedor` VARCHAR(80) DEFAULT NULL,
+  `codigo_empresa` VARCHAR(80) DEFAULT NULL,
+  `valor_competencia` DECIMAL(12,2) DEFAULT NULL,
+  `valor_proveedor` DECIMAL(12,2) DEFAULT NULL,
   `precio_compra` DECIMAL(12,2) DEFAULT NULL,
   `precio_venta` DECIMAL(12,2) DEFAULT NULL,
   `stock_minimo` DECIMAL(12,2) DEFAULT NULL,
@@ -130,6 +135,12 @@ CREATE TABLE IF NOT EXISTS `inventario_productos` (
   CONSTRAINT `inventario_productos_subfamilia_fk` FOREIGN KEY (`subfamilia_id`) REFERENCES `inventario_subfamilias` (`id`) ON DELETE SET NULL,
   CONSTRAINT `inventario_productos_unidad_fk` FOREIGN KEY (`unidad_id`) REFERENCES `inventario_unidades` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE `inventario_productos` ADD COLUMN IF NOT EXISTS `codigo_competencia` VARCHAR(80) DEFAULT NULL;
+ALTER TABLE `inventario_productos` ADD COLUMN IF NOT EXISTS `codigo_proveedor` VARCHAR(80) DEFAULT NULL;
+ALTER TABLE `inventario_productos` ADD COLUMN IF NOT EXISTS `codigo_empresa` VARCHAR(80) DEFAULT NULL;
+ALTER TABLE `inventario_productos` ADD COLUMN IF NOT EXISTS `valor_competencia` DECIMAL(12,2) DEFAULT NULL;
+ALTER TABLE `inventario_productos` ADD COLUMN IF NOT EXISTS `valor_proveedor` DECIMAL(12,2) DEFAULT NULL;
 
 CREATE TABLE IF NOT EXISTS `inventario_movimientos` (
   `id` INT NOT NULL AUTO_INCREMENT,

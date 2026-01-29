@@ -13,6 +13,8 @@ $empresaId = current_empresa_id();
 
 $fields = [
     'cliente_id' => '',
+    'tipo_documento' => '',
+    'numero_documento' => '',
     'fecha' => date('Y-m-d'),
     'nota' => '',
 ];
@@ -21,6 +23,7 @@ $clientes = [];
 $productos = [];
 $lineItems = [['producto_id' => '', 'cantidad' => '', 'precio_unitario' => '']];
 $lineErrors = [];
+$productoPrecioMap = [];
 $hasClienteNombreColumn = column_exists('ventas', 'cliente_nombre');
 $hasClienteIdColumn = column_exists('ventas', 'cliente_id');
 $hasClienteLegacyColumn = column_exists('ventas', 'cliente');
@@ -28,6 +31,8 @@ $hasBodegaColumn = column_exists('ventas', 'bodega_id');
 $hasEmpresaColumn = column_exists('ventas', 'empresa_id');
 $hasNotaColumn = column_exists('ventas', 'nota');
 $hasObservacionColumn = column_exists('ventas', 'observacion');
+$hasTipoDocumentoColumn = column_exists('ventas', 'tipo_documento');
+$hasNumeroDocumentoColumn = column_exists('ventas', 'numero_documento');
 try {
     $stmt = db()->prepare('SELECT id, nombre, documento FROM clientes WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
     $stmt->execute([$empresaId]);
@@ -35,6 +40,9 @@ try {
     $stmt = db()->prepare('SELECT id, nombre, sku, precio_venta, stock_actual FROM inventario_productos WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
     $stmt->execute([$empresaId]);
     $productos = $stmt->fetchAll();
+    foreach ($productos as $producto) {
+        $productoPrecioMap[(string) ($producto['id'] ?? '')] = (float) ($producto['precio_venta'] ?? 0);
+    }
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar los catálogos de venta.';
 }
@@ -53,15 +61,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $lineItems = [];
         foreach ($productoIds as $index => $productoId) {
+            $productoIdValue = trim((string) $productoId);
+            $precioUnitario = trim((string) ($precios[$index] ?? ''));
+            if ($precioUnitario === '' && $productoIdValue !== '' && isset($productoPrecioMap[$productoIdValue])) {
+                $precioUnitario = (string) $productoPrecioMap[$productoIdValue];
+            }
             $lineItems[] = [
-                'producto_id' => trim((string) $productoId),
+                'producto_id' => $productoIdValue,
                 'cantidad' => trim((string) ($cantidades[$index] ?? '')),
-                'precio_unitario' => trim((string) ($precios[$index] ?? '')),
+                'precio_unitario' => $precioUnitario,
             ];
         }
 
         if ($fields['cliente_id'] === '') {
             $errors[] = 'El cliente es obligatorio.';
+        }
+        if ($fields['tipo_documento'] === '') {
+            $errors[] = 'El tipo de documento es obligatorio.';
+        }
+        if ($fields['numero_documento'] === '') {
+            $errors[] = 'El número de documento es obligatorio.';
         }
 
         $lineTotal = 0;
@@ -143,6 +162,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $values[] = $fields['fecha'];
                 $columns[] = 'total';
                 $values[] = $total;
+
+                if ($hasTipoDocumentoColumn) {
+                    $columns[] = 'tipo_documento';
+                    $values[] = $fields['tipo_documento'];
+                }
+                if ($hasNumeroDocumentoColumn) {
+                    $columns[] = 'numero_documento';
+                    $values[] = $fields['numero_documento'];
+                }
 
                 if ($hasNotaColumn) {
                     $columns[] = 'nota';
@@ -319,13 +347,31 @@ include('partials/html.php');
                                             <div class="form-text">¿No aparece? <a href="clientes.php">Registra un cliente</a>.</div>
                                         </div>
                                         <div class="col-md-6 col-xl-2">
+                                            <label class="form-label">Tipo documento</label>
+                                            <select name="tipo_documento" class="form-select" required>
+                                                <option value="">Selecciona</option>
+                                                <?php
+                                                    $tipoOptions = ['factura' => 'Factura', 'guia' => 'Guía', 'boleta' => 'Boleta'];
+                                                    foreach ($tipoOptions as $value => $label) :
+                                                ?>
+                                                    <option value="<?php echo $value; ?>" <?php echo $fields['tipo_documento'] === $value ? 'selected' : ''; ?>>
+                                                        <?php echo $label; ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6 col-xl-2">
+                                            <label class="form-label">N° documento</label>
+                                            <input type="text" name="numero_documento" class="form-control" value="<?php echo htmlspecialchars($fields['numero_documento'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        </div>
+                                        <div class="col-md-6 col-xl-2">
                                             <label class="form-label">Fecha</label>
                                             <input type="date" name="fecha" class="form-control" value="<?php echo htmlspecialchars($fields['fecha'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
                                         <div class="col-12">
                                             <label class="form-label">Detalle de productos</label>
-                                            <div class="table-responsive">
-                                                <table class="table table-bordered align-middle mb-2" id="ventasDetalleTable">
+                                            <div class="table-responsive detail-table-wrapper">
+                                                <table class="table table-bordered align-middle mb-2 detail-table" id="ventasDetalleTable">
                                                     <thead class="table-light">
                                                         <tr>
                                                             <th style="width: 45%;">Producto</th>
@@ -337,11 +383,11 @@ include('partials/html.php');
                                                     <tbody>
                                                         <?php foreach ($lineItems as $index => $line) : ?>
                                                             <tr>
-                                                                <td>
+                                                                <td data-label="Producto">
                                                                     <select name="producto_id[]" class="form-select">
                                                                         <option value="">Selecciona</option>
                                                                         <?php foreach ($productos as $producto) : ?>
-                                                                            <option value="<?php echo (int) $producto['id']; ?>" <?php echo $line['producto_id'] === (string) $producto['id'] ? 'selected' : ''; ?>>
+                                                                            <option value="<?php echo (int) $producto['id']; ?>" data-precio="<?php echo htmlspecialchars((string) ($producto['precio_venta'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" <?php echo $line['producto_id'] === (string) $producto['id'] ? 'selected' : ''; ?>>
                                                                                 <?php echo htmlspecialchars($producto['nombre'], ENT_QUOTES, 'UTF-8'); ?> (<?php echo htmlspecialchars($producto['sku'], ENT_QUOTES, 'UTF-8'); ?>)
                                                                             </option>
                                                                         <?php endforeach; ?>
@@ -350,13 +396,13 @@ include('partials/html.php');
                                                                         <div class="text-danger small mt-1"><?php echo htmlspecialchars($lineErrors[$index], ENT_QUOTES, 'UTF-8'); ?></div>
                                                                     <?php endif; ?>
                                                                 </td>
-                                                                <td>
+                                                                <td data-label="Cantidad">
                                                                     <input type="number" step="0.01" name="cantidad[]" class="form-control" value="<?php echo htmlspecialchars($line['cantidad'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                 </td>
-                                                                <td>
+                                                                <td data-label="Precio unitario">
                                                                     <input type="number" step="0.01" name="precio_unitario[]" class="form-control" value="<?php echo htmlspecialchars($line['precio_unitario'], ENT_QUOTES, 'UTF-8'); ?>">
                                                                 </td>
-                                                                <td class="text-center">
+                                                                <td class="text-center" data-label="Acción">
                                                                     <button type="button" class="btn btn-outline-danger btn-sm remove-line">Quitar</button>
                                                                 </td>
                                                             </tr>
@@ -398,6 +444,7 @@ include('partials/html.php');
                                         <thead>
                                             <tr>
                                                 <th>Cliente</th>
+                                                <th>Documento</th>
                                                 <th>Fecha</th>
                                                 <th>Total</th>
                                                 <th>Nota</th>
@@ -407,12 +454,15 @@ include('partials/html.php');
                                         <tbody>
                                             <?php if (!$ventas) : ?>
                                                 <tr>
-                                                    <td colspan="5" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="6" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($ventas as $venta) : ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($venta['cliente_nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td>
+                                                            <?php echo htmlspecialchars(($venta['tipo_documento'] ?? '—') . ' ' . ($venta['numero_documento'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>
+                                                        </td>
                                                         <td><?php echo htmlspecialchars($venta['fecha'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($venta['total'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($venta['nota'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
@@ -446,22 +496,49 @@ include('partials/html.php');
             addLineButton.addEventListener('click', () => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>
+                    <td data-label="Producto">
                         <select name="producto_id[]" class="form-select">
                             <option value="">Selecciona</option>
                             ${<?php echo json_encode($productos, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>.map((producto) => {
                                 const label = `${producto.nombre} (${producto.sku})`;
-                                return `<option value="${producto.id}">${label}</option>`;
+                                const precio = producto.precio_venta ?? '';
+                                return `<option value="${producto.id}" data-precio="${precio}">${label}</option>`;
                             }).join('')}
                         </select>
                     </td>
-                    <td><input type="number" step="0.01" name="cantidad[]" class="form-control"></td>
-                    <td><input type="number" step="0.01" name="precio_unitario[]" class="form-control"></td>
-                    <td class="text-center">
+                    <td data-label="Cantidad"><input type="number" step="0.01" name="cantidad[]" class="form-control"></td>
+                    <td data-label="Precio unitario"><input type="number" step="0.01" name="precio_unitario[]" class="form-control"></td>
+                    <td class="text-center" data-label="Acción">
                         <button type="button" class="btn btn-outline-danger btn-sm remove-line">Quitar</button>
                     </td>
                 `;
                 tableBody.appendChild(row);
+            });
+
+            tableBody.addEventListener('change', (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLSelectElement)) {
+                    return;
+                }
+                if (!target.name || target.name !== 'producto_id[]') {
+                    return;
+                }
+                const selectedOption = target.selectedOptions[0];
+                if (!selectedOption) {
+                    return;
+                }
+                const precio = selectedOption.getAttribute('data-precio');
+                if (!precio) {
+                    return;
+                }
+                const row = target.closest('tr');
+                if (!row) {
+                    return;
+                }
+                const precioInput = row.querySelector('input[name="precio_unitario[]"]');
+                if (precioInput instanceof HTMLInputElement && precioInput.value.trim() === '') {
+                    precioInput.value = precio;
+                }
             });
 
             tableBody.addEventListener('click', (event) => {

@@ -19,6 +19,11 @@ $fields = [
     'categoria_id' => '',
     'subfamilia_id' => '',
     'unidad_id' => '',
+    'codigo_competencia' => '',
+    'codigo_proveedor' => '',
+    'codigo_empresa' => '',
+    'valor_competencia' => '',
+    'valor_proveedor' => '',
     'precio_compra' => '',
     'precio_venta' => '',
     'stock_minimo' => '',
@@ -29,6 +34,11 @@ $fields = [
 $categorias = [];
 $subfamilias = [];
 $unidades = [];
+$hasCodigoCompetenciaColumn = column_exists('inventario_productos', 'codigo_competencia');
+$hasCodigoProveedorColumn = column_exists('inventario_productos', 'codigo_proveedor');
+$hasCodigoEmpresaColumn = column_exists('inventario_productos', 'codigo_empresa');
+$hasValorCompetenciaColumn = column_exists('inventario_productos', 'valor_competencia');
+$hasValorProveedorColumn = column_exists('inventario_productos', 'valor_proveedor');
 try {
     $stmt = db()->prepare('SELECT id, nombre FROM inventario_categorias WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY nombre');
     $stmt->execute([$empresaId]);
@@ -64,6 +74,11 @@ if (isset($_GET['edit'])) {
             $fields['categoria_id'] = (string) ($record['categoria_id'] ?? '');
             $fields['subfamilia_id'] = (string) ($record['subfamilia_id'] ?? '');
             $fields['unidad_id'] = (string) ($record['unidad_id'] ?? '');
+            $fields['codigo_competencia'] = (string) ($record['codigo_competencia'] ?? '');
+            $fields['codigo_proveedor'] = (string) ($record['codigo_proveedor'] ?? '');
+            $fields['codigo_empresa'] = (string) ($record['codigo_empresa'] ?? '');
+            $fields['valor_competencia'] = (string) ($record['valor_competencia'] ?? '');
+            $fields['valor_proveedor'] = (string) ($record['valor_proveedor'] ?? '');
             $fields['precio_compra'] = (string) ($record['precio_compra'] ?? '');
             $fields['precio_venta'] = (string) ($record['precio_venta'] ?? '');
             $fields['stock_minimo'] = (string) ($record['stock_minimo'] ?? '');
@@ -120,45 +135,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (!has_permission('productos', 'edit')) {
                             throw new RuntimeException('Sin permisos.');
                         }
-                        $stmt = db()->prepare(
-                            'UPDATE inventario_productos SET nombre = ?, sku = ?, categoria_id = ?, subfamilia_id = ?, unidad_id = ?, precio_compra = ?, precio_venta = ?, stock_minimo = ?, stock_actual = ?, descripcion = ?, empresa_id = ? WHERE id = ?'
-                        );
-                        $stmt->execute([
-                            $fields['nombre'],
-                            $fields['sku'],
-                            (int) $fields['categoria_id'],
-                            (int) $fields['subfamilia_id'],
-                            (int) $fields['unidad_id'],
-                            $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
-                            $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
-                            $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
-                            (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
-                            $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
-                            $empresaId,
-                            $recordId,
-                        ]);
+                        $columns = [
+                            'nombre' => $fields['nombre'],
+                            'sku' => $fields['sku'],
+                            'categoria_id' => (int) $fields['categoria_id'],
+                            'subfamilia_id' => (int) $fields['subfamilia_id'],
+                            'unidad_id' => (int) $fields['unidad_id'],
+                            'precio_compra' => $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
+                            'precio_venta' => $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
+                            'stock_minimo' => $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
+                            'stock_actual' => (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
+                            'descripcion' => $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            'empresa_id' => $empresaId,
+                        ];
+
+                        if ($hasCodigoCompetenciaColumn) {
+                            $columns['codigo_competencia'] = $fields['codigo_competencia'] !== '' ? $fields['codigo_competencia'] : null;
+                        }
+                        if ($hasCodigoProveedorColumn) {
+                            $columns['codigo_proveedor'] = $fields['codigo_proveedor'] !== '' ? $fields['codigo_proveedor'] : null;
+                        }
+                        if ($hasCodigoEmpresaColumn) {
+                            $columns['codigo_empresa'] = $fields['codigo_empresa'] !== '' ? $fields['codigo_empresa'] : null;
+                        }
+                        if ($hasValorCompetenciaColumn) {
+                            $columns['valor_competencia'] = $fields['valor_competencia'] !== '' ? (float) $fields['valor_competencia'] : null;
+                        }
+                        if ($hasValorProveedorColumn) {
+                            $columns['valor_proveedor'] = $fields['valor_proveedor'] !== '' ? (float) $fields['valor_proveedor'] : null;
+                        }
+
+                        $setClauses = implode(', ', array_map(static fn($column) => sprintf('%s = ?', $column), array_keys($columns)));
+                        $stmt = db()->prepare(sprintf('UPDATE inventario_productos SET %s WHERE id = ?', $setClauses));
+                        $stmt->execute([...array_values($columns), $recordId]);
                         $_SESSION['producto_flash'] = 'Producto actualizado correctamente.';
                     } else {
                         if (!has_permission('productos', 'create')) {
                             throw new RuntimeException('Sin permisos.');
                         }
+                        $columns = [
+                            'nombre' => $fields['nombre'],
+                            'sku' => $fields['sku'],
+                            'categoria_id' => (int) $fields['categoria_id'],
+                            'subfamilia_id' => (int) $fields['subfamilia_id'],
+                            'unidad_id' => (int) $fields['unidad_id'],
+                            'precio_compra' => $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
+                            'precio_venta' => $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
+                            'stock_minimo' => $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
+                            'stock_actual' => (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
+                            'descripcion' => $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
+                            'empresa_id' => $empresaId,
+                        ];
+
+                        if ($hasCodigoCompetenciaColumn) {
+                            $columns['codigo_competencia'] = $fields['codigo_competencia'] !== '' ? $fields['codigo_competencia'] : null;
+                        }
+                        if ($hasCodigoProveedorColumn) {
+                            $columns['codigo_proveedor'] = $fields['codigo_proveedor'] !== '' ? $fields['codigo_proveedor'] : null;
+                        }
+                        if ($hasCodigoEmpresaColumn) {
+                            $columns['codigo_empresa'] = $fields['codigo_empresa'] !== '' ? $fields['codigo_empresa'] : null;
+                        }
+                        if ($hasValorCompetenciaColumn) {
+                            $columns['valor_competencia'] = $fields['valor_competencia'] !== '' ? (float) $fields['valor_competencia'] : null;
+                        }
+                        if ($hasValorProveedorColumn) {
+                            $columns['valor_proveedor'] = $fields['valor_proveedor'] !== '' ? (float) $fields['valor_proveedor'] : null;
+                        }
+
+                        $placeholders = implode(', ', array_fill(0, count($columns), '?'));
                         $stmt = db()->prepare(
-                            'INSERT INTO inventario_productos (nombre, sku, categoria_id, subfamilia_id, unidad_id, precio_compra, precio_venta, stock_minimo, stock_actual, descripcion, empresa_id)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                            sprintf('INSERT INTO inventario_productos (%s) VALUES (%s)', implode(', ', array_keys($columns)), $placeholders)
                         );
-                        $stmt->execute([
-                            $fields['nombre'],
-                            $fields['sku'],
-                            (int) $fields['categoria_id'],
-                            (int) $fields['subfamilia_id'],
-                            (int) $fields['unidad_id'],
-                            $fields['precio_compra'] !== '' ? (float) $fields['precio_compra'] : null,
-                            $fields['precio_venta'] !== '' ? (float) $fields['precio_venta'] : null,
-                            $fields['stock_minimo'] !== '' ? (float) $fields['stock_minimo'] : null,
-                            (float) ($fields['stock_actual'] !== '' ? $fields['stock_actual'] : 0),
-                            $fields['descripcion'] !== '' ? $fields['descripcion'] : null,
-                            $empresaId,
-                        ]);
+                        $stmt->execute(array_values($columns));
                         $_SESSION['producto_flash'] = 'Producto registrado correctamente.';
                     }
                     redirect('inventario-productos.php');
@@ -242,6 +291,12 @@ include('partials/html.php');
                                             <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">SKU:</span> <?php echo htmlspecialchars($viewRecord['sku'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Stock:</span> <?php echo htmlspecialchars((string) ($viewRecord['stock_actual'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Código competencia:</span> <?php echo htmlspecialchars($viewRecord['codigo_competencia'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Código proveedor:</span> <?php echo htmlspecialchars($viewRecord['codigo_proveedor'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Código empresa:</span> <?php echo htmlspecialchars($viewRecord['codigo_empresa'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Valor competencia:</span> <?php echo htmlspecialchars((string) ($viewRecord['valor_competencia'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Valor proveedor:</span> <?php echo htmlspecialchars((string) ($viewRecord['valor_proveedor'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Valor empresa:</span> <?php echo htmlspecialchars((string) ($viewRecord['precio_venta'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
@@ -295,14 +350,34 @@ include('partials/html.php');
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Código competencia</label>
+                                            <input type="text" name="codigo_competencia" class="form-control" value="<?php echo htmlspecialchars($fields['codigo_competencia'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Código competencia">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Código proveedor</label>
+                                            <input type="text" name="codigo_proveedor" class="form-control" value="<?php echo htmlspecialchars($fields['codigo_proveedor'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Código proveedor">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Código empresa</label>
+                                            <input type="text" name="codigo_empresa" class="form-control" value="<?php echo htmlspecialchars($fields['codigo_empresa'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="Código empresa">
+                                        </div>
 
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Precio compra</label>
                                             <input type="number" step="0.01" name="precio_compra" class="form-control" value="<?php echo htmlspecialchars($fields['precio_compra'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="0.00">
                                         </div>
                                         <div class="col-md-6 col-xl-3">
-                                            <label class="form-label">Precio venta</label>
+                                            <label class="form-label">Valor empresa</label>
                                             <input type="number" step="0.01" name="precio_venta" class="form-control" value="<?php echo htmlspecialchars($fields['precio_venta'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Valor competencia</label>
+                                            <input type="number" step="0.01" name="valor_competencia" class="form-control" value="<?php echo htmlspecialchars($fields['valor_competencia'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="0.00">
+                                        </div>
+                                        <div class="col-md-6 col-xl-3">
+                                            <label class="form-label">Valor proveedor</label>
+                                            <input type="number" step="0.01" name="valor_proveedor" class="form-control" value="<?php echo htmlspecialchars($fields['valor_proveedor'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="0.00">
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Stock mínimo</label>
@@ -346,11 +421,16 @@ include('partials/html.php');
                                             <tr>
                                                 <th>Nombre</th>
                                                 <th>SKU</th>
+                                                <th>Código competencia</th>
+                                                <th>Código proveedor</th>
+                                                <th>Código empresa</th>
                                                 <th>Familia</th>
                                                 <th>Subfamilia</th>
                                                 <th>Unidad</th>
                                                 <th>Stock</th>
-                                                <th>Precio venta</th>
+                                                <th>Valor competencia</th>
+                                                <th>Valor proveedor</th>
+                                                <th>Valor empresa</th>
                                                 <th>Creado</th>
                                                 <th class="text-end">Acciones</th>
                                             </tr>
@@ -358,17 +438,22 @@ include('partials/html.php');
                                         <tbody>
                                             <?php if (!$productos) : ?>
                                                 <tr>
-                                                    <td colspan="8" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="14" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
                                                 <?php foreach ($productos as $producto) : ?>
                                                     <tr>
                                                         <td><?php echo htmlspecialchars($producto['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['sku'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($producto['codigo_competencia'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($producto['codigo_proveedor'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($producto['codigo_empresa'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['categoria_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['subfamilia_nombre'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars($producto['unidad_abreviatura'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($producto['stock_actual'] ?? '0'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($producto['valor_competencia'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars((string) ($producto['valor_proveedor'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($producto['precio_venta'] ?? '—'), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td><?php echo htmlspecialchars((string) ($producto['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
                                                         <td class="text-end">
