@@ -4,19 +4,25 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
+require_permission('stock', 'view');
+
 $municipalidad = get_municipalidad();
 $errors = [];
+$empresaId = current_empresa_id();
 
 $productos = [];
 try {
-    $productos = db()->query(
+    $stmt = db()->prepare(
         'SELECT p.*, c.nombre AS categoria_nombre, s.nombre AS subfamilia_nombre, u.abreviatura AS unidad_abreviatura
          FROM inventario_productos p
          LEFT JOIN inventario_categorias c ON c.id = p.categoria_id
          LEFT JOIN inventario_subfamilias s ON s.id = p.subfamilia_id
          LEFT JOIN inventario_unidades u ON u.id = p.unidad_id
+         WHERE p.empresa_id = ? OR p.empresa_id IS NULL
          ORDER BY p.nombre'
-    )->fetchAll();
+    );
+    $stmt->execute([$empresaId]);
+    $productos = $stmt->fetchAll();
 } catch (Exception $e) {
     $errors[] = 'No se pudo cargar el stock actual.';
 }

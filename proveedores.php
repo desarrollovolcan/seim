@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/app/bootstrap.php';
 
-require_permission('empresas', 'view');
+require_permission('proveedores', 'view');
 
 $municipalidad = get_municipalidad();
 $errors = [];
 $successMessage = '';
 $editingId = null;
 $viewRecord = null;
+$empresaId = current_empresa_id();
 
 $fields = [
     'nombre' => '',
     'razon_social' => '',
-    'ruc' => '',
+    'rut' => '',
     'telefono' => '',
     'correo' => '',
     'direccion' => '',
@@ -24,8 +25,8 @@ $fields = [
 if (isset($_GET['view'])) {
     $viewId = (int) $_GET['view'];
     if ($viewId > 0) {
-        $stmt = db()->prepare('SELECT * FROM empresas WHERE id = ? LIMIT 1');
-        $stmt->execute([$viewId]);
+        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$viewId, $empresaId]);
         $viewRecord = $stmt->fetch() ?: null;
     }
 }
@@ -33,13 +34,13 @@ if (isset($_GET['view'])) {
 if (isset($_GET['edit'])) {
     $editingId = (int) $_GET['edit'];
     if ($editingId > 0) {
-        $stmt = db()->prepare('SELECT * FROM empresas WHERE id = ? LIMIT 1');
-        $stmt->execute([$editingId]);
+        $stmt = db()->prepare('SELECT * FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL) LIMIT 1');
+        $stmt->execute([$editingId, $empresaId]);
         $record = $stmt->fetch();
         if ($record) {
             $fields['nombre'] = (string) ($record['nombre'] ?? '');
             $fields['razon_social'] = (string) ($record['razon_social'] ?? '');
-            $fields['ruc'] = (string) ($record['ruc'] ?? '');
+            $fields['rut'] = (string) ($record['rut'] ?? '');
             $fields['telefono'] = (string) ($record['telefono'] ?? '');
             $fields['correo'] = (string) ($record['correo'] ?? '');
             $fields['direccion'] = (string) ($record['direccion'] ?? '');
@@ -55,16 +56,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = (int) ($_POST['id'] ?? 0);
 
         if ($action === 'delete' && $recordId > 0) {
-            if (!has_permission('empresas', 'delete')) {
-                $errors[] = 'No tienes permisos para eliminar empresas.';
+            if (!has_permission('proveedores', 'delete')) {
+                $errors[] = 'No tienes permisos para eliminar proveedores.';
             } else {
                 try {
-                    $stmt = db()->prepare('DELETE FROM empresas WHERE id = ?');
-                    $stmt->execute([$recordId]);
-                    $_SESSION['empresa_flash'] = 'Empresa eliminada correctamente.';
-                    redirect('empresa.php');
+                    $stmt = db()->prepare('DELETE FROM proveedores WHERE id = ? AND (empresa_id = ? OR empresa_id IS NULL)');
+                    $stmt->execute([$recordId, $empresaId]);
+                    $_SESSION['proveedor_flash'] = 'Proveedor eliminado correctamente.';
+                    redirect('proveedores.php');
                 } catch (Exception $e) {
-                    $errors[] = 'No se pudo eliminar la empresa.';
+                    $errors[] = 'No se pudo eliminar el proveedor.';
                 }
             }
         } else {
@@ -75,8 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($fields['nombre'] === '') {
                 $errors[] = 'El nombre es obligatorio.';
             }
-            if ($fields['ruc'] === '') {
-                $errors[] = 'El RUC es obligatorio.';
+            if ($fields['rut'] === '') {
+                $errors[] = 'El RUT es obligatorio.';
+            } elseif (!validate_rut($fields['rut'])) {
+                $errors[] = 'El RUT ingresado no es válido.';
             }
             if ($fields['correo'] !== '' && !filter_var($fields['correo'], FILTER_VALIDATE_EMAIL)) {
                 $errors[] = 'Debes ingresar un correo válido.';
@@ -85,92 +88,90 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (!$errors) {
                 try {
                     if ($action === 'update' && $recordId > 0) {
-                        if (!has_permission('empresas', 'edit')) {
+                        if (!has_permission('proveedores', 'edit')) {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'UPDATE empresas SET nombre = ?, razon_social = ?, ruc = ?, telefono = ?, correo = ?, direccion = ? WHERE id = ?'
+                            'UPDATE proveedores SET nombre = ?, razon_social = ?, rut = ?, telefono = ?, correo = ?, direccion = ?, empresa_id = ? WHERE id = ?'
                         );
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
-                            $fields['ruc'],
+                            $fields['rut'],
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $empresaId,
                             $recordId,
                         ]);
-                        $_SESSION['empresa_flash'] = 'Empresa actualizada correctamente.';
+                        $_SESSION['proveedor_flash'] = 'Proveedor actualizado correctamente.';
                     } else {
-                        if (!has_permission('empresas', 'create')) {
+                        if (!has_permission('proveedores', 'create')) {
                             throw new RuntimeException('Sin permisos.');
                         }
                         $stmt = db()->prepare(
-                            'INSERT INTO empresas (nombre, razon_social, ruc, telefono, correo, direccion) VALUES (?, ?, ?, ?, ?, ?)'
+                            'INSERT INTO proveedores (nombre, razon_social, rut, telefono, correo, direccion, empresa_id) VALUES (?, ?, ?, ?, ?, ?, ?)'
                         );
                         $stmt->execute([
                             $fields['nombre'],
                             $fields['razon_social'] !== '' ? $fields['razon_social'] : null,
-                            $fields['ruc'],
+                            $fields['rut'],
                             $fields['telefono'] !== '' ? $fields['telefono'] : null,
                             $fields['correo'] !== '' ? $fields['correo'] : null,
                             $fields['direccion'] !== '' ? $fields['direccion'] : null,
+                            $empresaId,
                         ]);
-                        $_SESSION['empresa_flash'] = 'Empresa registrada correctamente.';
+                        $_SESSION['proveedor_flash'] = 'Proveedor registrado correctamente.';
                     }
-                    redirect('empresa.php');
+                    redirect('proveedores.php');
                 } catch (Exception $e) {
-                    $errors[] = 'No se pudo guardar la empresa. Revisa que el nombre o RUC no estén duplicados.';
+                    $errors[] = 'No se pudo guardar el proveedor. Revisa que el RUT no esté duplicado.';
                 }
             }
         }
     }
 }
 
-if (isset($_SESSION['empresa_flash'])) {
-    $successMessage = (string) $_SESSION['empresa_flash'];
-    unset($_SESSION['empresa_flash']);
+if (isset($_SESSION['proveedor_flash'])) {
+    $successMessage = (string) $_SESSION['proveedor_flash'];
+    unset($_SESSION['proveedor_flash']);
 }
 
-$empresas = [];
+$proveedores = [];
 try {
-    $empresas = db()->query('SELECT * FROM empresas ORDER BY created_at DESC')->fetchAll();
+    $stmt = db()->prepare('SELECT * FROM proveedores WHERE empresa_id = ? OR empresa_id IS NULL ORDER BY created_at DESC');
+    $stmt->execute([$empresaId]);
+    $proveedores = $stmt->fetchAll();
 } catch (Exception $e) {
-    $errors[] = 'No se pudo cargar el listado de empresas.';
+    $errors[] = 'No se pudo cargar el listado de proveedores.';
 }
 
 include('partials/html.php');
 ?>
 
 <head>
-    <?php $title = 'Empresa'; include('partials/title-meta.php'); ?>
+    <?php $title = 'Proveedores'; include('partials/title-meta.php'); ?>
 
     <?php include('partials/head-css.php'); ?>
 </head>
 
 <body>
-    <!-- Begin page -->
     <div class="wrapper">
-
         <?php include('partials/menu.php'); ?>
-
-        <!-- ============================================================== -->
-        <!-- Start Main Content -->
-        <!-- ============================================================== -->
 
         <div class="content-page">
             <div class="container-fluid">
-                <?php $subtitle = 'Gestión'; $title = 'Empresa'; include('partials/page-title.php'); ?>
+                <?php $subtitle = 'Comercial'; $title = 'Proveedores'; include('partials/page-title.php'); ?>
 
                 <div class="row">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header d-flex align-items-center justify-content-between">
-                                <h5 class="card-title mb-0">Input Example</h5>
+                                <h5 class="card-title mb-0">Proveedores</h5>
                                 <div class="d-flex align-items-center gap-2">
                                     <span class="text-muted small">Show Code</span>
                                     <div class="form-check form-switch">
-                                        <input class="form-check-input" type="checkbox" id="showCodeSwitchEmpresa">
+                                        <input class="form-check-input" type="checkbox" id="showCodeSwitchProveedores">
                                     </div>
                                 </div>
                             </div>
@@ -190,18 +191,19 @@ include('partials/html.php');
 
                                 <?php if ($viewRecord) : ?>
                                     <div class="border rounded-3 p-3 mb-4 bg-light-subtle">
-                                        <h6 class="fw-semibold mb-2">Detalle de empresa</h6>
+                                        <h6 class="fw-semibold mb-2">Detalle de proveedor</h6>
                                         <div class="row g-2">
                                             <div class="col-md-4"><span class="text-muted">Nombre:</span> <?php echo htmlspecialchars($viewRecord['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
-                                            <div class="col-md-4"><span class="text-muted">RUC:</span> <?php echo htmlspecialchars($viewRecord['ruc'] ?? '', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Razón social:</span> <?php echo htmlspecialchars($viewRecord['razon_social'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">RUT:</span> <?php echo htmlspecialchars($viewRecord['rut'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Correo:</span> <?php echo htmlspecialchars($viewRecord['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                             <div class="col-md-4"><span class="text-muted">Teléfono:</span> <?php echo htmlspecialchars($viewRecord['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
-                                            <div class="col-md-8"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
+                                            <div class="col-md-4"><span class="text-muted">Dirección:</span> <?php echo htmlspecialchars($viewRecord['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></div>
                                         </div>
                                     </div>
                                 <?php endif; ?>
 
-                                <form method="post" action="empresa.php">
+                                <form method="post" action="proveedores.php">
                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                     <input type="hidden" name="action" value="<?php echo $editingId ? 'update' : 'create'; ?>">
                                     <?php if ($editingId) : ?>
@@ -218,8 +220,8 @@ include('partials/html.php');
                                             <input type="text" name="razon_social" class="form-control" value="<?php echo htmlspecialchars($fields['razon_social'], ENT_QUOTES, 'UTF-8'); ?>">
                                         </div>
                                         <div class="col-md-6 col-xl-3">
-                                            <label class="form-label">RUC</label>
-                                            <input type="text" name="ruc" class="form-control" value="<?php echo htmlspecialchars($fields['ruc'], ENT_QUOTES, 'UTF-8'); ?>" required>
+                                            <label class="form-label">RUT</label>
+                                            <input type="text" name="rut" class="form-control rut-field" value="<?php echo htmlspecialchars($fields['rut'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="12.345.678-9" required>
                                         </div>
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Teléfono</label>
@@ -229,7 +231,7 @@ include('partials/html.php');
                                         <div class="col-md-6 col-xl-3">
                                             <label class="form-label">Correo</label>
                                             <div class="app-search">
-                                                <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($fields['correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="empresa@correo.com">
+                                                <input type="email" name="correo" class="form-control" value="<?php echo htmlspecialchars($fields['correo'], ENT_QUOTES, 'UTF-8'); ?>" placeholder="proveedor@correo.com">
                                                 <i data-lucide="mail" class="app-search-icon text-muted"></i>
                                             </div>
                                         </div>
@@ -239,11 +241,11 @@ include('partials/html.php');
                                         </div>
 
                                         <div class="col-12 d-flex gap-2">
-                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('empresas', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
-                                                <?php echo $editingId ? 'Actualizar empresa' : 'Guardar empresa'; ?>
+                                            <button type="submit" class="btn btn-primary" <?php echo !has_permission('proveedores', $editingId ? 'edit' : 'create') ? 'disabled' : ''; ?>>
+                                                <?php echo $editingId ? 'Actualizar proveedor' : 'Guardar proveedor'; ?>
                                             </button>
                                             <?php if ($editingId) : ?>
-                                                <a href="empresa.php" class="btn btn-outline-secondary">Cancelar edición</a>
+                                                <a href="proveedores.php" class="btn btn-outline-secondary">Cancelar edición</a>
                                             <?php endif; ?>
                                         </div>
                                     </div>
@@ -257,7 +259,7 @@ include('partials/html.php');
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
-                                <h5 class="card-title mb-0">Empresas registradas</h5>
+                                <h5 class="card-title mb-0">Proveedores registrados</h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
@@ -265,39 +267,42 @@ include('partials/html.php');
                                         <thead>
                                             <tr>
                                                 <th>Nombre</th>
-                                                <th>RUC</th>
-                                                <th>Teléfono</th>
+                                                <th>RUT</th>
                                                 <th>Correo</th>
+                                                <th>Teléfono</th>
                                                 <th>Dirección</th>
-                                                <th>Creado</th>
-                                                <th class="text-end">Acciones</th>
+                                                <th>Acciones</th>
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if (!$empresas) : ?>
+                                            <?php if (!$proveedores) : ?>
                                                 <tr>
-                                                    <td colspan="7" class="text-center text-muted">Sin registros aún.</td>
+                                                    <td colspan="6" class="text-center text-muted">Sin registros aún.</td>
                                                 </tr>
                                             <?php else : ?>
-                                                <?php foreach ($empresas as $empresa) : ?>
+                                                <?php foreach ($proveedores as $proveedor) : ?>
                                                     <tr>
-                                                        <td><?php echo htmlspecialchars($empresa['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($empresa['ruc'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($empresa['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($empresa['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars($empresa['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td><?php echo htmlspecialchars((string) ($empresa['created_at'] ?? ''), ENT_QUOTES, 'UTF-8'); ?></td>
-                                                        <td class="text-end">
-                                                            <a class="btn btn-sm btn-outline-primary" href="empresa.php?view=<?php echo (int) $empresa['id']; ?>">Ver</a>
-                                                            <?php if (has_permission('empresas', 'edit')) : ?>
-                                                                <a class="btn btn-sm btn-outline-secondary" href="empresa.php?edit=<?php echo (int) $empresa['id']; ?>">Editar</a>
+                                                        <td>
+                                                            <?php echo htmlspecialchars($proveedor['nombre'] ?? '', ENT_QUOTES, 'UTF-8'); ?>
+                                                            <?php if (!empty($proveedor['razon_social'])) : ?>
+                                                                <div class="text-muted small"><?php echo htmlspecialchars($proveedor['razon_social'], ENT_QUOTES, 'UTF-8'); ?></div>
                                                             <?php endif; ?>
-                                                            <?php if (has_permission('empresas', 'delete')) : ?>
-                                                                <form method="post" action="empresa.php" class="d-inline">
+                                                        </td>
+                                                        <td><?php echo htmlspecialchars($proveedor['rut'] ?? '', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($proveedor['correo'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($proveedor['telefono'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td><?php echo htmlspecialchars($proveedor['direccion'] ?? '—', ENT_QUOTES, 'UTF-8'); ?></td>
+                                                        <td class="text-nowrap">
+                                                            <a href="proveedores.php?view=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-info btn-sm">Ver</a>
+                                                            <?php if (has_permission('proveedores', 'edit')) : ?>
+                                                                <a href="proveedores.php?edit=<?php echo (int) $proveedor['id']; ?>" class="btn btn-outline-primary btn-sm">Editar</a>
+                                                            <?php endif; ?>
+                                                            <?php if (has_permission('proveedores', 'delete')) : ?>
+                                                                <form method="post" action="proveedores.php" class="d-inline">
                                                                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
                                                                     <input type="hidden" name="action" value="delete">
-                                                                    <input type="hidden" name="id" value="<?php echo (int) $empresa['id']; ?>">
-                                                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('¿Eliminar esta empresa?');">Eliminar</button>
+                                                                    <input type="hidden" name="id" value="<?php echo (int) $proveedor['id']; ?>">
+                                                                    <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('¿Eliminar proveedor?');">Eliminar</button>
                                                                 </form>
                                                             <?php endif; ?>
                                                         </td>
@@ -313,14 +318,33 @@ include('partials/html.php');
                 </div>
             </div>
         </div>
-        <!-- ============================================================== -->
-        <!-- End Main Content -->
-        <!-- ============================================================== -->
 
         <?php include('partials/footer.php'); ?>
     </div>
-    <!-- End page -->
 
     <?php include('partials/footer-scripts.php'); ?>
+    <script>
+        function formatRut(value) {
+            const clean = value.replace(/[^0-9kK]/g, '').toUpperCase();
+            if (clean.length === 0) {
+                return '';
+            }
+            const body = clean.slice(0, -1);
+            const dv = clean.slice(-1);
+            const reversed = body.split('').reverse();
+            const grouped = [];
+            for (let i = 0; i < reversed.length; i += 3) {
+                grouped.push(reversed.slice(i, i + 3).reverse().join(''));
+            }
+            const formattedBody = grouped.reverse().join('.');
+            return `${formattedBody}-${dv}`;
+        }
+
+        document.querySelectorAll('.rut-field').forEach((input) => {
+            input.addEventListener('blur', (event) => {
+                event.target.value = formatRut(event.target.value);
+            });
+        });
+    </script>
 </body>
 </html>
