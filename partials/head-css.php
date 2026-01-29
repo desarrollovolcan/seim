@@ -98,6 +98,27 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
         .app-topbar .topnav-toggle-button {
             margin-left: auto;
         }
+
+        .wrapper .form-control,
+        .wrapper .form-select {
+            min-height: 40px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.9rem;
+        }
+
+        .wrapper textarea.form-control {
+            min-height: 96px;
+        }
+
+        .wrapper .table-responsive {
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .wrapper .table {
+            min-width: 640px;
+        }
     }
 
     @media (max-width: 576px) {
@@ -203,7 +224,9 @@ $secondaryRgb = hex_to_rgb($secondaryColor) ?? [74, 129, 212];
     .wrapper .table-responsive {
         border: 1px solid #e2e8f0;
         border-radius: 0.85rem;
-        overflow: hidden;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
         background-color: #ffffff;
     }
 
