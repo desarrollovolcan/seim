@@ -219,7 +219,7 @@ html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .menu-text
 
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-text,
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
-    color: #d8c9ff !important;
+    color: #b79cff !important;
 }
 
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
