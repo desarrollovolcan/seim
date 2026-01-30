@@ -289,13 +289,17 @@ class ProductionController extends Controller
                 ]);
             }
 
+            $outputProductColumn = $this->outputs->outputProductColumn();
+            $movementSupportsProduced = $this->movements->supportsProducedProductId();
+            $movementSupportsProduct = $this->movements->supportsProductId();
+
             foreach ($outputs as $output) {
                 $productId = (int)$output['product']['id'];
                 $unitCost = $outputUnitCosts[$productId] ?? ($totalOutputQty > 0 ? $totalCost / $totalOutputQty : 0);
                 $subtotal = $output['quantity'] * $unitCost;
                 $this->outputs->create([
                     'production_id' => $orderId,
-                    'produced_product_id' => $productId,
+                    $outputProductColumn => $productId,
                     'quantity' => $output['quantity'],
                     'unit_cost' => $unitCost,
                     'subtotal' => $subtotal,
@@ -304,9 +308,8 @@ class ProductionController extends Controller
                 ]);
                 $this->producedProducts->adjustStock($productId, $output['quantity']);
                 $this->producedProducts->updateCost($productId, $unitCost);
-                $this->movements->create([
+                $movement = [
                     'company_id' => $companyId,
-                    'produced_product_id' => $output['product']['id'],
                     'movement_date' => $productionDate,
                     'movement_type' => 'entrada',
                     'quantity' => $output['quantity'],
@@ -316,7 +319,13 @@ class ProductionController extends Controller
                     'notes' => 'Ingreso producción',
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
-                ]);
+                ];
+                if ($movementSupportsProduced) {
+                    $movement['produced_product_id'] = $output['product']['id'];
+                } elseif ($movementSupportsProduct) {
+                    $movement['product_id'] = $output['product']['id'];
+                }
+                $this->movements->create($movement);
             }
 
             foreach ($expenses as $expense) {

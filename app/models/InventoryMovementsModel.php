@@ -16,4 +16,14 @@ class InventoryMovementsModel extends Model
             ['company_id' => $companyId]
         );
     }
+
+    public function supportsProducedProductId(): bool
+    {
+        return $this->hasColumn('produced_product_id');
+    }
+
+    public function supportsProductId(): bool
+    {
+        return $this->hasColumn('product_id');
+    }
 }
