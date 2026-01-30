@@ -217,6 +217,17 @@ html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .menu-text
     font-weight: 600;
 }
 
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-text,
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
+    color: #fff !important;
+}
+
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
+    opacity: 0.95;
+    font-size: 0.78rem;
+    letter-spacing: 0.01em;
+}
+
 html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     display: inline-flex;
     align-items: center;
