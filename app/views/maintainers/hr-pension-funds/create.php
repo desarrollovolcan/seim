@@ -19,7 +19,7 @@
     <?php
     $reportTemplate = 'informeIcargaEspanol.php';
     $reportSource = 'maintainers/hr-pension-funds/create';
-    include __DIR__ . '/../partials/report-download.php';
+    include __DIR__ . '/../../partials/report-download.php';
     ?>
 </form>
     </div>

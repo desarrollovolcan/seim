@@ -6,7 +6,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
 $companyName = $currentCompany['name'] ?? ($companySettings['name'] ?? '');
 $userAvatar = $currentUser['avatar_path'] ?? '';
 $userInitials = trim((string)($currentUser['name'] ?? 'U'));
-$userInitials = $userInitials !== '' ? strtoupper(mb_substr($userInitials, 0, 1)) : 'U';
+$userInitials = $userInitials !== '' ? strtoupper(mb_substr_safe($userInitials, 0, 1)) : 'U';
 $isAdmin = ($currentUser['role'] ?? '') === 'admin';
 $hasPermission = static function (string $key) use ($permissions, $isAdmin): bool {
     if ($isAdmin) {
