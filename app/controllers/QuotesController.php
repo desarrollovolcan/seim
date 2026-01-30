@@ -5,6 +5,7 @@ class QuotesController extends Controller
     private QuotesModel $quotes;
     private ClientsModel $clients;
     private SystemServicesModel $services;
+    private ProducedProductsModel $producedProducts;
 
     public function __construct(array $config, Database $db)
     {
@@ -12,6 +13,7 @@ class QuotesController extends Controller
         $this->quotes = new QuotesModel($db);
         $this->clients = new ClientsModel($db);
         $this->services = new SystemServicesModel($db);
+        $this->producedProducts = new ProducedProductsModel($db);
     }
 
     public function index(): void
@@ -47,6 +49,7 @@ class QuotesController extends Controller
              ORDER BY p.name ASC',
             ['company_id' => $companyId]
         );
+        $producedProducts = $this->producedProducts->active($companyId);
         $projects = $this->db->fetchAll(
             'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
             ['company_id' => $companyId]
@@ -60,6 +63,7 @@ class QuotesController extends Controller
             'clients' => $clients,
             'services' => $services,
             'products' => $products,
+            'producedProducts' => $producedProducts,
             'projects' => $projects,
             'number' => $number,
             'selectedClientId' => $selectedClientId,
@@ -222,6 +226,7 @@ class QuotesController extends Controller
              ORDER BY p.name ASC',
             ['company_id' => $companyId]
         );
+        $producedProducts = $this->producedProducts->active($companyId);
         $projects = $this->db->fetchAll(
             'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
             ['company_id' => $companyId]
@@ -234,6 +239,7 @@ class QuotesController extends Controller
             'clients' => $clients,
             'services' => $services,
             'products' => $products,
+            'producedProducts' => $producedProducts,
             'projects' => $projects,
         ]);
     }

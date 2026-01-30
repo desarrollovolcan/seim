@@ -73,6 +73,7 @@ class SalesController extends Controller
         $sessionTotals = [];
         $posReady = $this->posTablesReady();
         $recentSessionSales = [];
+        $printSaleId = 0;
         if ($isPos) {
             if ($posReady) {
                 $session = $this->posSessions->activeForUser($companyId, (int)(Auth::user()['id'] ?? 0));
@@ -83,6 +84,7 @@ class SalesController extends Controller
             } else {
                 flash('error', 'Faltan tablas/columnas para el POS. Ejecuta la actualización de base de datos.');
             }
+            $printSaleId = (int)($_GET['print_sale_id'] ?? 0);
         }
 
         $this->render('sales/create', [
@@ -99,6 +101,7 @@ class SalesController extends Controller
             'sessionTotals' => $sessionTotals,
             'posReady' => $posReady,
             'recentSessionSales' => $recentSessionSales,
+            'printSaleId' => $printSaleId,
         ]);
     }
 
@@ -165,6 +168,7 @@ class SalesController extends Controller
         }
 
         $pdo = $this->db->pdo();
+        $saleId = null;
         try {
             $pdo->beginTransaction();
             $saleId = $this->sales->create(array_merge([
@@ -222,6 +226,9 @@ class SalesController extends Controller
             flash('error', 'No pudimos guardar la venta. Revisa los datos e intenta nuevamente.');
         }
 
+        if ($isPos && $saleId) {
+            $this->redirect('index.php?route=pos&print_sale_id=' . $saleId);
+        }
         $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales');
     }
 
@@ -253,6 +260,36 @@ class SalesController extends Controller
             'sale' => $sale,
             'items' => $items,
         ]);
+    }
+
+    public function receipt(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $id = (int)($_GET['id'] ?? 0);
+        $copies = max(1, (int)($_GET['copies'] ?? 1));
+        $sale = $this->sales->findForCompany($id, $companyId);
+        if (!$sale) {
+            $this->redirect('index.php?route=sales');
+        }
+        $items = $this->db->fetchAll(
+            'SELECT si.*,
+                    COALESCE(p.name, pp.name) AS product_name,
+                    COALESCE(p.sku, pp.sku) AS sku
+             FROM sale_items si
+             LEFT JOIN products p ON si.product_id = p.id
+             LEFT JOIN produced_products pp ON si.produced_product_id = pp.id
+             WHERE si.sale_id = :sale_id
+             ORDER BY si.id ASC',
+            ['sale_id' => $id]
+        );
+        $company = (new SettingsModel($this->db))->get('company', []);
+        $viewPath = __DIR__ . '/../views/sales/receipt.php';
+        if (file_exists($viewPath)) {
+            include $viewPath;
+            return;
+        }
+        echo 'Vista no encontrada.';
     }
 
     public function delete(): void
