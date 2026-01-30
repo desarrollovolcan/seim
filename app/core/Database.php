@@ -30,17 +30,27 @@ class Database
 
     public function fetchAll(string $sql, array $params = []): array
     {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        return $stmt->fetchAll();
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            return $stmt->fetchAll();
+        } catch (PDOException $e) {
+            log_message('error', 'DB fetchAll failed: ' . $e->getMessage());
+            return [];
+        }
     }
 
     public function fetch(string $sql, array $params = []): ?array
     {
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($params);
-        $result = $stmt->fetch();
-        return $result ?: null;
+        try {
+            $stmt = $this->pdo->prepare($sql);
+            $stmt->execute($params);
+            $result = $stmt->fetch();
+            return $result ?: null;
+        } catch (PDOException $e) {
+            log_message('error', 'DB fetch failed: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public function execute(string $sql, array $params = []): bool

@@ -7,8 +7,15 @@ class QuotesModel extends Model
     public function allWithClient(?int $companyId = null): array
     {
         $companyId = $companyId ?? current_company_id();
+        if (!$companyId) {
+            return [];
+        }
         return $this->db->fetchAll(
-            'SELECT quotes.*, clients.name as client_name FROM quotes JOIN clients ON quotes.client_id = clients.id WHERE quotes.company_id = :company_id ORDER BY quotes.id DESC',
+            'SELECT quotes.*, COALESCE(clients.name, "Sin cliente") as client_name
+             FROM quotes
+             LEFT JOIN clients ON quotes.client_id = clients.id
+             WHERE quotes.company_id = :company_id
+             ORDER BY quotes.id DESC',
             ['company_id' => $companyId]
         );
     }
