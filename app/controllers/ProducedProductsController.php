@@ -3,11 +3,13 @@
 class ProducedProductsController extends Controller
 {
     private ProducedProductsModel $products;
+    private ProductsModel $regularProducts;
 
     public function __construct(array $config, Database $db)
     {
         parent::__construct($config, $db);
         $this->products = new ProducedProductsModel($db);
+        $this->regularProducts = new ProductsModel($db);
     }
 
     private function requireCompany(): int
@@ -36,11 +38,13 @@ class ProducedProductsController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireCompany();
+        $companyId = $this->requireCompany();
+        $products = $this->regularProducts->active($companyId);
 
         $this->render('produced-products/create', [
             'title' => 'Nuevo producto fabricado',
             'pageTitle' => 'Nuevo producto fabricado',
+            'products' => $products,
         ]);
     }
 
@@ -55,13 +59,16 @@ class ProducedProductsController extends Controller
             $this->redirect('index.php?route=produced-products/create');
         }
 
+        $materials = $this->calculateMaterialsCost();
+        $cost = $materials['has_inputs'] ? $materials['cost'] : (float)($_POST['cost'] ?? 0);
+
         $this->products->create([
             'company_id' => $companyId,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
             'price' => (float)($_POST['price'] ?? 0),
-            'cost' => (float)($_POST['cost'] ?? 0),
+            'cost' => $cost,
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
             'status' => $_POST['status'] ?? 'activo',
@@ -83,11 +90,13 @@ class ProducedProductsController extends Controller
         if (!$product) {
             $this->redirect('index.php?route=produced-products');
         }
+        $products = $this->regularProducts->active($companyId);
 
         $this->render('produced-products/edit', [
             'title' => 'Editar producto fabricado',
             'pageTitle' => 'Editar producto fabricado',
             'product' => $product,
+            'products' => $products,
         ]);
     }
 
@@ -108,12 +117,15 @@ class ProducedProductsController extends Controller
             $this->redirect('index.php?route=produced-products/edit&id=' . $id);
         }
 
+        $materials = $this->calculateMaterialsCost();
+        $cost = $materials['has_inputs'] ? $materials['cost'] : (float)($_POST['cost'] ?? 0);
+
         $this->products->update($id, [
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
             'price' => (float)($_POST['price'] ?? 0),
-            'cost' => (float)($_POST['cost'] ?? 0),
+            'cost' => $cost,
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
             'status' => $_POST['status'] ?? 'activo',
@@ -140,5 +152,30 @@ class ProducedProductsController extends Controller
         audit($this->db, Auth::user()['id'], 'delete', 'produced_products', $id);
         flash('success', 'Producto fabricado eliminado correctamente.');
         $this->redirect('index.php?route=produced-products');
+    }
+
+    private function calculateMaterialsCost(): array
+    {
+        $productIds = $_POST['input_product_id'] ?? [];
+        $quantities = $_POST['input_quantity'] ?? [];
+        $unitCosts = $_POST['input_unit_cost'] ?? [];
+        $total = 0.0;
+        $hasInputs = false;
+
+        foreach ($productIds as $index => $productId) {
+            $productId = (int)$productId;
+            if ($productId <= 0) {
+                continue;
+            }
+            $hasInputs = true;
+            $qty = max(0, (float)($quantities[$index] ?? 0));
+            $unit = max(0, (float)($unitCosts[$index] ?? 0));
+            $total += $qty * $unit;
+        }
+
+        return [
+            'cost' => $total,
+            'has_inputs' => $hasInputs,
+        ];
     }
 }
