@@ -40,6 +40,17 @@ class QuotesController extends Controller
         }
         $clients = $this->clients->active($companyId);
         $services = $this->services->allWithType($companyId);
+        $products = $this->db->fetchAll(
+            'SELECT p.id, p.name, p.price, p.stock,
+                    COALESCE(SUM(po.quantity), 0) AS produced_qty
+             FROM products p
+             LEFT JOIN production_outputs po ON po.product_id = p.id
+             LEFT JOIN production_orders o ON o.id = po.production_id AND o.company_id = p.company_id
+             WHERE p.company_id = :company_id AND p.deleted_at IS NULL
+             GROUP BY p.id
+             ORDER BY p.name ASC',
+            ['company_id' => $companyId]
+        );
         $projects = $this->db->fetchAll(
             'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
             ['company_id' => $companyId]
@@ -52,6 +63,7 @@ class QuotesController extends Controller
             'pageTitle' => 'Nueva Cotización',
             'clients' => $clients,
             'services' => $services,
+            'products' => $products,
             'projects' => $projects,
             'number' => $number,
             'selectedClientId' => $selectedClientId,
@@ -207,6 +219,17 @@ class QuotesController extends Controller
         $items = (new QuoteItemsModel($this->db))->byQuote($id);
         $clients = $this->clients->active($companyId);
         $services = $this->services->allWithType($companyId);
+        $products = $this->db->fetchAll(
+            'SELECT p.id, p.name, p.price, p.stock,
+                    COALESCE(SUM(po.quantity), 0) AS produced_qty
+             FROM products p
+             LEFT JOIN production_outputs po ON po.product_id = p.id
+             LEFT JOIN production_orders o ON o.id = po.production_id AND o.company_id = p.company_id
+             WHERE p.company_id = :company_id AND p.deleted_at IS NULL
+             GROUP BY p.id
+             ORDER BY p.name ASC',
+            ['company_id' => $companyId]
+        );
         $projects = $this->db->fetchAll(
             'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
             ['company_id' => $companyId]
@@ -218,6 +241,7 @@ class QuotesController extends Controller
             'items' => $items,
             'clients' => $clients,
             'services' => $services,
+            'products' => $products,
             'projects' => $projects,
         ]);
     }

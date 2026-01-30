@@ -69,6 +69,22 @@ $defaultIssueDate = date('Y-m-d');
                         <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-2 text-nowrap">
                             <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2" data-add-manual-item>Agregar item manual</button>
                             <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm py-1" data-product-item-select>
+                                    <option value="">Selecciona producto</option>
+                                    <?php foreach ($products as $product): ?>
+                                        <option value="<?php echo $product['id']; ?>"
+                                                data-product-price="<?php echo e($product['price'] ?? 0); ?>"
+                                                data-product-name="<?php echo e($product['name'] ?? ''); ?>">
+                                            <?php echo e($product['name']); ?>
+                                            <?php if (!empty($product['produced_qty'])): ?>
+                                                (Producido: <?php echo (int)$product['produced_qty']; ?>)
+                                            <?php endif; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" data-add-product-item>Agregar producto</button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
                                 <select class="form-select form-select-sm py-1" data-service-item-select>
                                     <option value="">Selecciona servicio</option>
                                     <?php foreach ($services as $service): ?>
@@ -166,7 +182,9 @@ $defaultIssueDate = date('Y-m-d');
     const taxRateInput = document.querySelector('[data-tax-rate]');
     const applyTaxCheckbox = document.querySelector('[data-apply-tax]');
     const addManualItemButton = document.querySelector('[data-add-manual-item]');
+    const addProductItemButton = document.querySelector('[data-add-product-item]');
     const addServiceItemButton = document.querySelector('[data-add-service-item]');
+    const productItemSelect = document.querySelector('[data-product-item-select]');
     const serviceItemSelect = document.querySelector('[data-service-item-select]');
     const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
         $carry[$client['id']] = [
@@ -330,6 +348,18 @@ $defaultIssueDate = date('Y-m-d');
             price: Number(selected.dataset.servicePrice || 0),
         });
         serviceItemSelect.value = '';
+    });
+
+    addProductItemButton?.addEventListener('click', () => {
+        const selected = productItemSelect?.selectedOptions?.[0];
+        if (!selected || !selected.value) {
+            return;
+        }
+        addItemRow({
+            description: selected.dataset.productName || selected.textContent?.trim() || '',
+            price: Number(selected.dataset.productPrice || 0),
+        });
+        productItemSelect.value = '';
     });
 
     projectSelect?.addEventListener('change', (event) => {
