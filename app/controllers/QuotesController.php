@@ -41,7 +41,6 @@ class QuotesController extends Controller
             $this->redirect('index.php?route=auth/switch-company');
         }
         $clients = $this->clients->active($companyId);
-        $services = $this->services->allWithType($companyId);
         $products = $this->db->fetchAll(
             'SELECT p.id, p.name, p.price, p.stock
              FROM products p
@@ -50,24 +49,16 @@ class QuotesController extends Controller
             ['company_id' => $companyId]
         );
         $producedProducts = $this->producedProducts->active($companyId);
-        $projects = $this->db->fetchAll(
-            'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
-            ['company_id' => $companyId]
-        );
         $number = $this->quotes->nextNumber('COT-', $companyId);
         $selectedClientId = (int)($_GET['client_id'] ?? 0);
-        $selectedProjectId = (int)($_GET['project_id'] ?? 0);
         $this->render('quotes/create', [
             'title' => 'Nueva Cotización',
             'pageTitle' => 'Nueva Cotización',
             'clients' => $clients,
-            'services' => $services,
             'products' => $products,
             'producedProducts' => $producedProducts,
-            'projects' => $projects,
             'number' => $number,
             'selectedClientId' => $selectedClientId,
-            'selectedProjectId' => $selectedProjectId,
         ]);
     }
 

@@ -26,28 +26,13 @@ $defaultIssueDate = date('Y-m-d');
                         <option value="rechazada">Rechazada</option>
                     </select>
                 </div>
-                <div class="col-md-6 mb-3">
+                <div class="col-md-8 mb-3">
                     <label class="form-label">Cliente</label>
                     <select name="client_id" class="form-select" data-client-select required>
                         <option value="">Selecciona un cliente</option>
                         <?php foreach ($clients as $client): ?>
                             <option value="<?php echo $client['id']; ?>" <?php echo (int)($selectedClientId ?? 0) === (int)$client['id'] ? 'selected' : ''; ?>>
                                 <?php echo e($client['name']); ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label class="form-label">Proyecto</label>
-                    <select name="project_id" class="form-select" data-project-select>
-                        <option value="">Selecciona proyecto</option>
-                        <?php foreach ($projects as $project): ?>
-                            <option value="<?php echo $project['id']; ?>"
-                                    data-client-id="<?php echo $project['client_id']; ?>"
-                                    data-name="<?php echo e($project['name']); ?>"
-                                    data-price="<?php echo e($project['value'] ?? 0); ?>"
-                                    <?php echo (int)($selectedProjectId ?? 0) === (int)$project['id'] ? 'selected' : ''; ?>>
-                                <?php echo e($project['name']); ?> (<?php echo e($project['client_name']); ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -97,31 +82,21 @@ $defaultIssueDate = date('Y-m-d');
                                 </select>
                                 <button type="button" class="btn btn-outline-dark btn-sm py-1 px-2" data-add-produced-item>Agregar fabricado</button>
                             </div>
-                            <div class="d-flex align-items-center gap-2">
-                                <select class="form-select form-select-sm py-1" data-service-item-select>
-                                    <option value="">Selecciona servicio</option>
-                                    <?php foreach ($services as $service): ?>
-                                        <option value="<?php echo $service['id']; ?>" data-service-price="<?php echo e($service['cost'] ?? 0); ?>">
-                                            <?php echo e($service['name']); ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                                <button type="button" class="btn btn-outline-primary btn-sm py-1 px-2" data-add-service-item>Agregar servicio</button>
-                            </div>
                         </div>
                     </div>
                 </div>
                 <div class="card-body">
                     <div class="row g-2 mb-2 fw-semibold text-muted small">
-                        <div class="col-md-3">Descripción</div>
+                        <div class="col-md-4">Descripción</div>
                         <div class="col-md-2">Cantidad</div>
                         <div class="col-md-2">Precio unitario</div>
-                        <div class="col-md-2">Impuesto %</div>
-                        <div class="col-md-2">Impuesto $</div>
+                        <div class="col-md-1">Impuesto %</div>
+                        <div class="col-md-1">Impuesto $</div>
                         <div class="col-md-1">Total</div>
+                        <div class="col-md-1 text-center">Quitar</div>
                     </div>
                     <div class="row g-2 mb-2" data-item-row>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <input type="text" name="items[0][descripcion]" class="form-control" data-item-description>
                         </div>
                         <div class="col-md-2">
@@ -130,14 +105,17 @@ $defaultIssueDate = date('Y-m-d');
                         <div class="col-md-2">
                             <input type="number" name="items[0][precio_unitario]" class="form-control" value="0" step="0.01" data-item-price>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <input type="number" name="items[0][impuesto_pct]" class="form-control" value="0" data-item-tax-rate>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-1">
                             <input type="number" name="items[0][impuesto_monto]" class="form-control" value="0" data-item-tax readonly>
                         </div>
                         <div class="col-md-1">
                             <input type="number" name="items[0][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
+                        </div>
+                        <div class="col-md-1 d-flex align-items-center justify-content-center">
+                            <button type="button" class="btn btn-link text-danger p-0" data-remove-row aria-label="Eliminar">✕</button>
                         </div>
                     </div>
                 </div>
@@ -187,7 +165,6 @@ $defaultIssueDate = date('Y-m-d');
 </div>
 
 <script>
-    const projectSelect = document.querySelector('[data-project-select]');
     const clientSelect = document.querySelector('[data-client-select]');
     const subtotalInput = document.querySelector('[data-subtotal]');
     const impuestosInput = document.querySelector('[data-impuestos]');
@@ -197,10 +174,8 @@ $defaultIssueDate = date('Y-m-d');
     const addManualItemButton = document.querySelector('[data-add-manual-item]');
     const addProductItemButton = document.querySelector('[data-add-product-item]');
     const addProducedItemButton = document.querySelector('[data-add-produced-item]');
-    const addServiceItemButton = document.querySelector('[data-add-service-item]');
     const productItemSelect = document.querySelector('[data-product-item-select]');
     const producedItemSelect = document.querySelector('[data-produced-item-select]');
-    const serviceItemSelect = document.querySelector('[data-service-item-select]');
     const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
         $carry[$client['id']] = [
             'rut' => $client['rut'] ?? '',
@@ -326,7 +301,7 @@ $defaultIssueDate = date('Y-m-d');
         row.setAttribute('data-item-row', 'true');
         const defaultTaxRate = Number(taxRateInput?.value || 0);
         row.innerHTML = `
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <input type="text" name="items[${index}][descripcion]" class="form-control" data-item-description value="${description}">
             </div>
             <div class="col-md-2">
@@ -335,14 +310,17 @@ $defaultIssueDate = date('Y-m-d');
             <div class="col-md-2">
                 <input type="number" name="items[${index}][precio_unitario]" class="form-control" value="${formatNumber(price).toFixed(2)}" step="0.01" data-item-price>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <input type="number" name="items[${index}][impuesto_pct]" class="form-control" value="${defaultTaxRate}" data-item-tax-rate>
             </div>
-            <div class="col-md-2">
+            <div class="col-md-1">
                 <input type="number" name="items[${index}][impuesto_monto]" class="form-control" value="0" data-item-tax readonly>
             </div>
             <div class="col-md-1">
                 <input type="number" name="items[${index}][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
+            </div>
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <button type="button" class="btn btn-link text-danger p-0" data-remove-row aria-label="Eliminar">✕</button>
             </div>
         `;
         rows[rows.length - 1]?.after(row);
@@ -353,27 +331,48 @@ $defaultIssueDate = date('Y-m-d');
         addItemRow();
     });
 
-    addServiceItemButton?.addEventListener('click', () => {
-        const selected = serviceItemSelect?.selectedOptions?.[0];
-        if (!selected || !selected.value) {
-            return;
+    const findFirstEmptyRow = () => {
+        return Array.from(document.querySelectorAll('[data-item-row]')).find((row) => {
+            const description = row.querySelector('[data-item-description]')?.value || '';
+            return description.trim() === '';
+        }) || null;
+    };
+
+    const fillRow = (row, { description = '', price = 0 } = {}) => {
+        const descriptionInput = row.querySelector('[data-item-description]');
+        const priceInput = row.querySelector('[data-item-price]');
+        const qtyInput = row.querySelector('[data-item-qty]');
+        const taxRateInputRow = row.querySelector('[data-item-tax-rate]');
+        if (descriptionInput) {
+            descriptionInput.value = description;
         }
-        addItemRow({
-            description: selected.textContent?.trim() || '',
-            price: Number(selected.dataset.servicePrice || 0),
-        });
-        serviceItemSelect.value = '';
-    });
+        if (priceInput) {
+            priceInput.value = formatNumber(price).toFixed(2);
+        }
+        if (qtyInput && Number(qtyInput.value || 0) === 0) {
+            qtyInput.value = '1';
+        }
+        if (taxRateInputRow) {
+            taxRateInputRow.value = taxRateInput?.value || '0';
+        }
+        updateFromItems();
+    };
 
     addProductItemButton?.addEventListener('click', () => {
         const selected = productItemSelect?.selectedOptions?.[0];
         if (!selected || !selected.value) {
             return;
         }
-        addItemRow({
+        const payload = {
             description: selected.dataset.productName || selected.textContent?.trim() || '',
             price: Number(selected.dataset.productPrice || 0),
-        });
+        };
+        const emptyRow = findFirstEmptyRow();
+        if (emptyRow) {
+            fillRow(emptyRow, payload);
+        } else {
+            addItemRow(payload);
+        }
         productItemSelect.value = '';
     });
 
@@ -382,43 +381,17 @@ $defaultIssueDate = date('Y-m-d');
         if (!selected || !selected.value) {
             return;
         }
-        addItemRow({
+        const payload = {
             description: selected.dataset.producedName || selected.textContent?.trim() || '',
             price: Number(selected.dataset.producedPrice || 0),
-        });
+        };
+        const emptyRow = findFirstEmptyRow();
+        if (emptyRow) {
+            fillRow(emptyRow, payload);
+        } else {
+            addItemRow(payload);
+        }
         producedItemSelect.value = '';
-    });
-
-    projectSelect?.addEventListener('change', (event) => {
-        const option = event.target.selectedOptions[0];
-        const projectName = option?.dataset?.name || '';
-        const projectPrice = Number(option?.dataset?.price || 0);
-        const clientId = option?.dataset?.clientId;
-        const firstRow = document.querySelector('[data-item-row]');
-        if (firstRow) {
-            const descriptionInput = firstRow.querySelector('[data-item-description]');
-            const priceInput = firstRow.querySelector('[data-item-price]');
-            const qtyInput = firstRow.querySelector('[data-item-qty]');
-            const taxRateInputRow = firstRow.querySelector('[data-item-tax-rate]');
-            if (descriptionInput) {
-                descriptionInput.value = projectName;
-            }
-            if (priceInput) {
-                priceInput.value = formatNumber(projectPrice).toFixed(2);
-            }
-            if (qtyInput) {
-                qtyInput.value = '1';
-                qtyInput.readOnly = true;
-            }
-            if (taxRateInputRow) {
-                taxRateInputRow.value = taxRateInput?.value || '0';
-            }
-            updateFromItems();
-        }
-        if (clientSelect && clientId) {
-            clientSelect.value = clientId;
-            applyClientSii(Number(clientId));
-        }
     });
 
     taxRateInput?.addEventListener('input', () => {
@@ -436,34 +409,31 @@ $defaultIssueDate = date('Y-m-d');
         applyClientSii(Number(clientSelect?.value || 0));
     });
 
-    if (projectSelect?.value) {
-        const option = projectSelect.selectedOptions[0];
-        const clientId = option?.dataset?.clientId;
-        if (clientSelect && clientId) {
-            clientSelect.value = clientId;
-            applyClientSii(Number(clientId));
+    document.addEventListener('click', (event) => {
+        if (!event.target?.matches('[data-remove-row]')) {
+            return;
         }
-        const firstRow = document.querySelector('[data-item-row]');
-        if (firstRow) {
-            const descriptionInput = firstRow.querySelector('[data-item-description]');
-            const priceInput = firstRow.querySelector('[data-item-price]');
-            const qtyInput = firstRow.querySelector('[data-item-qty]');
-            const taxRateInputRow = firstRow.querySelector('[data-item-tax-rate]');
-            if (descriptionInput) {
-                descriptionInput.value = option?.dataset?.name || '';
-            }
-            if (priceInput) {
-                priceInput.value = formatNumber(option?.dataset?.price || 0).toFixed(2);
-            }
-            if (qtyInput) {
-                qtyInput.value = '1';
-                qtyInput.readOnly = true;
-            }
-            if (taxRateInputRow) {
-                taxRateInputRow.value = taxRateInput?.value || '0';
-            }
+        const rows = document.querySelectorAll('[data-item-row]');
+        const row = event.target.closest('[data-item-row]');
+        if (!row) {
+            return;
         }
-    }
+        if (rows.length <= 1) {
+            row.querySelectorAll('input').forEach((input) => {
+                if (input.matches('[data-item-qty]')) {
+                    input.value = '1';
+                } else if (input.matches('[data-item-price], [data-item-tax-rate], [data-item-tax], [data-item-total]')) {
+                    input.value = '0';
+                } else {
+                    input.value = '';
+                }
+            });
+            updateFromItems();
+            return;
+        }
+        row.remove();
+        updateFromItems();
+    });
 
     applyClientSii(Number(clientSelect?.value || 0));
     updateFromItems();
