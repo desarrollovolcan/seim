@@ -284,6 +284,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarCrmVentas">
                         <ul class="sub-menu">
+                            <?php if ($hasPermission('quotes_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=quotes" class="side-nav-link">
+                                        <span class="menu-text">Cotizaciones</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('invoices_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=invoices" class="side-nav-link">
