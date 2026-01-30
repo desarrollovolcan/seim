@@ -43,9 +43,10 @@ class InventoryController extends Controller
         $companyId = $this->requireCompany();
         $movementId = (int)($_GET['id'] ?? 0);
         $movement = $this->db->fetch(
-            'SELECT im.*, p.name as product_name
+            'SELECT im.*, COALESCE(p.name, pp.name) as product_name
              FROM inventory_movements im
-             JOIN products p ON im.product_id = p.id
+             LEFT JOIN products p ON im.product_id = p.id
+             LEFT JOIN produced_products pp ON im.produced_product_id = pp.id
              WHERE im.id = :id AND im.company_id = :company_id',
             ['id' => $movementId, 'company_id' => $companyId]
         );
@@ -98,9 +99,10 @@ class InventoryController extends Controller
         $companyId = $this->requireCompany();
         $movementId = (int)($_GET['id'] ?? 0);
         $movement = $this->db->fetch(
-            'SELECT im.*, p.name as product_name
+            'SELECT im.*, COALESCE(p.name, pp.name) as product_name
              FROM inventory_movements im
-             JOIN products p ON im.product_id = p.id
+             LEFT JOIN products p ON im.product_id = p.id
+             LEFT JOIN produced_products pp ON im.produced_product_id = pp.id
              WHERE im.id = :id AND im.company_id = :company_id',
             ['id' => $movementId, 'company_id' => $companyId]
         );

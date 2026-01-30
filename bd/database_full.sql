@@ -990,6 +990,23 @@ CREATE TABLE products (
     FOREIGN KEY (subfamily_id) REFERENCES product_subfamilies(id)
 );
 
+CREATE TABLE produced_products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    sku VARCHAR(100) NULL,
+    description TEXT NULL,
+    price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+    stock INT NOT NULL DEFAULT 0,
+    stock_min INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'activo',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
 CREATE TABLE projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
@@ -1329,14 +1346,14 @@ CREATE TABLE production_inputs (
 CREATE TABLE production_outputs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     production_id INT NOT NULL,
-    product_id INT NOT NULL,
+    produced_product_id INT NOT NULL,
     quantity INT NOT NULL DEFAULT 0,
     unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
     subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (production_id) REFERENCES production_orders(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id)
 );
 
 CREATE TABLE production_expenses (
@@ -1400,6 +1417,7 @@ CREATE TABLE sale_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sale_id INT NOT NULL,
     product_id INT NULL,
+    produced_product_id INT NULL,
     service_id INT NULL,
     quantity INT NOT NULL DEFAULT 0,
     unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -1408,6 +1426,7 @@ CREATE TABLE sale_items (
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(id),
     FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id),
     FOREIGN KEY (service_id) REFERENCES services(id)
 );
 
@@ -1958,7 +1977,8 @@ CREATE TABLE bank_transactions (
 CREATE TABLE inventory_movements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
-    product_id INT NOT NULL,
+    product_id INT NULL,
+    produced_product_id INT NULL,
     movement_date DATE NOT NULL,
     movement_type VARCHAR(20) NOT NULL,
     quantity INT NOT NULL DEFAULT 0,
@@ -1969,7 +1989,8 @@ CREATE TABLE inventory_movements (
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id)
 );
 
 CREATE TABLE document_categories (
