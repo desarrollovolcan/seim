@@ -694,7 +694,7 @@ function permission_catalog(): array
         ],
         'produced_products' => [
             'label' => 'Productos fabricados',
-            'routes' => ['produced-products'],
+            'routes' => ['produced-products', 'produced_products'],
             'legacy_key' => 'produced_products',
             'view_key' => 'produced_products_view',
             'edit_key' => 'produced_products_edit',
