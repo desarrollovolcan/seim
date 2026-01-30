@@ -158,6 +158,7 @@
         const totalCost = document.getElementById('total-cost');
         const totalOutput = document.getElementById('total-output');
         const unitCost = document.getElementById('unit-cost');
+        const producedProductMaterials = <?php echo json_encode($materialsByProduct ?? [], JSON_UNESCAPED_UNICODE); ?>;
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount || 0);
@@ -204,6 +205,9 @@
                             costInput.value = cost;
                         }
                     }
+                    if (input.name === 'output_product_id[]') {
+                        loadMaterialsForProduct(parseInt(input.value || '0', 10));
+                    }
                     recalc();
                 });
             });
@@ -237,6 +241,58 @@
             inputTable.appendChild(row);
             recalc();
         });
+
+        function clearInputRows() {
+            const rows = Array.from(inputTable.querySelectorAll('.input-row'));
+            rows.slice(1).forEach((row) => row.remove());
+            const firstRow = rows[0];
+            if (firstRow) {
+                firstRow.querySelectorAll('select').forEach((select) => {
+                    select.value = '';
+                });
+                firstRow.querySelectorAll('input').forEach((input) => {
+                    input.value = input.classList.contains('input-qty') ? '1' : '0';
+                });
+            }
+        }
+
+        function loadMaterialsForProduct(producedProductId) {
+            if (!producedProductId || !producedProductMaterials?.[producedProductId]) {
+                return;
+            }
+            const currentRows = Array.from(inputTable.querySelectorAll('.input-row'));
+            const hasSelection = currentRows.some((row) => row.querySelector('.input-product')?.value);
+            if (hasSelection) {
+                return;
+            }
+            clearInputRows();
+            const materials = producedProductMaterials[producedProductId];
+            if (!materials?.length) {
+                recalc();
+                return;
+            }
+            materials.forEach((material, index) => {
+                let row = inputTable.querySelector('.input-row');
+                if (index > 0) {
+                    row = row.cloneNode(true);
+                    inputTable.appendChild(row);
+                }
+                const productSelect = row.querySelector('.input-product');
+                const qtyInput = row.querySelector('.input-qty');
+                const costInput = row.querySelector('.input-cost');
+                if (productSelect) {
+                    productSelect.value = String(material.product_id);
+                }
+                if (qtyInput) {
+                    qtyInput.value = material.quantity || 1;
+                }
+                if (costInput) {
+                    costInput.value = material.unit_cost || 0;
+                }
+                attachRowHandlers(row);
+            });
+            recalc();
+        }
 
         addExpense?.addEventListener('click', () => {
             const row = expenseTable.querySelector('.expense-row').cloneNode(true);

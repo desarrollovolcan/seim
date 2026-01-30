@@ -53,22 +53,43 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr class="material-row">
-                                    <td>
-                                        <select name="input_product_id[]" class="form-select form-select-sm material-product">
-                                            <option value="">Selecciona</option>
-                                            <?php foreach ($products as $productOption): ?>
-                                                <option value="<?php echo (int)$productOption['id']; ?>" data-cost="<?php echo e((float)($productOption['cost'] ?? 0)); ?>">
-                                                    <?php echo e($productOption['name']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
-                                    </td>
-                                    <td><input type="number" name="input_quantity[]" class="form-control form-control-sm material-qty" min="1" value="1"></td>
-                                    <td><input type="number" name="input_unit_cost[]" class="form-control form-control-sm material-cost" step="0.01" min="0" value="0"></td>
-                                    <td class="text-end material-subtotal fw-semibold">0</td>
-                                    <td><button type="button" class="btn btn-link text-danger p-0 remove-row">✕</button></td>
-                                </tr>
+                                <?php if (!empty($materials)): ?>
+                                    <?php foreach ($materials as $material): ?>
+                                        <tr class="material-row">
+                                            <td>
+                                                <select name="input_product_id[]" class="form-select form-select-sm material-product">
+                                                    <option value="">Selecciona</option>
+                                                    <?php foreach ($products as $productOption): ?>
+                                                        <option value="<?php echo (int)$productOption['id']; ?>" data-cost="<?php echo e((float)($productOption['cost'] ?? 0)); ?>" <?php echo (int)$productOption['id'] === (int)($material['product_id'] ?? 0) ? 'selected' : ''; ?>>
+                                                            <?php echo e($productOption['name']); ?>
+                                                        </option>
+                                                    <?php endforeach; ?>
+                                                </select>
+                                            </td>
+                                            <td><input type="number" name="input_quantity[]" class="form-control form-control-sm material-qty" min="1" value="<?php echo e((float)($material['quantity'] ?? 1)); ?>"></td>
+                                            <td><input type="number" name="input_unit_cost[]" class="form-control form-control-sm material-cost" step="0.01" min="0" value="<?php echo e((float)($material['unit_cost'] ?? 0)); ?>"></td>
+                                            <td class="text-end material-subtotal fw-semibold">0</td>
+                                            <td><button type="button" class="btn btn-link text-danger p-0 remove-row">✕</button></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                <?php else: ?>
+                                    <tr class="material-row">
+                                        <td>
+                                            <select name="input_product_id[]" class="form-select form-select-sm material-product">
+                                                <option value="">Selecciona</option>
+                                                <?php foreach ($products as $productOption): ?>
+                                                    <option value="<?php echo (int)$productOption['id']; ?>" data-cost="<?php echo e((float)($productOption['cost'] ?? 0)); ?>">
+                                                        <?php echo e($productOption['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </td>
+                                        <td><input type="number" name="input_quantity[]" class="form-control form-control-sm material-qty" min="1" value="1"></td>
+                                        <td><input type="number" name="input_unit_cost[]" class="form-control form-control-sm material-cost" step="0.01" min="0" value="0"></td>
+                                        <td class="text-end material-subtotal fw-semibold">0</td>
+                                        <td><button type="button" class="btn btn-link text-danger p-0 remove-row">✕</button></td>
+                                    </tr>
+                                <?php endif; ?>
                             </tbody>
                         </table>
                     </div>
