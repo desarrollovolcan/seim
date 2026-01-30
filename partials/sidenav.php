@@ -214,6 +214,11 @@
                             </a>
                         </li>
                         <li class="side-nav-item">
+                            <a href="index.php?route=quotes" class="side-nav-link">
+                                <span class="menu-text" data-lang="crm-quotes">Cotizaciones</span>
+                            </a>
+                        </li>
+                        <li class="side-nav-item">
                             <a href="crm-proposals.php" class="side-nav-link">
                                 <span class="menu-text" data-lang="crm-proposals">Proposals</span>
                             </a>

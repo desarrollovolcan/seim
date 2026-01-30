@@ -94,6 +94,23 @@ $item = $items[0] ?? [
             include __DIR__ . '/../partials/sii-document-fields.php';
             ?>
 
+            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+                <select class="form-select form-select-sm" data-product-select>
+                    <option value="">Selecciona producto</option>
+                    <?php foreach ($products as $product): ?>
+                        <option value="<?php echo $product['id']; ?>"
+                                data-name="<?php echo e($product['name'] ?? ''); ?>"
+                                data-price="<?php echo e($product['price'] ?? 0); ?>">
+                            <?php echo e($product['name']); ?>
+                            <?php if (!empty($product['produced_qty'])): ?>
+                                (Producido: <?php echo (int)$product['produced_qty']; ?>)
+                            <?php endif; ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn btn-outline-success btn-sm" data-apply-product>Usar producto</button>
+            </div>
+
             <div class="table-responsive mt-3">
                 <table class="table table-bordered align-middle">
                     <thead class="table-light">
@@ -169,6 +186,8 @@ $item = $items[0] ?? [
     const taxesInput = document.querySelector('[data-taxes]');
     const totalSummaryInput = document.querySelector('[data-total]');
     const clientSelect = document.querySelector('select[name="client_id"]');
+    const productSelect = document.querySelector('[data-product-select]');
+    const applyProductButton = document.querySelector('[data-apply-product]');
     const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
         $carry[$client['id']] = [
             'rut' => $client['rut'] ?? '',
@@ -270,6 +289,19 @@ $item = $items[0] ?? [
             projectSelect.value = '';
         }
         applySourceData(event.target.selectedOptions[0]);
+    });
+
+    applyProductButton?.addEventListener('click', () => {
+        if (serviceSelect) {
+            serviceSelect.value = '';
+        }
+        if (projectSelect) {
+            projectSelect.value = '';
+        }
+        applySourceData(productSelect?.selectedOptions?.[0]);
+        if (productSelect) {
+            productSelect.value = '';
+        }
     });
 
     projectSelect?.addEventListener('change', (event) => {
