@@ -1,8 +1,17 @@
 <?php
-$municipalidad = get_municipalidad();
-$themeColor = $municipalidad['color_primary'] ?? '#6658dd';
-$appName = $municipalidad['nombre'] ?? 'SEIM';
-$baseUrl = rtrim(base_url(), '/');
+$themeColor = '#6658dd';
+$appName = 'SEIM';
+$baseUrl = '';
+
+if (function_exists('get_municipalidad')) {
+    $municipalidad = get_municipalidad();
+    $themeColor = $municipalidad['color_primary'] ?? $themeColor;
+    $appName = $municipalidad['nombre'] ?? $appName;
+}
+
+if (function_exists('base_url')) {
+    $baseUrl = rtrim(base_url(), '/');
+}
 ?>
 <meta charset="utf-8">
 <title><?php echo ($title); ?> | UBold - Responsive Bootstrap 5 Admin Dashboard</title>
