@@ -1007,6 +1007,19 @@ CREATE TABLE produced_products (
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
+CREATE TABLE produced_product_materials (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    produced_product_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id),
+    FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
 CREATE TABLE projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,

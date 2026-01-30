@@ -8,6 +8,7 @@ class ProductionController extends Controller
     private ProductionExpensesModel $expenses;
     private ProductsModel $products;
     private ProducedProductsModel $producedProducts;
+    private ProducedProductMaterialsModel $materials;
     private InventoryMovementsModel $movements;
 
     public function __construct(array $config, Database $db)
@@ -19,6 +20,7 @@ class ProductionController extends Controller
         $this->expenses = new ProductionExpensesModel($db);
         $this->products = new ProductsModel($db);
         $this->producedProducts = new ProducedProductsModel($db);
+        $this->materials = new ProducedProductMaterialsModel($db);
         $this->movements = new InventoryMovementsModel($db);
     }
 
@@ -51,12 +53,28 @@ class ProductionController extends Controller
         $companyId = $this->requireCompany();
         $products = $this->products->active($companyId);
         $producedProducts = $this->producedProducts->active($companyId);
+        $materials = $this->materials->byCompany($companyId);
+        $materialsByProduct = [];
+        foreach ($materials as $material) {
+            $producedProductId = (int)($material['produced_product_id'] ?? 0);
+            if (!$producedProductId) {
+                continue;
+            }
+            $materialsByProduct[$producedProductId][] = [
+                'product_id' => (int)$material['product_id'],
+                'product_name' => $material['product_name'] ?? '',
+                'quantity' => (float)$material['quantity'],
+                'unit_cost' => (float)$material['unit_cost'],
+                'subtotal' => (float)$material['subtotal'],
+            ];
+        }
 
         $this->render('production/create', [
             'title' => 'Registrar producción',
             'pageTitle' => 'Registrar producción',
             'products' => $products,
             'producedProducts' => $producedProducts,
+            'materialsByProduct' => $materialsByProduct,
             'today' => date('Y-m-d'),
         ]);
     }

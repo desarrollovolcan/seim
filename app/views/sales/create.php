@@ -330,42 +330,48 @@
                     <?php endif; ?>
                     <input type="text" class="form-control form-control-sm w-100" id="search-products" placeholder="Buscar producto">
                 </div>
-                <div class="list-group list-group-flush flex-grow-1 overflow-auto w-100">
-                    <?php foreach ($products as $product): ?>
-                        <button type="button"
-                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
-                                data-product-id="<?php echo (int)$product['id']; ?>"
-                                data-product-type="regular"
-                                data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
-                                data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
-                                data-label="<?php echo e($product['name']); ?>">
-                            <span class="flex-grow-1">
-                                <?php echo e($product['name']); ?>
-                                <?php if (!empty($product['sku'])): ?>
-                                    <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
-                                <?php endif; ?>
-                            </span>
-                            <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
-                        </button>
-                    <?php endforeach; ?>
-                    <?php foreach ($producedProducts as $product): ?>
-                        <button type="button"
-                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
-                                data-produced-product-id="<?php echo (int)$product['id']; ?>"
-                                data-product-type="produced"
-                                data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
-                                data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
-                                data-label="<?php echo e($product['name']); ?>">
-                            <span class="flex-grow-1">
-                                <?php echo e($product['name']); ?>
-                                <?php if (!empty($product['sku'])): ?>
-                                    <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
-                                <?php endif; ?>
-                                <span class="badge bg-soft-info text-info ms-2">Fabricado</span>
-                            </span>
-                            <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
-                        </button>
-                    <?php endforeach; ?>
+                <div class="flex-grow-1 overflow-auto w-100">
+                    <div class="px-3 pt-2 pb-1 text-uppercase small text-muted product-group-title" data-group-type="regular">Productos normales</div>
+                    <div class="list-group list-group-flush" data-product-group="regular">
+                        <?php foreach ($products as $product): ?>
+                            <button type="button"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
+                                    data-product-id="<?php echo (int)$product['id']; ?>"
+                                    data-product-type="regular"
+                                    data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
+                                    data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
+                                    data-label="<?php echo e($product['name']); ?>">
+                                <span class="flex-grow-1">
+                                    <?php echo e($product['name']); ?>
+                                    <?php if (!empty($product['sku'])): ?>
+                                        <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
+                                    <?php endif; ?>
+                                </span>
+                                <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="px-3 pt-3 pb-1 text-uppercase small text-muted product-group-title" data-group-type="produced">Productos fabricados</div>
+                    <div class="list-group list-group-flush" data-product-group="produced">
+                        <?php foreach ($producedProducts as $product): ?>
+                            <button type="button"
+                                    class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
+                                    data-produced-product-id="<?php echo (int)$product['id']; ?>"
+                                    data-product-type="produced"
+                                    data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
+                                    data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
+                                    data-label="<?php echo e($product['name']); ?>">
+                                <span class="flex-grow-1">
+                                    <?php echo e($product['name']); ?>
+                                    <?php if (!empty($product['sku'])): ?>
+                                        <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
+                                    <?php endif; ?>
+                                    <span class="badge bg-soft-info text-info ms-2">Fabricado</span>
+                                </span>
+                                <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
+                            </button>
+                        <?php endforeach; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -431,6 +437,8 @@
         const productSelectors = document.querySelectorAll('.add-product');
         const searchProducts = document.getElementById('search-products');
         const productTypeFilter = document.getElementById('product-type-filter');
+        const productGroupTitles = document.querySelectorAll('.product-group-title');
+        const productGroups = document.querySelectorAll('[data-product-group]');
         const mainCard = document.querySelector('.pos-main-card');
         const sideCard = document.querySelector('.pos-side-card');
         const clientSelect = document.querySelector('select[name="client_id"]');
@@ -607,6 +615,15 @@
                 const matchesTerm = name.includes(term);
                 const matchesType = type === 'all' || (type === 'produced' && productType === 'produced') || (type === 'regular' && productType === 'regular');
                 el.style.display = matchesTerm && matchesType ? '' : 'none';
+            });
+            productGroups.forEach((group) => {
+                const groupType = group.dataset.productGroup;
+                const hasVisible = Array.from(group.querySelectorAll('.add-product')).some((item) => item.style.display !== 'none');
+                group.style.display = hasVisible ? '' : 'none';
+                const title = Array.from(productGroupTitles).find((el) => el.dataset.groupType === groupType);
+                if (title) {
+                    title.style.display = hasVisible ? '' : 'none';
+                }
             });
         }
         searchProducts?.addEventListener('input', filterList);
