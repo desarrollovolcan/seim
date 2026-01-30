@@ -181,6 +181,28 @@
             border-top: 1px solid var(--gris-claro);
             padding-top: 6px;
         }
+
+        .print-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 12px;
+        }
+
+        .print-actions button {
+            background: var(--azul);
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        @media print {
+            .print-actions {
+                display: none;
+            }
+        }
     </style>
 </head>
 
@@ -191,12 +213,22 @@ $companyRut = $company['rut'] ?? '';
 $companyEmail = $company['email'] ?? '';
 $companyPhone = $company['phone'] ?? '';
 $companyAddress = $company['address'] ?? '';
+$companyGiro = $company['giro'] ?? '';
+$companyCity = $company['city'] ?? '';
 $clientRut = $client['rut'] ?? '';
 $clientContact = $client['contact_name'] ?? '';
+$clientGiro = $client['giro'] ?? '';
+$clientPhone = $client['phone'] ?? '';
+$clientAddress = $client['address'] ?? '';
+$clientCommune = $client['commune'] ?? '';
+$clientCity = $client['city'] ?? '';
 $validUntil = $quote['valid_until'] ?? '';
 ?>
 
 <div class="page">
+    <div class="print-actions">
+        <button type="button" onclick="window.print()">Imprimir</button>
+    </div>
     <div class="header">
         <div class="left">
             <div class="logo"><?php echo e($companyName); ?></div>
@@ -204,7 +236,14 @@ $validUntil = $quote['valid_until'] ?? '';
                 <?php if ($companyRut !== ''): ?>
                     RUT: <?php echo e($companyRut); ?><br>
                 <?php endif; ?>
-                <?php echo e($companyAddress); ?><br>
+                <?php if ($companyGiro !== ''): ?>
+                    Giro: <?php echo e($companyGiro); ?><br>
+                <?php endif; ?>
+                <?php echo e($companyAddress); ?>
+                <?php if ($companyCity !== ''): ?>
+                    , <?php echo e($companyCity); ?>
+                <?php endif; ?>
+                <br>
                 <?php echo e($companyEmail); ?>
                 <?php if ($companyPhone !== ''): ?>
                     · <?php echo e($companyPhone); ?>
@@ -237,6 +276,23 @@ $validUntil = $quote['valid_until'] ?? '';
                     <td><?php echo e($clientRut); ?></td>
                 </tr>
             <?php endif; ?>
+            <?php if ($clientGiro !== ''): ?>
+                <tr>
+                    <td class="label">Giro</td>
+                    <td><?php echo e($clientGiro); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if ($clientAddress !== ''): ?>
+                <tr>
+                    <td class="label">Dirección</td>
+                    <td>
+                        <?php echo e($clientAddress); ?>
+                        <?php if ($clientCommune !== '' || $clientCity !== ''): ?>
+                            <?php echo e(trim($clientCommune . ' ' . $clientCity)); ?>
+                        <?php endif; ?>
+                    </td>
+                </tr>
+            <?php endif; ?>
             <?php if ($clientContact !== ''): ?>
                 <tr>
                     <td class="label">Contacto</td>
@@ -247,6 +303,64 @@ $validUntil = $quote['valid_until'] ?? '';
                 <td class="label">Email</td>
                 <td><?php echo e($client['email'] ?? ''); ?></td>
             </tr>
+            <?php if ($clientPhone !== ''): ?>
+                <tr>
+                    <td class="label">Teléfono</td>
+                    <td><?php echo e($clientPhone); ?></td>
+                </tr>
+            <?php endif; ?>
+        </table>
+    </div>
+
+    <div class="section">
+        <div class="section-title">Información de la Cotización</div>
+        <table class="table-info">
+            <tr>
+                <td class="label">Estado</td>
+                <td><?php echo e(ucfirst($quote['estado'] ?? 'pendiente')); ?></td>
+            </tr>
+            <?php if (!empty($quote['sii_document_type'])): ?>
+                <tr>
+                    <td class="label">Documento SII</td>
+                    <td><?php echo e($quote['sii_document_type']); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['sii_document_number'])): ?>
+                <tr>
+                    <td class="label">Folio</td>
+                    <td><?php echo e($quote['sii_document_number']); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['sii_receiver_rut'])): ?>
+                <tr>
+                    <td class="label">RUT receptor</td>
+                    <td><?php echo e($quote['sii_receiver_rut']); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['sii_receiver_name'])): ?>
+                <tr>
+                    <td class="label">Razón social</td>
+                    <td><?php echo e($quote['sii_receiver_name']); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['sii_receiver_giro'])): ?>
+                <tr>
+                    <td class="label">Giro</td>
+                    <td><?php echo e($quote['sii_receiver_giro']); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['sii_receiver_address'])): ?>
+                <tr>
+                    <td class="label">Dirección SII</td>
+                    <td><?php echo e(trim(($quote['sii_receiver_address'] ?? '') . ' ' . ($quote['sii_receiver_commune'] ?? '') . ' ' . ($quote['sii_receiver_city'] ?? ''))); ?></td>
+                </tr>
+            <?php endif; ?>
+            <?php if (!empty($quote['notas'])): ?>
+                <tr>
+                    <td class="label">Notas</td>
+                    <td><?php echo nl2br(e($quote['notas'] ?? '')); ?></td>
+                </tr>
+            <?php endif; ?>
         </table>
     </div>
 
@@ -296,7 +410,7 @@ $validUntil = $quote['valid_until'] ?? '';
         <div class="section-title">Condiciones Comerciales</div>
         <ul>
             <li>Valores expresados en pesos chilenos.</li>
-            <li>Pago 50% al inicio y 50% contra entrega.</li>
+            <li>Pago según acuerdo comercial.</li>
             <li>Plazo de entrega sujeto a entrega de información.</li>
             <li>Vigencia de la cotización: 15 días.</li>
         </ul>

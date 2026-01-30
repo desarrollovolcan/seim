@@ -305,11 +305,13 @@
                         </div>
                     </div>
                 
-    <?php
-    $reportTemplate = 'informeIcargaEspanol.php';
-    $reportSource = 'sales/create';
-    include __DIR__ . '/../partials/report-download.php';
-    ?>
+    <?php if (!$isPos): ?>
+        <?php
+        $reportTemplate = 'informeIcargaEspanol.php';
+        $reportSource = 'sales/create';
+        include __DIR__ . '/../partials/report-download.php';
+        ?>
+    <?php endif; ?>
 </form>
             </div>
         </div>
@@ -639,5 +641,20 @@
         toggleQuickSale();
         filterList();
         recalc();
+
+        const printSaleId = <?php echo (int)($printSaleId ?? 0); ?>;
+        if (printSaleId) {
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.delete('print_sale_id');
+            window.history.replaceState({}, document.title, currentUrl.toString());
+            const copiesInput = window.prompt('¿Cuántas copias deseas imprimir?', '1');
+            if (copiesInput !== null) {
+                const copies = Number.parseInt(copiesInput, 10);
+                if (Number.isFinite(copies) && copies > 0) {
+                    const printUrl = `index.php?route=sales/receipt&id=${printSaleId}&copies=${copies}`;
+                    window.open(printUrl, '_blank', 'noopener,noreferrer');
+                }
+            }
+        }
     })();
 </script>

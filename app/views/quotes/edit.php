@@ -109,6 +109,17 @@ $item = $items[0] ?? [
                     <?php endforeach; ?>
                 </select>
                 <button type="button" class="btn btn-outline-success btn-sm" data-apply-product>Usar producto</button>
+                <select class="form-select form-select-sm" data-produced-select>
+                    <option value="">Selecciona producto fabricado</option>
+                    <?php foreach ($producedProducts as $producedProduct): ?>
+                        <option value="<?php echo $producedProduct['id']; ?>"
+                                data-name="<?php echo e($producedProduct['name'] ?? ''); ?>"
+                                data-price="<?php echo e($producedProduct['price'] ?? 0); ?>">
+                            <?php echo e($producedProduct['name']); ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+                <button type="button" class="btn btn-outline-dark btn-sm" data-apply-produced>Usar fabricado</button>
             </div>
 
             <div class="table-responsive mt-3">
@@ -188,6 +199,8 @@ $item = $items[0] ?? [
     const clientSelect = document.querySelector('select[name="client_id"]');
     const productSelect = document.querySelector('[data-product-select]');
     const applyProductButton = document.querySelector('[data-apply-product]');
+    const producedSelect = document.querySelector('[data-produced-select]');
+    const applyProducedButton = document.querySelector('[data-apply-produced]');
     const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
         $carry[$client['id']] = [
             'rut' => $client['rut'] ?? '',
@@ -301,6 +314,19 @@ $item = $items[0] ?? [
         applySourceData(productSelect?.selectedOptions?.[0]);
         if (productSelect) {
             productSelect.value = '';
+        }
+    });
+
+    applyProducedButton?.addEventListener('click', () => {
+        if (serviceSelect) {
+            serviceSelect.value = '';
+        }
+        if (projectSelect) {
+            projectSelect.value = '';
+        }
+        applySourceData(producedSelect?.selectedOptions?.[0]);
+        if (producedSelect) {
+            producedSelect.value = '';
         }
     });
 
