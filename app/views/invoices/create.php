@@ -172,9 +172,6 @@
                 </div>
             </div>
             <div class="d-flex justify-content-end gap-2">
-                <button type="submit" class="btn btn-outline-primary" formaction="index.php?route=invoices/preview-pdf" formmethod="post" formtarget="_blank">
-                    <i class="ti ti-download me-1"></i> Descargar PDF
-                </button>
                 <a href="index.php?route=invoices" class="btn btn-light">Cancelar</a>
                 <button type="submit" class="btn btn-primary">Guardar</button>
             </div>

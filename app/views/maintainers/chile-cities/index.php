@@ -1,3 +1,8 @@
+<?php
+$canCreate = can_access_route($db, 'maintainers/chile-cities/create', $currentUser);
+$canEdit = can_access_route($db, 'maintainers/chile-cities/edit', $currentUser);
+$canDelete = can_access_route($db, 'maintainers/chile-cities/delete', $currentUser);
+?>
 <div class="card">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
         <div>
@@ -8,9 +13,11 @@
             <span class="badge bg-soft-primary text-primary">
                 <?php echo count($cities); ?> registros
             </span>
-            <a href="index.php?route=maintainers/chile-cities/create" class="btn btn-primary btn-sm">
-                Agregar
-            </a>
+            <?php if ($canCreate): ?>
+                <a href="index.php?route=maintainers/chile-cities/create" class="btn btn-primary btn-sm">
+                    Agregar
+                </a>
+            <?php endif; ?>
         </div>
     </div>
     <div class="card-body">
@@ -34,23 +41,31 @@
                                 <td><?php echo e($city['name'] ?? ''); ?></td>
                                 <td><?php echo e($city['region'] ?? ''); ?></td>
                                 <td class="text-end">
-                                    <div class="dropdown actions-dropdown">
-                                        <button class="btn btn-soft-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <a href="index.php?route=maintainers/chile-cities/edit&id=<?php echo $city['id']; ?>" class="dropdown-item">Editar</a>
-                                            </li>
-                                            <li>
-                                                <form method="post" action="index.php?route=maintainers/chile-cities/delete" onsubmit="return confirm('¿Eliminar esta ciudad?');">
-                                                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                                                    <input type="hidden" name="id" value="<?php echo (int)$city['id']; ?>">
-                                                    <button type="submit" class="dropdown-item dropdown-item-button text-danger">Eliminar</button>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <?php if ($canEdit || $canDelete): ?>
+                                        <div class="dropdown actions-dropdown">
+                                            <button class="btn btn-soft-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <?php if ($canEdit): ?>
+                                                    <li>
+                                                        <a href="index.php?route=maintainers/chile-cities/edit&id=<?php echo $city['id']; ?>" class="dropdown-item">Editar</a>
+                                                    </li>
+                                                <?php endif; ?>
+                                                <?php if ($canDelete): ?>
+                                                    <li>
+                                                        <form method="post" action="index.php?route=maintainers/chile-cities/delete" onsubmit="return confirm('¿Eliminar esta ciudad?');">
+                                                            <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                            <input type="hidden" name="id" value="<?php echo (int)$city['id']; ?>">
+                                                            <button type="submit" class="dropdown-item dropdown-item-button text-danger">Eliminar</button>
+                                                        </form>
+                                                    </li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">Sin permisos</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

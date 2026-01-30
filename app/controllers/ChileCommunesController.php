@@ -5,7 +5,6 @@ class ChileCommunesController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         try {
             $communes = $this->db->fetchAll(
                 'SELECT communes.id, communes.name AS commune, cities.name AS city, regions.name AS region
@@ -28,7 +27,6 @@ class ChileCommunesController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $cities = $this->loadCities();
         $this->render('maintainers/chile-communes/create', [
             'title' => 'Nueva comuna',
@@ -40,7 +38,6 @@ class ChileCommunesController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $commune = trim($_POST['commune'] ?? '');
         $cityId = (int)($_POST['city_id'] ?? 0);
@@ -73,7 +70,6 @@ class ChileCommunesController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $commune = $this->db->fetch(
             'SELECT communes.id, communes.name AS commune, communes.city_id, cities.name AS city, regions.name AS region
@@ -98,7 +94,6 @@ class ChileCommunesController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $commune = $this->db->fetch(
@@ -139,7 +134,6 @@ class ChileCommunesController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $commune = $this->db->fetch(

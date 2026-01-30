@@ -1,8 +1,9 @@
 <?php
 $reportTemplate = $reportTemplate ?? '';
 $reportSource = $reportSource ?? '';
+$reportDownloadEnabled = $reportDownloadEnabled ?? false;
 ?>
-<?php if ($reportTemplate !== '' && $reportSource !== ''): ?>
+<?php if ($reportDownloadEnabled && $reportTemplate !== '' && $reportSource !== ''): ?>
     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
     <input type="hidden" name="report_template" value="<?php echo e($reportTemplate); ?>">
     <input type="hidden" name="report_source" value="<?php echo e($reportSource); ?>">

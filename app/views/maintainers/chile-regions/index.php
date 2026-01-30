@@ -1,3 +1,8 @@
+<?php
+$canCreate = can_access_route($db, 'maintainers/chile-regions/create', $currentUser);
+$canEdit = can_access_route($db, 'maintainers/chile-regions/edit', $currentUser);
+$canDelete = can_access_route($db, 'maintainers/chile-regions/delete', $currentUser);
+?>
 <div class="card">
     <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
         <div>
@@ -8,9 +13,11 @@
             <span class="badge bg-soft-primary text-primary">
                 <?php echo count($regions); ?> registros
             </span>
-            <a href="index.php?route=maintainers/chile-regions/create" class="btn btn-primary btn-sm">
-                Agregar
-            </a>
+            <?php if ($canCreate): ?>
+                <a href="index.php?route=maintainers/chile-regions/create" class="btn btn-primary btn-sm">
+                    Agregar
+                </a>
+            <?php endif; ?>
         </div>
     </div>
     <div class="card-body">
@@ -32,23 +39,31 @@
                             <tr>
                                 <td><?php echo e($region['name'] ?? ''); ?></td>
                                 <td class="text-end">
-                                    <div class="dropdown actions-dropdown">
-                                        <button class="btn btn-soft-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                            Acciones
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li>
-                                                <a href="index.php?route=maintainers/chile-regions/edit&id=<?php echo $region['id']; ?>" class="dropdown-item">Editar</a>
-                                            </li>
-                                            <li>
-                                                <form method="post" action="index.php?route=maintainers/chile-regions/delete" onsubmit="return confirm('¿Eliminar esta región?');">
-                                                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                                                    <input type="hidden" name="id" value="<?php echo (int)$region['id']; ?>">
-                                                    <button type="submit" class="dropdown-item dropdown-item-button text-danger">Eliminar</button>
-                                                </form>
-                                            </li>
-                                        </ul>
-                                    </div>
+                                    <?php if ($canEdit || $canDelete): ?>
+                                        <div class="dropdown actions-dropdown">
+                                            <button class="btn btn-soft-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                                Acciones
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end">
+                                                <?php if ($canEdit): ?>
+                                                    <li>
+                                                        <a href="index.php?route=maintainers/chile-regions/edit&id=<?php echo $region['id']; ?>" class="dropdown-item">Editar</a>
+                                                    </li>
+                                                <?php endif; ?>
+                                                <?php if ($canDelete): ?>
+                                                    <li>
+                                                        <form method="post" action="index.php?route=maintainers/chile-regions/delete" onsubmit="return confirm('¿Eliminar esta región?');">
+                                                            <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                            <input type="hidden" name="id" value="<?php echo (int)$region['id']; ?>">
+                                                            <button type="submit" class="dropdown-item dropdown-item-button text-danger">Eliminar</button>
+                                                        </form>
+                                                    </li>
+                                                <?php endif; ?>
+                                            </ul>
+                                        </div>
+                                    <?php else: ?>
+                                        <span class="text-muted">Sin permisos</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
