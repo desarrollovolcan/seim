@@ -189,9 +189,17 @@
                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                     <input type="hidden" name="channel" value="<?php echo $isPos ? 'pos' : 'venta'; ?>">
                     <div class="row g-4">
+                        <?php if ($isPos): ?>
+                            <div class="col-12">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="quick-sale-toggle" name="quick_sale" value="1">
+                                    <label class="form-check-label" for="quick-sale-toggle">Venta rápida (sin cliente)</label>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                         <div class="col-12">
                             <div class="row g-3">
-                                <div class="col-md-6">
+                                <div class="col-md-6" id="client-section">
                                     <label class="form-label">Cliente</label>
                                     <select name="client_id" class="form-select">
                                         <option value="">Consumidor final</option>
@@ -222,6 +230,7 @@
                                 'sii_tax_rate' => 19,
                                 'sii_exempt_amount' => 0,
                             ];
+                            $siiRequired = !$isPos;
                             include __DIR__ . '/../partials/sii-document-fields.php';
                             ?>
                         </div>
@@ -252,6 +261,7 @@
                             <tr class="item-row">
                                 <input type="hidden" name="item_type[]" value="product" class="item-type">
                                 <input type="hidden" name="product_id[]" value="" class="product-id">
+                                <input type="hidden" name="produced_product_id[]" value="" class="produced-product-id">
                                 <input type="hidden" name="service_id[]" value="" class="service-id">
                                 <td class="item-name fw-semibold text-wrap"></td>
                                 <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="1"></td>
@@ -322,12 +332,11 @@
                 </div>
                 <div class="list-group list-group-flush flex-grow-1 overflow-auto w-100">
                     <?php foreach ($products as $product): ?>
-                        <?php $isProduced = in_array((int)($product['id'] ?? 0), $producedProductIds ?? [], true); ?>
                         <button type="button"
                                 class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
                                 data-product-id="<?php echo (int)$product['id']; ?>"
+                                data-product-type="regular"
                                 data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
-                                data-produced="<?php echo $isProduced ? '1' : '0'; ?>"
                                 data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
                                 data-label="<?php echo e($product['name']); ?>">
                             <span class="flex-grow-1">
@@ -335,6 +344,24 @@
                                 <?php if (!empty($product['sku'])): ?>
                                     <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
                                 <?php endif; ?>
+                            </span>
+                            <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
+                        </button>
+                    <?php endforeach; ?>
+                    <?php foreach ($producedProducts as $product): ?>
+                        <button type="button"
+                                class="list-group-item list-group-item-action d-flex justify-content-between align-items-center add-product w-100"
+                                data-produced-product-id="<?php echo (int)$product['id']; ?>"
+                                data-product-type="produced"
+                                data-price="<?php echo e((float)($product['price'] ?? 0)); ?>"
+                                data-name="<?php echo e(strtolower($product['name'] ?? '')); ?>"
+                                data-label="<?php echo e($product['name']); ?>">
+                            <span class="flex-grow-1">
+                                <?php echo e($product['name']); ?>
+                                <?php if (!empty($product['sku'])): ?>
+                                    <small class="text-muted ms-1">(#<?php echo e($product['sku']); ?>)</small>
+                                <?php endif; ?>
+                                <span class="badge bg-soft-info text-info ms-2">Fabricado</span>
                             </span>
                             <span class="badge bg-light text-body"><?php echo format_currency((float)($product['price'] ?? 0)); ?></span>
                         </button>
@@ -407,6 +434,9 @@
         const mainCard = document.querySelector('.pos-main-card');
         const sideCard = document.querySelector('.pos-side-card');
         const clientSelect = document.querySelector('select[name="client_id"]');
+        const quickSaleToggle = document.getElementById('quick-sale-toggle');
+        const clientSection = document.getElementById('client-section');
+        const siiCard = document.querySelector('[data-sii-warning]')?.closest('.card');
         const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
             $carry[$client['id']] = [
                 'rut' => $client['rut'] ?? '',
@@ -495,6 +525,11 @@
             const row = clone.querySelector('.item-row');
             row.querySelector('.item-type').value = type;
             row.querySelector('.product-id').value = productId;
+            row.querySelector('.produced-product-id').value = '';
+            if (type === 'produced_product') {
+                row.querySelector('.product-id').value = '';
+                row.querySelector('.produced-product-id').value = productId;
+            }
             row.querySelector('.service-id').value = serviceId;
             row.querySelector('.price-input').value = price;
             row.querySelector('.item-name').innerText = name || 'Item';
@@ -528,11 +563,14 @@
         });
         productSelectors.forEach((button) => {
             button.addEventListener('click', () => {
-                const productId = button.dataset.productId;
+                const productType = button.dataset.productType || 'regular';
+                const productId = productType === 'produced'
+                    ? button.dataset.producedProductId
+                    : button.dataset.productId;
                 const price = button.dataset.price || 0;
                 const name = button.dataset.label || button.innerText.trim();
                 addRow({
-                    type: 'product',
+                    type: productType === 'produced' ? 'produced_product' : 'product',
                     productId,
                     serviceId: '',
                     price,
@@ -540,14 +578,34 @@
                 });
             });
         });
+        function toggleQuickSale(forceState = null) {
+            if (!quickSaleToggle) {
+                return;
+            }
+            const enabled = forceState ?? quickSaleToggle.checked;
+            if (clientSection) {
+                clientSection.style.display = enabled ? 'none' : '';
+            }
+            if (siiCard) {
+                siiCard.style.display = enabled ? 'none' : '';
+            }
+            if (enabled && clientSelect) {
+                clientSelect.value = '';
+                applyClientSii(0, true);
+            }
+            if (!enabled) {
+                applyClientSii(Number(clientSelect?.value || 0), true);
+            }
+        }
+        quickSaleToggle?.addEventListener('change', () => toggleQuickSale());
         function filterList() {
             const term = (searchProducts?.value || '').toLowerCase();
             const type = productTypeFilter?.value || 'all';
             productSelectors.forEach((el) => {
                 const name = (el.dataset.name || '').toLowerCase();
-                const isProduced = (el.dataset.produced || '0') === '1';
+                const productType = el.dataset.productType || 'regular';
                 const matchesTerm = name.includes(term);
-                const matchesType = type === 'all' || (type === 'produced' && isProduced) || (type === 'regular' && !isProduced);
+                const matchesType = type === 'all' || (type === 'produced' && productType === 'produced') || (type === 'regular' && productType === 'regular');
                 el.style.display = matchesTerm && matchesType ? '' : 'none';
             });
         }
@@ -561,6 +619,7 @@
         window.addEventListener('resize', syncCardHeights);
         syncCardHeights();
         applyClientSii(Number(clientSelect?.value || 0));
+        toggleQuickSale();
         filterList();
         recalc();
     })();

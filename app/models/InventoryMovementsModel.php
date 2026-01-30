@@ -7,9 +7,10 @@ class InventoryMovementsModel extends Model
     public function byCompany(int $companyId): array
     {
         return $this->db->fetchAll(
-            'SELECT im.*, p.name as product_name
+            'SELECT im.*, COALESCE(p.name, pp.name) as product_name
              FROM inventory_movements im
-             JOIN products p ON im.product_id = p.id
+             LEFT JOIN products p ON im.product_id = p.id
+             LEFT JOIN produced_products pp ON im.produced_product_id = pp.id
              WHERE im.company_id = :company_id
              ORDER BY im.movement_date DESC, im.id DESC',
             ['company_id' => $companyId]
