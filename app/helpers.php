@@ -17,9 +17,26 @@ function verify_csrf(): void
     }
 }
 
-function e(string $value): string
+function e(mixed $value): string
 {
-    return htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+    if ($value === null) {
+        return '';
+    }
+
+    if (is_bool($value)) {
+        $value = $value ? '1' : '0';
+    }
+
+    return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
+}
+
+function mb_substr_safe(string $value, int $start, ?int $length = null): string
+{
+    if (function_exists('mb_substr')) {
+        return $length === null ? mb_substr($value, $start) : mb_substr($value, $start, $length);
+    }
+
+    return $length === null ? substr($value, $start) : substr($value, $start, $length);
 }
 
 function app_config(?string $key = null, mixed $default = null): mixed
@@ -47,6 +64,26 @@ function app_config(?string $key = null, mixed $default = null): mixed
     }
 
     return $value;
+}
+
+function base_url(): string
+{
+    $configured = trim((string)app_config('app.base_url', ''));
+    if ($configured !== '') {
+        return rtrim($configured, '/');
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host === '') {
+        return '';
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = rtrim(str_replace('/index.php', '', $scriptName), '/');
+
+    return $scheme . '://' . $host . $basePath;
 }
 
 function currency_format_settings(): array
