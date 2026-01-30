@@ -158,6 +158,7 @@
         const totalCost = document.getElementById('total-cost');
         const totalOutput = document.getElementById('total-output');
         const unitCost = document.getElementById('unit-cost');
+        const producedProductMaterials = <?php echo json_encode($materialsByProduct ?? [], JSON_UNESCAPED_UNICODE); ?>;
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount || 0);
@@ -194,6 +195,10 @@
         }
 
         function attachRowHandlers(row) {
+            if (row.dataset.handlersBound) {
+                return;
+            }
+            row.dataset.handlersBound = '1';
             row.querySelectorAll('input, select').forEach((input) => {
                 input.addEventListener('input', recalc);
                 input.addEventListener('change', () => {
@@ -210,6 +215,9 @@
             row.querySelector('.remove-row')?.addEventListener('click', () => {
                 if (row.parentElement.children.length > 1) {
                     row.remove();
+                    if (row.classList.contains('output-row')) {
+                        rebuildInputsFromOutputs();
+                    }
                     recalc();
                 }
             });
@@ -220,8 +228,10 @@
             row.querySelectorAll('select, input').forEach((input) => {
                 input.value = input.tagName === 'INPUT' ? '1' : '';
             });
+            delete row.dataset.handlersBound;
             attachRowHandlers(row);
             outputTable.appendChild(row);
+            rebuildInputsFromOutputs();
             recalc();
         });
 
@@ -233,10 +243,72 @@
             row.querySelectorAll('input').forEach((input) => {
                 input.value = input.classList.contains('input-qty') ? '1' : '0';
             });
+            delete row.dataset.handlersBound;
             attachRowHandlers(row);
             inputTable.appendChild(row);
             recalc();
         });
+
+        function clearInputRows() {
+            const rows = Array.from(inputTable.querySelectorAll('.input-row'));
+            rows.slice(1).forEach((row) => row.remove());
+            const firstRow = rows[0];
+            if (firstRow) {
+                firstRow.querySelectorAll('select').forEach((select) => {
+                    select.value = '';
+                });
+                firstRow.querySelectorAll('input').forEach((input) => {
+                    input.value = input.classList.contains('input-qty') ? '1' : '0';
+                });
+            }
+        }
+
+        function rebuildInputsFromOutputs() {
+            clearInputRows();
+            const aggregated = new Map();
+            const outputRows = Array.from(outputTable.querySelectorAll('.output-row'));
+            outputRows.forEach((row) => {
+                const productId = parseInt(row.querySelector('select')?.value || '0', 10);
+                const quantity = parseFloat(row.querySelector('.output-qty')?.value || '0');
+                if (!productId || !quantity) {
+                    return;
+                }
+                const materials = producedProductMaterials?.[productId] || [];
+                materials.forEach((material) => {
+                    const key = String(material.product_id);
+                    const existing = aggregated.get(key) || { ...material, quantity: 0 };
+                    existing.quantity += (material.quantity || 0) * quantity;
+                    aggregated.set(key, existing);
+                });
+            });
+            const aggregatedMaterials = Array.from(aggregated.values());
+            if (!aggregatedMaterials.length) {
+                recalc();
+                return;
+            }
+            aggregatedMaterials.forEach((material, index) => {
+                let row = inputTable.querySelector('.input-row');
+                if (index > 0) {
+                    row = row.cloneNode(true);
+                    delete row.dataset.handlersBound;
+                    inputTable.appendChild(row);
+                }
+                const productSelect = row.querySelector('.input-product');
+                const qtyInput = row.querySelector('.input-qty');
+                const costInput = row.querySelector('.input-cost');
+                if (productSelect) {
+                    productSelect.value = String(material.product_id);
+                }
+                if (qtyInput) {
+                    qtyInput.value = material.quantity || 1;
+                }
+                if (costInput) {
+                    costInput.value = material.unit_cost || 0;
+                }
+                attachRowHandlers(row);
+            });
+            recalc();
+        }
 
         addExpense?.addEventListener('click', () => {
             const row = expenseTable.querySelector('.expense-row').cloneNode(true);
@@ -249,6 +321,16 @@
         });
 
         document.querySelectorAll('.output-row, .input-row, .expense-row').forEach(attachRowHandlers);
+        outputTable.addEventListener('change', (event) => {
+            if (event.target.matches('select[name="output_product_id[]"], .output-qty')) {
+                rebuildInputsFromOutputs();
+            }
+        });
+        outputTable.addEventListener('input', (event) => {
+            if (event.target.classList.contains('output-qty')) {
+                rebuildInputsFromOutputs();
+            }
+        });
         recalc();
     })();
 </script>

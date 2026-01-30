@@ -79,12 +79,7 @@
                             <a href="index.php?route=products" class="btn btn-light ms-2">Cancelar</a>
                         </div>
                     </div>
-                
-    <?php
-    $reportTemplate = 'informeIcargaEspanol.php';
-    $reportSource = 'products/create';
-    include __DIR__ . '/../partials/report-download.php';
-    ?>
+
 </form>
             </div>
         </div>

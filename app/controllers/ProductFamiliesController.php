@@ -23,7 +23,6 @@ class ProductFamiliesController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $companyId = $this->requireCompany();
         $families = $this->families->active($companyId);
         $this->render('maintainers/product-families/index', [
@@ -36,7 +35,6 @@ class ProductFamiliesController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $this->requireCompany();
         $this->render('maintainers/product-families/create', [
             'title' => 'Nueva familia',
@@ -47,7 +45,6 @@ class ProductFamiliesController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $companyId = $this->requireCompany();
         $name = trim($_POST['name'] ?? '');
@@ -69,7 +66,6 @@ class ProductFamiliesController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $companyId = $this->requireCompany();
         $id = (int)($_GET['id'] ?? 0);
         $family = $this->families->findForCompany($id, $companyId);
@@ -86,7 +82,6 @@ class ProductFamiliesController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $companyId = $this->requireCompany();
         $id = (int)($_POST['id'] ?? 0);
@@ -111,7 +106,6 @@ class ProductFamiliesController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $companyId = $this->requireCompany();
         $id = (int)($_POST['id'] ?? 0);
