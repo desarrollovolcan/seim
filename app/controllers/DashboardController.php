@@ -16,7 +16,7 @@ class DashboardController extends Controller
                 'SELECT p.id, p.name, p.stock, p.cost, COALESCE(SUM(po.quantity), 0) AS produced_quantity
                  FROM production_outputs po
                  JOIN production_orders o ON o.id = po.production_id
-                 JOIN products p ON p.id = po.product_id
+                 JOIN produced_products p ON p.id = po.produced_product_id
                  WHERE 1=1' . $productionCompanyFilter . '
                  GROUP BY p.id, p.name, p.stock, p.cost
                  ORDER BY produced_quantity DESC, p.name ASC
@@ -24,27 +24,39 @@ class DashboardController extends Controller
                 $companyParams
             );
             $salesByProduct = $this->db->fetchAll(
-                'SELECT p.id, p.name, SUM(si.quantity) as quantity, SUM(si.subtotal) as total
+                'SELECT CASE
+                            WHEN si.produced_product_id IS NOT NULL THEN CONCAT("produced-", si.produced_product_id)
+                            ELSE CONCAT("product-", si.product_id)
+                        END AS product_key,
+                        COALESCE(pp.name, p.name) AS name,
+                        SUM(si.quantity) as quantity,
+                        SUM(si.subtotal) as total
                  FROM sale_items si
                  JOIN sales s ON s.id = si.sale_id
-                 JOIN products p ON p.id = si.product_id
+                 LEFT JOIN products p ON p.id = si.product_id
+                 LEFT JOIN produced_products pp ON pp.id = si.produced_product_id
                  WHERE 1=1' . ($companyId ? ' AND s.company_id = :company_id' : '') . '
-                 GROUP BY p.id, p.name
-                 ORDER BY total DESC, p.name ASC
+                 GROUP BY product_key, name
+                 ORDER BY total DESC, name ASC
                  LIMIT 8',
                 $companyParams
             );
             $profitByProduct = $this->db->fetchAll(
-                'SELECT p.id, p.name,
+                'SELECT CASE
+                            WHEN si.produced_product_id IS NOT NULL THEN CONCAT("produced-", si.produced_product_id)
+                            ELSE CONCAT("product-", si.product_id)
+                        END AS product_key,
+                        COALESCE(pp.name, p.name) AS name,
                         SUM(si.subtotal) as total,
-                        SUM(si.quantity * p.cost) as total_cost,
-                        SUM(si.subtotal - (si.quantity * p.cost)) as profit
+                        SUM(si.quantity * COALESCE(pp.cost, p.cost)) as total_cost,
+                        SUM(si.subtotal - (si.quantity * COALESCE(pp.cost, p.cost))) as profit
                  FROM sale_items si
                  JOIN sales s ON s.id = si.sale_id
-                 JOIN products p ON p.id = si.product_id
+                 LEFT JOIN products p ON p.id = si.product_id
+                 LEFT JOIN produced_products pp ON pp.id = si.produced_product_id
                  WHERE 1=1' . ($companyId ? ' AND s.company_id = :company_id' : '') . '
-                 GROUP BY p.id, p.name
-                 ORDER BY profit DESC, p.name ASC
+                 GROUP BY product_key, name
+                 ORDER BY profit DESC, name ASC
                  LIMIT 8',
                 $companyParams
             );
