@@ -5,7 +5,6 @@ class ChileRegionsController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         try {
             $regions = $this->db->fetchAll('SELECT id, name FROM regions ORDER BY name');
         } catch (Throwable $e) {
@@ -22,7 +21,6 @@ class ChileRegionsController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $this->render('maintainers/chile-regions/create', [
             'title' => 'Nueva región',
             'pageTitle' => 'Nueva región',
@@ -32,7 +30,6 @@ class ChileRegionsController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $name = trim($_POST['name'] ?? '');
         if ($name === '') {
@@ -64,7 +61,6 @@ class ChileRegionsController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $region = $this->db->fetch(
             'SELECT id, name FROM regions WHERE id = :id',
@@ -83,7 +79,6 @@ class ChileRegionsController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $region = $this->db->fetch(
@@ -123,7 +118,6 @@ class ChileRegionsController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $region = $this->db->fetch(

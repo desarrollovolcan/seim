@@ -10,9 +10,6 @@
                 <input type="hidden" name="invoice_id" value="<?php echo (int)$invoice['id']; ?>">
                 <button type="submit" class="btn btn-outline-success btn-sm">Enviar factura por correo</button>
             </form>
-            <a href="index.php?route=invoices/download-pdf&id=<?php echo (int)$invoice['id']; ?>" class="btn btn-outline-primary btn-sm">
-                Descargar PDF
-            </a>
             <a href="index.php?route=invoices/details&id=<?php echo $invoice['id']; ?>" class="btn btn-outline-primary btn-sm">Ver factura</a>
             <span class="badge bg-<?php echo $invoice['estado'] === 'pagada' ? 'success' : ($invoice['estado'] === 'vencida' ? 'danger' : 'warning'); ?>-subtle text-<?php echo $invoice['estado'] === 'pagada' ? 'success' : ($invoice['estado'] === 'vencida' ? 'danger' : 'warning'); ?>">
                 <?php echo e($invoice['estado']); ?>
