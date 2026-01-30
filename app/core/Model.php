@@ -4,6 +4,7 @@ abstract class Model
 {
     protected Database $db;
     protected string $table;
+    private array $columnCache = [];
 
     public function __construct(Database $db)
     {
@@ -45,5 +46,20 @@ abstract class Model
     {
         $sql = "UPDATE {$this->table} SET deleted_at = NOW() WHERE id = :id";
         return $this->db->execute($sql, ['id' => $id]);
+    }
+
+    protected function hasColumn(string $column): bool
+    {
+        if (array_key_exists($column, $this->columnCache)) {
+            return $this->columnCache[$column];
+        }
+
+        $row = $this->db->fetch(
+            'SELECT COUNT(*) AS count FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
+            ['table' => $this->table, 'column' => $column]
+        );
+        $exists = (int)($row['count'] ?? 0) > 0;
+        $this->columnCache[$column] = $exists;
+        return $exists;
     }
 }
