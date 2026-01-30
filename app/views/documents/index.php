@@ -40,7 +40,7 @@ $userInitials = static function (string $name): string {
     if ($name === '') {
         return 'U';
     }
-    return strtoupper(mb_substr($name, 0, 1));
+    return strtoupper(mb_substr_safe($name, 0, 1));
 };
 $filterLink = static function (string $filter = 'all', ?int $categoryId = null): string {
     $params = ['route=documents', 'filter=' . urlencode($filter)];

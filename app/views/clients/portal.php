@@ -56,7 +56,7 @@ $companySettings = app_config('company', []);
 $logoColor = $companySettings['logo_color'] ?? 'assets/images/logo.png';
 $logoBlack = $companySettings['logo_black'] ?? $logoColor;
 $portalLogo = $logoBlack ?: login_logo_src($companySettings);
-$clientInitial = strtoupper(mb_substr($client['name'] ?? 'C', 0, 1));
+$clientInitial = strtoupper(mb_substr_safe($client['name'] ?? 'C', 0, 1));
 $upcomingTasks = array_values(array_filter($projectTasks ?? [], static fn(array $task): bool => empty($task['completed'])));
 $projectsCount = count($projectsOverview ?? []);
 $openTickets = count($supportTickets ?? []);
