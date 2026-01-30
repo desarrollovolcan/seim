@@ -63,7 +63,7 @@ CREATE TABLE communes (
     FOREIGN KEY (city_id) REFERENCES cities(id)
 );
 
-CREATE TABLE sii_activity_codes (
+CREATE TABLE IF NOT EXISTS sii_activity_codes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -435,7 +435,7 @@ JOIN regions ON regions.name = chile_communes.region
 JOIN cities ON cities.name = chile_communes.city AND cities.region_id = regions.id
 ORDER BY chile_communes.commune;
 
-INSERT INTO sii_activity_codes (code, name) VALUES
+INSERT IGNORE INTO sii_activity_codes (code, name) VALUES
 ('011111', 'Cultivo de trigo'),
 ('011112', 'Cultivo de maíz'),
 ('011113', 'Cultivo de arroz'),
@@ -2085,7 +2085,7 @@ CREATE TABLE calendar_event_attendees (
         ON DELETE CASCADE
 );
 
-CREATE TABLE sii_activity_codes (
+CREATE TABLE IF NOT EXISTS sii_activity_codes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     code VARCHAR(20) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -2093,7 +2093,7 @@ CREATE TABLE sii_activity_codes (
     INDEX idx_sii_activity_name (name)
 );
 
-INSERT INTO sii_activity_codes (code, name) VALUES
+INSERT IGNORE INTO sii_activity_codes (code, name) VALUES
 ('011111', 'Cultivo de trigo'),
 ('011112', 'Cultivo de maíz'),
 ('011113', 'Cultivo de arroz'),
