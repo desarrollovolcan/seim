@@ -8,6 +8,7 @@ Este archivo documenta las modificaciones realizadas en el repositorio.
 - Se agrega el acceso a Cotizaciones en el menú de Ventas.
 - Se asegura que los metadatos PWA no fallen cuando falta el bootstrap.
 - Se añade Cotizaciones en el menú Ventas clásico y se habilita selección de productos (incluye producidos) en cotizaciones.
+- Se agrega Cotizaciones en el grupo Ventas del sidebar principal.
 
 ## 2025-09-27
 - Se crea el documento de changelog para registrar cambios en futuras conversaciones.
