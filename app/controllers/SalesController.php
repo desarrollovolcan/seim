@@ -10,6 +10,7 @@ class SalesController extends Controller
     private SalePaymentsModel $salePayments;
     private ServicesModel $services;
     private SettingsModel $settings;
+    private ProducedProductsModel $producedProducts;
 
     public function __construct(array $config, Database $db)
     {
@@ -22,6 +23,7 @@ class SalesController extends Controller
         $this->salePayments = new SalePaymentsModel($db);
         $this->services = new ServicesModel($db);
         $this->settings = new SettingsModel($db);
+        $this->producedProducts = new ProducedProductsModel($db);
     }
 
     private function requireCompany(): int
@@ -62,16 +64,9 @@ class SalesController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $products = $this->products->active($companyId);
+        $producedProducts = $this->producedProducts->active($companyId);
         $clients = $this->clients->active($companyId);
         $services = $this->services->active($companyId);
-        $producedProductIds = $this->db->fetchAll(
-            'SELECT DISTINCT po.product_id
-             FROM production_outputs po
-             JOIN production_orders o ON o.id = po.production_id
-             WHERE o.company_id = :company_id',
-            ['company_id' => $companyId]
-        );
-        $producedProductIds = array_map(static fn(array $row): int => (int)$row['product_id'], $producedProductIds);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
         $taxDefault = !empty($invoiceDefaults['apply_tax']) ? (float)($invoiceDefaults['tax_rate'] ?? 0) : 0;
         $session = null;
@@ -94,12 +89,12 @@ class SalesController extends Controller
             'title' => $isPos ? 'Punto de venta' : 'Registrar venta',
             'pageTitle' => $isPos ? 'Punto de venta' : 'Registrar venta',
             'products' => $products,
+            'producedProducts' => $producedProducts,
             'clients' => $clients,
             'services' => $services,
             'today' => date('Y-m-d'),
             'taxDefault' => $taxDefault,
             'isPos' => $isPos,
-            'producedProductIds' => $producedProductIds,
             'posSession' => $session,
             'sessionTotals' => $sessionTotals,
             'posReady' => $posReady,
@@ -115,6 +110,10 @@ class SalesController extends Controller
         $userId = (int)(Auth::user()['id'] ?? 0);
         $clientId = (int)($_POST['client_id'] ?? 0);
         $client = null;
+        $quickSale = !empty($_POST['quick_sale']);
+        if ($quickSale) {
+            $clientId = 0;
+        }
         if ($clientId > 0) {
             $client = $this->db->fetch(
                 'SELECT id, rut, name, giro, activity_code, address, commune, city FROM clients WHERE id = :id AND company_id = :company_id',
@@ -128,10 +127,12 @@ class SalesController extends Controller
 
         $isPos = ($_POST['channel'] ?? '') === 'pos';
         $siiData = sii_document_payload($_POST, $client ? sii_receiver_payload($client) : []);
-        $siiErrors = validate_sii_document_payload($siiData);
-        if ($siiErrors) {
-            flash('error', implode(' ', $siiErrors));
-            $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales/create');
+        if (!$isPos || !$quickSale || $clientId > 0) {
+            $siiErrors = validate_sii_document_payload($siiData);
+            if ($siiErrors) {
+                flash('error', implode(' ', $siiErrors));
+                $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales/create');
+            }
         }
         $posSessionId = null;
         if ($isPos) {
@@ -186,6 +187,7 @@ class SalesController extends Controller
                 $this->saleItems->create([
                     'sale_id' => $saleId,
                     'product_id' => $item['product']['id'] ?? null,
+                    'produced_product_id' => $item['produced_product']['id'] ?? null,
                     'service_id' => $item['service']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
@@ -195,6 +197,9 @@ class SalesController extends Controller
                 ]);
                 if (!empty($item['product']['id'])) {
                     $this->products->adjustStock($item['product']['id'], -$item['quantity']);
+                }
+                if (!empty($item['produced_product']['id'])) {
+                    $this->producedProducts->adjustStock($item['produced_product']['id'], -$item['quantity']);
                 }
             }
             if ($this->salePaymentsEnabled()) {
@@ -231,9 +236,12 @@ class SalesController extends Controller
         }
 
         $items = $this->db->fetchAll(
-            'SELECT si.*, p.name AS product_name, p.sku
+            'SELECT si.*,
+                    COALESCE(p.name, pp.name) AS product_name,
+                    COALESCE(p.sku, pp.sku) AS sku
              FROM sale_items si
              LEFT JOIN products p ON si.product_id = p.id
+             LEFT JOIN produced_products pp ON si.produced_product_id = pp.id
              WHERE si.sale_id = :sale_id
              ORDER BY si.id ASC',
             ['sale_id' => $id]
@@ -267,16 +275,18 @@ class SalesController extends Controller
     private function collectItems(int $companyId, bool $isPos): array
     {
         $productIds = $_POST['product_id'] ?? [];
+        $producedProductIds = $_POST['produced_product_id'] ?? [];
         $serviceIds = $_POST['service_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitPrices = $_POST['unit_price'] ?? [];
         $types = $_POST['item_type'] ?? [];
         $items = [];
 
-        $max = max(count($productIds), count($serviceIds), count($quantities));
+        $max = max(count($productIds), count($producedProductIds), count($serviceIds), count($quantities));
         for ($index = 0; $index < $max; $index++) {
             $type = $types[$index] ?? 'product';
             $productId = (int)($productIds[$index] ?? 0);
+            $producedProductId = (int)($producedProductIds[$index] ?? 0);
             $serviceId = (int)($serviceIds[$index] ?? 0);
             $quantity = max(0, (int)($quantities[$index] ?? 0));
             $unitPrice = max(0.0, (float)($unitPrices[$index] ?? 0));
@@ -291,7 +301,28 @@ class SalesController extends Controller
                 $price = $unitPrice > 0 ? $unitPrice : (float)($service['cost'] ?? 0);
                 $items[] = [
                     'product' => null,
+                    'produced_product' => null,
                     'service' => $service,
+                    'quantity' => $quantity,
+                    'unit_price' => $price,
+                    'subtotal' => $quantity * $price,
+                ];
+                continue;
+            }
+            if ($type === 'produced_product' && $producedProductId > 0) {
+                $producedProduct = $this->producedProducts->findForCompany($producedProductId, $companyId);
+                if (!$producedProduct) {
+                    continue;
+                }
+                if ((int)$producedProduct['stock'] < $quantity) {
+                    flash('error', sprintf('Stock insuficiente para %s. Disponible: %d', $producedProduct['name'], (int)$producedProduct['stock']));
+                    $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales/create');
+                }
+                $price = $unitPrice > 0 ? $unitPrice : (float)($producedProduct['price'] ?? 0);
+                $items[] = [
+                    'product' => null,
+                    'produced_product' => $producedProduct,
+                    'service' => null,
                     'quantity' => $quantity,
                     'unit_price' => $price,
                     'subtotal' => $quantity * $price,
@@ -309,6 +340,7 @@ class SalesController extends Controller
                 }
                 $items[] = [
                     'product' => $product,
+                    'produced_product' => null,
                     'service' => null,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0),

@@ -306,6 +306,23 @@ CREATE TABLE IF NOT EXISTS products (
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
 );
 
+CREATE TABLE IF NOT EXISTS produced_products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    sku VARCHAR(100) NULL,
+    description TEXT NULL,
+    price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    cost DECIMAL(12,2) NOT NULL DEFAULT 0,
+    stock INT NOT NULL DEFAULT 0,
+    stock_min INT NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'activo',
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
 CREATE TABLE IF NOT EXISTS purchases (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
@@ -377,6 +394,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     sale_id INT NOT NULL,
     product_id INT NULL,
+    produced_product_id INT NULL,
     service_id INT NULL,
     quantity INT NOT NULL DEFAULT 0,
     unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
@@ -385,6 +403,7 @@ CREATE TABLE IF NOT EXISTS sale_items (
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(id),
     FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id),
     FOREIGN KEY (service_id) REFERENCES services(id)
 );
 
@@ -497,6 +516,42 @@ SET @sale_items_service_col := (
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sale_items' AND COLUMN_NAME = 'service_id'
 );
 SET @sql := IF(@sale_items_service_col = 0, 'ALTER TABLE sale_items ADD COLUMN service_id INT NULL AFTER product_id, MODIFY product_id INT NULL, ADD CONSTRAINT fk_sale_items_service FOREIGN KEY (service_id) REFERENCES services(id);', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sale_items_produced_col := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sale_items' AND COLUMN_NAME = 'produced_product_id'
+);
+SET @sql := IF(@sale_items_produced_col = 0, 'ALTER TABLE sale_items ADD COLUMN produced_product_id INT NULL AFTER product_id, ADD CONSTRAINT fk_sale_items_produced FOREIGN KEY (produced_product_id) REFERENCES produced_products(id);', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sale_items_product_col := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sale_items' AND COLUMN_NAME = 'product_id'
+);
+SET @sql := IF(@sale_items_product_col = 1, 'ALTER TABLE sale_items MODIFY product_id INT NULL;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @production_outputs_produced_col := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'production_outputs' AND COLUMN_NAME = 'produced_product_id'
+);
+SET @sql := IF(@production_outputs_produced_col = 0, 'ALTER TABLE production_outputs ADD COLUMN produced_product_id INT NULL AFTER production_id, ADD CONSTRAINT fk_production_outputs_produced FOREIGN KEY (produced_product_id) REFERENCES produced_products(id);', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @production_outputs_product_col := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'production_outputs' AND COLUMN_NAME = 'product_id'
+);
+SET @sql := IF(@production_outputs_product_col = 1, 'ALTER TABLE production_outputs MODIFY product_id INT NULL;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -1075,7 +1130,8 @@ CREATE TABLE IF NOT EXISTS bank_transactions (
 CREATE TABLE IF NOT EXISTS inventory_movements (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
-    product_id INT NOT NULL,
+    product_id INT NULL,
+    produced_product_id INT NULL,
     movement_date DATE NOT NULL,
     movement_type VARCHAR(20) NOT NULL,
     quantity INT NOT NULL DEFAULT 0,
@@ -1086,7 +1142,8 @@ CREATE TABLE IF NOT EXISTS inventory_movements (
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id)
 );
 
 SET @invoices_sii_document_type := (

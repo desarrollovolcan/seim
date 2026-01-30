@@ -3,7 +3,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="card-title mb-0">Nueva producción</h4>
-                <a href="index.php?route=products/create" class="btn btn-soft-secondary btn-sm">Crear producto</a>
+                <div class="d-flex gap-2">
+                    <a href="index.php?route=produced-products/create" class="btn btn-soft-primary btn-sm">Crear producto fabricado</a>
+                    <a href="index.php?route=products/create" class="btn btn-soft-secondary btn-sm">Crear producto normal</a>
+                </div>
             </div>
             <div class="card-body">
                 <form method="post" action="index.php?route=production/store" id="production-form">
@@ -33,7 +36,7 @@
                                             <td>
                                                 <select name="output_product_id[]" class="form-select form-select-sm">
                                                     <option value="">Selecciona</option>
-                                                    <?php foreach ($products as $product): ?>
+                                                    <?php foreach ($producedProducts as $product): ?>
                                                         <option value="<?php echo (int)$product['id']; ?>"><?php echo e($product['name']); ?></option>
                                                     <?php endforeach; ?>
                                                 </select>

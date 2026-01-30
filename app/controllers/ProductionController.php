@@ -7,6 +7,7 @@ class ProductionController extends Controller
     private ProductionOutputsModel $outputs;
     private ProductionExpensesModel $expenses;
     private ProductsModel $products;
+    private ProducedProductsModel $producedProducts;
     private InventoryMovementsModel $movements;
 
     public function __construct(array $config, Database $db)
@@ -17,6 +18,7 @@ class ProductionController extends Controller
         $this->outputs = new ProductionOutputsModel($db);
         $this->expenses = new ProductionExpensesModel($db);
         $this->products = new ProductsModel($db);
+        $this->producedProducts = new ProducedProductsModel($db);
         $this->movements = new InventoryMovementsModel($db);
     }
 
@@ -48,11 +50,13 @@ class ProductionController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $products = $this->products->active($companyId);
+        $producedProducts = $this->producedProducts->active($companyId);
 
         $this->render('production/create', [
             'title' => 'Registrar producción',
             'pageTitle' => 'Registrar producción',
             'products' => $products,
+            'producedProducts' => $producedProducts,
             'today' => date('Y-m-d'),
         ]);
     }
@@ -68,9 +72,9 @@ class ProductionController extends Controller
         }
 
         $outputs = $this->db->fetchAll(
-            'SELECT po.*, p.name AS product_name
+            'SELECT po.*, pp.name AS product_name
              FROM production_outputs po
-             JOIN products p ON po.product_id = p.id
+             JOIN produced_products pp ON po.produced_product_id = pp.id
              WHERE po.production_id = :production_id
              ORDER BY po.id ASC',
             ['production_id' => $id]
@@ -106,7 +110,7 @@ class ProductionController extends Controller
             'SELECT p.id, p.name, p.sku, p.stock, p.cost, COALESCE(SUM(po.quantity), 0) AS produced_quantity
              FROM production_outputs po
              JOIN production_orders o ON o.id = po.production_id
-             JOIN products p ON p.id = po.product_id
+             JOIN produced_products p ON p.id = po.produced_product_id
              WHERE o.company_id = :company_id
              GROUP BY p.id, p.name, p.sku, p.stock, p.cost
              ORDER BY p.name ASC',
@@ -243,18 +247,18 @@ class ProductionController extends Controller
                 $subtotal = $output['quantity'] * $unitCost;
                 $this->outputs->create([
                     'production_id' => $orderId,
-                    'product_id' => $output['product']['id'],
+                    'produced_product_id' => $output['product']['id'],
                     'quantity' => $output['quantity'],
                     'unit_cost' => $unitCost,
                     'subtotal' => $subtotal,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-                $this->products->adjustStock($output['product']['id'], $output['quantity']);
-                $this->products->updateCost($output['product']['id'], $unitCost);
+                $this->producedProducts->adjustStock($output['product']['id'], $output['quantity']);
+                $this->producedProducts->updateCost($output['product']['id'], $unitCost);
                 $this->movements->create([
                     'company_id' => $companyId,
-                    'product_id' => $output['product']['id'],
+                    'produced_product_id' => $output['product']['id'],
                     'movement_date' => $productionDate,
                     'movement_type' => 'entrada',
                     'quantity' => $output['quantity'],
@@ -301,7 +305,7 @@ class ProductionController extends Controller
             if ($productId <= 0 || $quantity <= 0) {
                 continue;
             }
-            $product = $this->products->findForCompany($productId, $companyId);
+            $product = $this->producedProducts->findForCompany($productId, $companyId);
             if (!$product) {
                 continue;
             }
