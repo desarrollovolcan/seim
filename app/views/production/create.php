@@ -209,6 +209,9 @@
                             costInput.value = cost;
                         }
                     }
+                    if (input.name === 'output_product_id[]') {
+                        loadMaterialsForProduct(parseInt(input.value || '0', 10));
+                    }
                     recalc();
                 });
             });
