@@ -220,12 +220,26 @@ html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .menu-text
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-text,
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
     color: #b79cff !important;
+    text-shadow: 0 1px 2px rgba(15, 8, 48, 0.45);
 }
 
 html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link .menu-caption {
     opacity: 0.95;
-    font-size: 0.78rem;
-    letter-spacing: 0.01em;
+    font-size: 0.8rem;
+    letter-spacing: 0.015em;
+}
+
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav > .side-nav-item:hover > .side-nav-link {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .side-nav-link {
+    line-height: 1.35;
+}
+
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .side-nav-link:hover,
+html[data-sidenav-size="condensed"] .sidenav-menu .side-nav .sub-menu .side-nav-link:focus {
+    background-color: rgba(255, 255, 255, 0.12);
 }
 
 html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
