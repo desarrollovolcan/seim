@@ -9,7 +9,7 @@ Sistema minimalista para gestión de clientes, proyectos, servicios recurrentes,
 
 ## Instalación
 1. Clona el repositorio.
-2. Crea la base de datos e importa `bd/database.sql`.
+2. Crea la base de datos e importa `bd/database.sql` (o `bd/database_full.sql` si quieres todas las actualizaciones aplicadas).
 3. Configura las credenciales en `app/config/config.php`.
 4. Apunta tu servidor web a la raíz del proyecto.
 5. Ingresa con:
