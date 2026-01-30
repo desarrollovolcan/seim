@@ -85,6 +85,19 @@ $defaultIssueDate = date('Y-m-d');
                                 <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" data-add-product-item>Agregar producto</button>
                             </div>
                             <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm py-1" data-produced-item-select>
+                                    <option value="">Selecciona producto fabricado</option>
+                                    <?php foreach ($producedProducts as $producedProduct): ?>
+                                        <option value="<?php echo $producedProduct['id']; ?>"
+                                                data-produced-price="<?php echo e($producedProduct['price'] ?? 0); ?>"
+                                                data-produced-name="<?php echo e($producedProduct['name'] ?? ''); ?>">
+                                            <?php echo e($producedProduct['name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-dark btn-sm py-1 px-2" data-add-produced-item>Agregar fabricado</button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
                                 <select class="form-select form-select-sm py-1" data-service-item-select>
                                     <option value="">Selecciona servicio</option>
                                     <?php foreach ($services as $service): ?>
@@ -183,8 +196,10 @@ $defaultIssueDate = date('Y-m-d');
     const applyTaxCheckbox = document.querySelector('[data-apply-tax]');
     const addManualItemButton = document.querySelector('[data-add-manual-item]');
     const addProductItemButton = document.querySelector('[data-add-product-item]');
+    const addProducedItemButton = document.querySelector('[data-add-produced-item]');
     const addServiceItemButton = document.querySelector('[data-add-service-item]');
     const productItemSelect = document.querySelector('[data-product-item-select]');
+    const producedItemSelect = document.querySelector('[data-produced-item-select]');
     const serviceItemSelect = document.querySelector('[data-service-item-select]');
     const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
         $carry[$client['id']] = [
@@ -360,6 +375,18 @@ $defaultIssueDate = date('Y-m-d');
             price: Number(selected.dataset.productPrice || 0),
         });
         productItemSelect.value = '';
+    });
+
+    addProducedItemButton?.addEventListener('click', () => {
+        const selected = producedItemSelect?.selectedOptions?.[0];
+        if (!selected || !selected.value) {
+            return;
+        }
+        addItemRow({
+            description: selected.dataset.producedName || selected.textContent?.trim() || '',
+            price: Number(selected.dataset.producedPrice || 0),
+        });
+        producedItemSelect.value = '';
     });
 
     projectSelect?.addEventListener('change', (event) => {

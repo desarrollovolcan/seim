@@ -87,6 +87,7 @@ return [
     'sales/create' => ['SalesController', 'create'],
     'sales/store' => ['SalesController', 'store'],
     'sales/show' => ['SalesController', 'show'],
+    'sales/receipt' => ['SalesController', 'receipt'],
     'sales/delete' => ['SalesController', 'delete'],
     'pos' => ['SalesController', 'pos'],
     'pos/open' => ['SalesController', 'openSession'],

@@ -210,6 +210,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
+                            <?php if ($hasPermission('clients_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=clients" class="side-nav-link">
+                                        <span class="menu-text">Clientes</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('crm_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=crm/orders" class="side-nav-link">
@@ -277,13 +284,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     <span class="menu-text">Briefs Comerciales</span>
                                 </a>
                             </li>
-                            <?php if ($hasPermission('clients_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=clients" class="side-nav-link">
-                                        <span class="menu-text">Clientes</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
                             <?php if ($hasPermission('quotes_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=quotes" class="side-nav-link">
@@ -305,6 +305,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarCrmVentas">
                         <ul class="sub-menu">
+                            <?php if ($hasPermission('clients_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=clients" class="side-nav-link">
+                                        <span class="menu-text">Clientes</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('quotes_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=quotes" class="side-nav-link">
