@@ -196,7 +196,13 @@ class ProductionController extends Controller
             $this->redirect('index.php?route=production/create');
         }
 
-        $inputs = $this->collectInputs($companyId);
+        $computed = $this->buildInputsFromMaterials($companyId, $outputs);
+        $inputs = $computed['inputs'];
+        $outputMaterialCosts = $computed['output_material_costs'];
+        if (empty($inputs)) {
+            $inputs = $this->collectInputs($companyId);
+            $outputMaterialCosts = [];
+        }
         $expenses = $this->collectExpenses();
 
         $materialCost = array_sum(array_map(static fn(array $item) => $item['subtotal'], $inputs));
@@ -220,7 +226,28 @@ class ProductionController extends Controller
         }
 
         $totalOutputQty = array_sum(array_map(static fn(array $item) => $item['quantity'], $outputs));
-        $unitCost = $totalOutputQty > 0 ? $totalCost / $totalOutputQty : 0;
+        $outputUnitCosts = [];
+        foreach ($outputs as $output) {
+            $productId = (int)($output['product']['id'] ?? 0);
+            $quantity = (float)$output['quantity'];
+            if ($quantity <= 0) {
+                $outputUnitCosts[$productId] = 0;
+                continue;
+            }
+            $materialCostForOutput = $outputMaterialCosts[$productId] ?? 0.0;
+            if (empty($outputMaterialCosts) && $totalOutputQty > 0) {
+                $materialCostForOutput = $materialCost * ($quantity / $totalOutputQty);
+            }
+            $expenseShare = 0.0;
+            if ($expensesTotal > 0) {
+                if ($materialCost > 0) {
+                    $expenseShare = ($materialCostForOutput / $materialCost) * $expensesTotal;
+                } elseif ($totalOutputQty > 0) {
+                    $expenseShare = ($quantity / $totalOutputQty) * $expensesTotal;
+                }
+            }
+            $outputUnitCosts[$productId] = ($materialCostForOutput + $expenseShare) / $quantity;
+        }
 
         $pdo = $this->db->pdo();
         try {
@@ -262,18 +289,20 @@ class ProductionController extends Controller
             }
 
             foreach ($outputs as $output) {
+                $productId = (int)$output['product']['id'];
+                $unitCost = $outputUnitCosts[$productId] ?? ($totalOutputQty > 0 ? $totalCost / $totalOutputQty : 0);
                 $subtotal = $output['quantity'] * $unitCost;
                 $this->outputs->create([
                     'production_id' => $orderId,
-                    'produced_product_id' => $output['product']['id'],
+                    'produced_product_id' => $productId,
                     'quantity' => $output['quantity'],
                     'unit_cost' => $unitCost,
                     'subtotal' => $subtotal,
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-                $this->producedProducts->adjustStock($output['product']['id'], $output['quantity']);
-                $this->producedProducts->updateCost($output['product']['id'], $unitCost);
+                $this->producedProducts->adjustStock($productId, $output['quantity']);
+                $this->producedProducts->updateCost($productId, $unitCost);
                 $this->movements->create([
                     'company_id' => $companyId,
                     'produced_product_id' => $output['product']['id'],
@@ -363,6 +392,55 @@ class ProductionController extends Controller
         }
 
         return $inputs;
+    }
+
+    private function buildInputsFromMaterials(int $companyId, array $outputs): array
+    {
+        $inputsByProduct = [];
+        $outputMaterialCosts = [];
+        foreach ($outputs as $output) {
+            $producedProductId = (int)($output['product']['id'] ?? 0);
+            $outputQty = (float)($output['quantity'] ?? 0);
+            if ($producedProductId <= 0 || $outputQty <= 0) {
+                continue;
+            }
+            $materials = $this->materials->byProducedProduct($producedProductId);
+            if (!$materials) {
+                continue;
+            }
+            foreach ($materials as $material) {
+                $productId = (int)($material['product_id'] ?? 0);
+                if ($productId <= 0) {
+                    continue;
+                }
+                $quantity = (float)($material['quantity'] ?? 0) * $outputQty;
+                if ($quantity <= 0) {
+                    continue;
+                }
+                $unitCost = (float)($material['unit_cost'] ?? 0);
+                $subtotal = $quantity * $unitCost;
+                if (!isset($inputsByProduct[$productId])) {
+                    $product = $this->products->findForCompany($productId, $companyId);
+                    if (!$product) {
+                        continue;
+                    }
+                    $inputsByProduct[$productId] = [
+                        'product' => $product,
+                        'quantity' => 0,
+                        'unit_cost' => $unitCost,
+                        'subtotal' => 0,
+                    ];
+                }
+                $inputsByProduct[$productId]['quantity'] += $quantity;
+                $inputsByProduct[$productId]['subtotal'] += $subtotal;
+                $outputMaterialCosts[$producedProductId] = ($outputMaterialCosts[$producedProductId] ?? 0) + $subtotal;
+            }
+        }
+
+        return [
+            'inputs' => array_values($inputsByProduct),
+            'output_material_costs' => $outputMaterialCosts,
+        ];
     }
 
     private function collectExpenses(): array
