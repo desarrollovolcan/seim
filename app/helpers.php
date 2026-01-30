@@ -66,6 +66,26 @@ function app_config(?string $key = null, mixed $default = null): mixed
     return $value;
 }
 
+function base_url(): string
+{
+    $configured = trim((string)app_config('app.base_url', ''));
+    if ($configured !== '') {
+        return rtrim($configured, '/');
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? '';
+    if ($host === '') {
+        return '';
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = rtrim(str_replace('/index.php', '', $scriptName), '/');
+
+    return $scheme . '://' . $host . $basePath;
+}
+
 function currency_format_settings(): array
 {
     return app_config('currency_format', [
