@@ -46,7 +46,7 @@
     <?php
     $reportTemplate = 'informeIcargaEspanol.php';
     $reportSource = 'maintainers/services/edit';
-    include __DIR__ . '/../partials/report-download.php';
+    include __DIR__ . '/../../partials/report-download.php';
     ?>
 </form>
     </div>
