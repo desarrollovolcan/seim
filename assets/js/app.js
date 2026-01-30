@@ -460,6 +460,32 @@ class App {
             t--;
             return -c / 2 * (t * (t - 2) - 1) + b;
         }
+
+        const html = document.documentElement;
+        const closeOffcanvasMenu = () => {
+            if (html.getAttribute('data-sidenav-size') !== 'offcanvas') {
+                return;
+            }
+            if (!html.classList.contains('sidebar-enable')) {
+                return;
+            }
+            html.classList.remove('sidebar-enable');
+            const backdrop = document.getElementById('custom-backdrop');
+            if (backdrop) {
+                backdrop.remove();
+            }
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+        };
+
+        sideNav.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', () => {
+                if (link.getAttribute('data-bs-toggle') === 'collapse') {
+                    return;
+                }
+                closeOffcanvasMenu();
+            });
+        });
     }
 
     // Topbar Menu Link Activation (Horizontal Menu)

@@ -1,0 +1,52 @@
+<?php
+
+class PermissionsController extends Controller
+{
+    private RolesModel $roles;
+    private RolePermissionsModel $permissions;
+
+    public function __construct(array $config, Database $db)
+    {
+        parent::__construct($config, $db);
+        $this->roles = new RolesModel($db);
+        $this->permissions = new RolePermissionsModel($db);
+    }
+
+    public function index(): void
+    {
+        $this->requireLogin();
+        $this->requireRole('admin');
+        $roles = $this->roles->all();
+        $selectedRoleId = (int)($_GET['role_id'] ?? ($roles[0]['id'] ?? 0));
+        $selectedPermissions = [];
+        if ($selectedRoleId) {
+            $rows = $this->permissions->byRole($selectedRoleId);
+            $selectedPermissions = array_map(static fn(array $row) => $row['permission_key'], $rows);
+        }
+
+        $this->render('users/permissions', [
+            'title' => 'Permisos de usuarios',
+            'pageTitle' => 'Permisos de usuarios',
+            'roles' => $roles,
+            'selectedRoleId' => $selectedRoleId,
+            'selectedPermissions' => $selectedPermissions,
+            'permissionCatalog' => permission_catalog(),
+        ]);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+        $this->requireRole('admin');
+        verify_csrf();
+        $roleId = (int)($_POST['role_id'] ?? 0);
+        $permissions = $_POST['permissions'] ?? [];
+        $permissions = array_values(array_filter($permissions, 'is_string'));
+        if ($roleId) {
+            $this->permissions->replaceForRole($roleId, $permissions);
+            audit($this->db, Auth::user()['id'], 'update', 'role_permissions', $roleId);
+            flash('success', 'Permisos actualizados correctamente.');
+        }
+        $this->redirect('index.php?route=users/permissions&role_id=' . $roleId);
+    }
+}

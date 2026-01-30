@@ -1,93 +1,15 @@
 <?php
-
-declare(strict_types=1);
-
 require __DIR__ . '/app/bootstrap.php';
-require __DIR__ . '/app/models/User.php';
-
-if (isset($_SESSION['user'])) {
-    redirect('dashboard.php');
-}
-
-$errors = [];
-$correo = '';
-$empresaSeleccionada = 0;
-$authLogo = get_auth_logo_context();
-$logoAuthHeight = (int) ($authLogo['logo_auth_height'] ?? 48);
-$logoPath = $authLogo['logo_path'] ?? 'assets/images/logo.png';
-$empresasDisponibles = load_empresas();
-
-if ($empresasDisponibles) {
-    $empresaSeleccionada = (int) ($empresasDisponibles[0]['id'] ?? 0);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $correo = trim((string) ($_POST['correo'] ?? ''));
-    $password = (string) ($_POST['password'] ?? '');
-    $empresaSeleccionada = (int) ($_POST['empresa_id'] ?? $empresaSeleccionada);
-
-    if (!verify_csrf($_POST['csrf_token'] ?? null)) {
-        $errors[] = 'Tu sesión expiró. Vuelve a intentar.';
-    }
-
-    if ($correo === '' || $password === '') {
-        $errors[] = 'Debes ingresar correo y contraseña.';
-    }
-
-    if ($empresaSeleccionada <= 0) {
-        $errors[] = 'Debes seleccionar una empresa.';
-    }
-
-    if (!$errors) {
-        $user = User::findByCorreo(db(), $correo);
-        if (!$user || !password_verify($password, $user['password_hash'])) {
-            $errors[] = 'Credenciales inválidas.';
-        } elseif ((int) ($user['estado'] ?? 0) !== 1) {
-            $errors[] = 'Tu cuenta está pendiente de aprobación.';
-        } else {
-            $empresasUsuario = load_user_empresas((int) $user['id']);
-            if (!$empresasUsuario && is_superuser()) {
-                $empresasUsuario = load_empresas();
-            }
-            if (!$empresasUsuario) {
-                $errors[] = 'Tu usuario no tiene empresas asignadas.';
-            } else {
-                $empresaValida = false;
-                foreach ($empresasUsuario as $empresa) {
-                    if ((int) ($empresa['id'] ?? 0) === $empresaSeleccionada) {
-                        $empresaValida = true;
-                        break;
-                    }
-                }
-                if (!$empresaValida) {
-                    $errors[] = 'La empresa seleccionada no está asociada a tu cuenta.';
-                }
-            }
-        }
-
-        if (!$errors) {
-            session_regenerate_id(true);
-            $_SESSION['user'] = [
-                'id' => $user['id'],
-                'nombre' => $user['nombre'],
-                'apellido' => $user['apellido'],
-                'correo' => $user['correo'],
-                'cargo' => $user['cargo'],
-                'rol' => $user['rol'],
-                'avatar_path' => $user['avatar_path'] ?? null,
-            ];
-            $_SESSION['user']['empresas'] = $empresasUsuario;
-            $_SESSION['empresa_id'] = $empresaSeleccionada;
-            redirect('dashboard.php');
-        }
-    }
-}
-
+$companySettings = login_company_settings($db);
+$logoColor = $companySettings['logo_color'] ?? 'assets/images/logo.png';
+$logoBlack = $companySettings['logo_black'] ?? 'assets/images/logo-black.png';
+$loginLogoVariant = $companySettings['login_logo_variant'] ?? 'light';
+$loginLogo = $companySettings['login_logo'] ?? '';
+$loginLogoSrc = $loginLogo !== '' ? $loginLogo : ($loginLogoVariant === 'dark' ? $logoBlack : $logoColor);
 include('partials/html.php');
 ?>
-
 <head>
-    <?php $title = "Iniciar sesión"; include('partials/title-meta.php'); ?>
+    <?php $title = "Sign In"; include('partials/title-meta.php'); ?>
 
     <?php include('partials/head-css.php'); ?>
 </head>
@@ -141,57 +63,29 @@ include('partials/html.php');
                     <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
                         <div class="auth-brand mb-0 text-center">
                             <a href="index.php" class="logo-dark">
-                                <img src="<?php echo htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoAuthHeight; ?>px;">
+                                <img src="<?php echo e($loginLogoSrc); ?>" alt="dark logo" height="28">
                             </a>
                             <a href="index.php" class="logo-light">
-                                <img src="<?php echo htmlspecialchars($logoPath, ENT_QUOTES, 'UTF-8'); ?>" alt="logo" style="height: <?php echo $logoAuthHeight; ?>px;">
+                                <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="28">
                             </a>
                         </div>
 
                         <div class="mt-auto">
-                            <p class="text-muted text-center auth-sub-text mx-auto">Ingresa con tu correo y contraseña para continuar.</p>
+                            <p class="text-muted text-center auth-sub-text mx-auto">Let’s get you signed in. Enter your email and password to continue.</p>
 
-                            <?php if ($errors) { ?>
-                                <div class="alert alert-danger" role="alert">
-                                    <ul class="mb-0">
-                                        <?php foreach ($errors as $error) { ?>
-                                            <li><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></li>
-                                        <?php } ?>
-                                    </ul>
-                                </div>
-                            <?php } ?>
-
-                            <form class="mt-4" method="post" action="auth-2-sign-in.php">
-                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8'); ?>">
+                            <form class="mt-4">
                                 <div class="mb-3">
-                                    <label for="userEmail" class="form-label">Correo <span class="text-danger">*</span></label>
+                                    <label for="userEmail" class="form-label">Email address <span class="text-danger">*</span></label>
                                     <div class="app-search">
-                                        <input type="email" class="form-control" id="userEmail" name="correo" placeholder="usuario@municipalidad.cl" value="<?php echo htmlspecialchars($correo, ENT_QUOTES, 'UTF-8'); ?>" required>
+                                        <input type="email" class="form-control" id="userEmail" placeholder="you@example.com" required>
                                         <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
                                     </div>
                                 </div>
 
                                 <div class="mb-3">
-                                    <label for="empresaSelect" class="form-label">Empresa <span class="text-danger">*</span></label>
-                                    <select class="form-select" id="empresaSelect" name="empresa_id" required>
-                                        <option value="">Selecciona una empresa</option>
-                                        <?php foreach ($empresasDisponibles as $empresa) : ?>
-                                            <?php $empresaId = (int) ($empresa['id'] ?? 0); ?>
-                                            <?php $empresaNombre = $empresa['razon_social'] ?: $empresa['nombre']; ?>
-                                            <option value="<?php echo $empresaId; ?>" <?php echo $empresaSeleccionada === $empresaId ? 'selected' : ''; ?>>
-                                                <?php echo htmlspecialchars($empresaNombre, ENT_QUOTES, 'UTF-8'); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                    <?php if (empty($empresasDisponibles)) : ?>
-                                        <div class="form-text text-warning">No hay empresas registradas. Contacta al administrador.</div>
-                                    <?php endif; ?>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="userPassword" class="form-label">Contraseña <span class="text-danger">*</span></label>
+                                    <label for="userPassword" class="form-label">Password <span class="text-danger">*</span></label>
                                     <div class="app-search">
-                                        <input type="password" class="form-control" id="userPassword" name="password" placeholder="••••••••" required>
+                                        <input type="password" class="form-control" id="userPassword" placeholder="••••••••" required>
                                         <i data-lucide="key-round" class="app-search-icon text-muted"></i>
                                     </div>
                                 </div>
@@ -199,25 +93,25 @@ include('partials/html.php');
                                 <div class="d-flex justify-content-between align-items-center mb-3">
                                     <div class="form-check">
                                         <input class="form-check-input form-check-input-light fs-14" type="checkbox" checked id="rememberMe">
-                                        <label class="form-check-label" for="rememberMe">Mantener sesión</label>
+                                        <label class="form-check-label" for="rememberMe">Keep me signed in</label>
                                     </div>
 
-                                    <a href="auth-2-reset-pass.php" class="text-decoration-underline link-offset-3 text-muted">¿Olvidaste tu contraseña?</a>
+                                    <a href="auth-2-reset-pass.php" class="text-decoration-underline link-offset-3 text-muted">Forgot Password?</a>
                                 </div>
 
                                 <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary fw-bold py-2">Ingresar</button>
+                                    <button type="submit" class="btn btn-primary fw-bold py-2">Sign In</button>
                                 </div>
                             </form>
                         </div>
 
                         <p class="text-muted text-center mt-4 mb-0">
-                            ¿Nuevo usuario? <a href="auth-sign-up.php" class="text-decoration-underline link-offset-3 fw-semibold">Crear cuenta</a>
+                            New here? <a href="auth-2-sign-up.php" class="text-decoration-underline link-offset-3 fw-semibold">Create an account</a>
                         </p>
 
                         <p class="text-center text-muted mt-auto mb-0">
                             ©
-                            <script>document.write(new Date().getFullYear())</script> Seim Inventario - tecnologia escalable
+                            <script>document.write(new Date().getFullYear())</script> UBold — by <span class="fw-semibold">Coderthemes</span>
                         </p>
                     </div>
                 </div>

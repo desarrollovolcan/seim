@@ -10,6 +10,36 @@
                             <span class="menu-text">Dashboard</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="projects.php">
+                            <span class="menu-icon"><i data-lucide="briefcase"></i></span>
+                            <span class="menu-text">Proyectos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle drop-arrow-none" href="#" id="topnav-crm" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">
+                            <span class="menu-icon"><i data-lucide="handshake"></i></span>
+                            <span class="menu-text">CRM</span>
+                            <div class="menu-arrow"></div>
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="topnav-crm">
+                            <a href="crm-reports.php" class="dropdown-item">Reports &amp; Insights</a>
+                            <a href="crm-briefs.php" class="dropdown-item">Briefs Comerciales</a>
+                            <a href="crm-pipeline.php" class="dropdown-item">Pipeline</a>
+                            <a href="crm-deals.php" class="dropdown-item">Deals</a>
+                            <a href="crm-orders.php" class="dropdown-item">Órdenes de Venta</a>
+                            <a href="crm-leads.php" class="dropdown-item">Leads</a>
+                            <a href="crm-campaign.php" class="dropdown-item">Campaign</a>
+                            <a href="crm-proposals.php" class="dropdown-item">Proposals</a>
+                            <a href="crm-estimations.php" class="dropdown-item">Estimations</a>
+                            <a href="crm-customers.php" class="dropdown-item">Customers</a>
+                            <a href="crm-renewals.php" class="dropdown-item">Renovaciones</a>
+                            <a href="crm-activities.php" class="dropdown-item">Activities</a>
+                            <a href="tickets-list.php" class="dropdown-item">Service Desk</a>
+                            <a href="invoices.php" class="dropdown-item">Invoicing</a>
+                            <a href="users-roles.php" class="dropdown-item">Users &amp; Roles</a>
+                        </div>
+                    </li>
 
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle drop-arrow-none" href="#" id="topnav-drop" data-bs-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">

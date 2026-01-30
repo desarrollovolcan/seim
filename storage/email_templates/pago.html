@@ -1,0 +1,40 @@
+<table style="width:100%; background:#f6f7f9; padding:24px;" role="presentation" cellspacing="0" cellpadding="0">
+  <tbody>
+    <tr>
+      <td align="center">
+        <table style="max-width:640px; background:#ffffff; border-radius:12px; padding:24px;" role="presentation" cellspacing="0" cellpadding="0">
+          <tbody>
+            <tr>
+              <td style="font-size:18px; font-weight:bold; color:#166534; padding-bottom:12px;">
+                Confirmación de pago
+              </td>
+            </tr>
+            <tr>
+              <td style="font-size:14px; color:#374151; line-height:1.6;">
+                Hola {{cliente_nombre}},<br><br>
+                Hemos recibido tu pago por <strong>{{monto_pagado}}</strong>.
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:12px; font-size:14px; color:#111827;">
+                <strong>Fecha de pago:</strong> {{fecha_pago}}<br>
+                <strong>Método:</strong> {{metodo_pago}}<br>
+                <strong>Referencia:</strong> {{referencia_pago}}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:12px; font-size:14px; color:#111827;">
+                <strong>Saldo pendiente:</strong> {{saldo_pendiente}}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding-top:20px; font-size:12px; color:#6b7280;">
+                Gracias por tu pago.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td>
+    </tr>
+  </tbody>
+</table>
