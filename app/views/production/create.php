@@ -195,6 +195,10 @@
         }
 
         function attachRowHandlers(row) {
+            if (row.dataset.handlersBound) {
+                return;
+            }
+            row.dataset.handlersBound = '1';
             row.querySelectorAll('input, select').forEach((input) => {
                 input.addEventListener('input', recalc);
                 input.addEventListener('change', () => {
@@ -214,6 +218,9 @@
             row.querySelector('.remove-row')?.addEventListener('click', () => {
                 if (row.parentElement.children.length > 1) {
                     row.remove();
+                    if (row.classList.contains('output-row')) {
+                        rebuildInputsFromOutputs();
+                    }
                     recalc();
                 }
             });
@@ -224,8 +231,10 @@
             row.querySelectorAll('select, input').forEach((input) => {
                 input.value = input.tagName === 'INPUT' ? '1' : '';
             });
+            delete row.dataset.handlersBound;
             attachRowHandlers(row);
             outputTable.appendChild(row);
+            rebuildInputsFromOutputs();
             recalc();
         });
 
@@ -237,6 +246,7 @@
             row.querySelectorAll('input').forEach((input) => {
                 input.value = input.classList.contains('input-qty') ? '1' : '0';
             });
+            delete row.dataset.handlersBound;
             attachRowHandlers(row);
             inputTable.appendChild(row);
             recalc();
@@ -256,25 +266,34 @@
             }
         }
 
-        function loadMaterialsForProduct(producedProductId) {
-            if (!producedProductId || !producedProductMaterials?.[producedProductId]) {
-                return;
-            }
-            const currentRows = Array.from(inputTable.querySelectorAll('.input-row'));
-            const hasSelection = currentRows.some((row) => row.querySelector('.input-product')?.value);
-            if (hasSelection) {
-                return;
-            }
+        function rebuildInputsFromOutputs() {
             clearInputRows();
-            const materials = producedProductMaterials[producedProductId];
-            if (!materials?.length) {
+            const aggregated = new Map();
+            const outputRows = Array.from(outputTable.querySelectorAll('.output-row'));
+            outputRows.forEach((row) => {
+                const productId = parseInt(row.querySelector('select')?.value || '0', 10);
+                const quantity = parseFloat(row.querySelector('.output-qty')?.value || '0');
+                if (!productId || !quantity) {
+                    return;
+                }
+                const materials = producedProductMaterials?.[productId] || [];
+                materials.forEach((material) => {
+                    const key = String(material.product_id);
+                    const existing = aggregated.get(key) || { ...material, quantity: 0 };
+                    existing.quantity += (material.quantity || 0) * quantity;
+                    aggregated.set(key, existing);
+                });
+            });
+            const aggregatedMaterials = Array.from(aggregated.values());
+            if (!aggregatedMaterials.length) {
                 recalc();
                 return;
             }
-            materials.forEach((material, index) => {
+            aggregatedMaterials.forEach((material, index) => {
                 let row = inputTable.querySelector('.input-row');
                 if (index > 0) {
                     row = row.cloneNode(true);
+                    delete row.dataset.handlersBound;
                     inputTable.appendChild(row);
                 }
                 const productSelect = row.querySelector('.input-product');
@@ -305,6 +324,16 @@
         });
 
         document.querySelectorAll('.output-row, .input-row, .expense-row').forEach(attachRowHandlers);
+        outputTable.addEventListener('change', (event) => {
+            if (event.target.matches('select[name="output_product_id[]"], .output-qty')) {
+                rebuildInputsFromOutputs();
+            }
+        });
+        outputTable.addEventListener('input', (event) => {
+            if (event.target.classList.contains('output-qty')) {
+                rebuildInputsFromOutputs();
+            }
+        });
         recalc();
     })();
 </script>
