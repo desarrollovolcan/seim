@@ -30,6 +30,15 @@ function e(mixed $value): string
     return htmlspecialchars((string)$value, ENT_QUOTES, 'UTF-8');
 }
 
+function mb_substr_safe(string $value, int $start, ?int $length = null): string
+{
+    if (function_exists('mb_substr')) {
+        return $length === null ? mb_substr($value, $start) : mb_substr($value, $start, $length);
+    }
+
+    return $length === null ? substr($value, $start) : substr($value, $start, $length);
+}
+
 function app_config(?string $key = null, mixed $default = null): mixed
 {
     static $config = null;
