@@ -65,6 +65,7 @@ class ProductionController extends Controller
                 'product_name' => $material['product_name'] ?? '',
                 'quantity' => (float)$material['quantity'],
                 'unit_cost' => (float)$material['unit_cost'],
+                'product_cost' => (float)($material['product_cost'] ?? 0),
                 'subtotal' => (float)$material['subtotal'],
             ];
         }
@@ -417,8 +418,6 @@ class ProductionController extends Controller
                 if ($quantity <= 0) {
                     continue;
                 }
-                $unitCost = (float)($material['unit_cost'] ?? 0);
-                $subtotal = $quantity * $unitCost;
                 if (!isset($inputsByProduct[$productId])) {
                     $product = $this->products->findForCompany($productId, $companyId);
                     if (!$product) {
@@ -427,10 +426,18 @@ class ProductionController extends Controller
                     $inputsByProduct[$productId] = [
                         'product' => $product,
                         'quantity' => 0,
-                        'unit_cost' => $unitCost,
+                        'unit_cost' => 0.0,
                         'subtotal' => 0,
                     ];
                 }
+                $unitCost = (float)($material['unit_cost'] ?? 0);
+                if ($unitCost <= 0) {
+                    $unitCost = (float)($inputsByProduct[$productId]['product']['cost'] ?? 0);
+                }
+                if ($inputsByProduct[$productId]['unit_cost'] <= 0 && $unitCost > 0) {
+                    $inputsByProduct[$productId]['unit_cost'] = $unitCost;
+                }
+                $subtotal = $quantity * $unitCost;
                 $inputsByProduct[$productId]['quantity'] += $quantity;
                 $inputsByProduct[$productId]['subtotal'] += $subtotal;
                 $outputMaterialCosts[$producedProductId] = ($outputMaterialCosts[$producedProductId] ?? 0) + $subtotal;

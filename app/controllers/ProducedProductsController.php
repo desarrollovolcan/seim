@@ -177,6 +177,10 @@ class ProducedProductsController extends Controller
             }
             $qty = max(0, (float)($quantities[$index] ?? 0));
             $unit = max(0, (float)($unitCosts[$index] ?? 0));
+            if ($unit <= 0) {
+                $product = $this->regularProducts->findForCompany($productId, $this->requireCompany());
+                $unit = (float)($product['cost'] ?? 0);
+            }
             $subtotal = $qty * $unit;
             if ($qty <= 0) {
                 continue;

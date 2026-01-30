@@ -268,8 +268,8 @@
 
         function rebuildInputsFromOutputs() {
             clearInputRows();
-            const aggregated = new Map();
             const outputRows = Array.from(outputTable.querySelectorAll('.output-row'));
+            const lines = [];
             outputRows.forEach((row) => {
                 const productId = parseInt(row.querySelector('select')?.value || '0', 10);
                 const quantity = parseFloat(row.querySelector('.output-qty')?.value || '0');
@@ -278,18 +278,18 @@
                 }
                 const materials = producedProductMaterials?.[productId] || [];
                 materials.forEach((material) => {
-                    const key = String(material.product_id);
-                    const existing = aggregated.get(key) || { ...material, quantity: 0 };
-                    existing.quantity += (material.quantity || 0) * quantity;
-                    aggregated.set(key, existing);
+                    lines.push({
+                        product_id: material.product_id,
+                        quantity: (material.quantity || 0) * quantity,
+                        unit_cost: material.unit_cost || material.product_cost || 0,
+                    });
                 });
             });
-            const aggregatedMaterials = Array.from(aggregated.values());
-            if (!aggregatedMaterials.length) {
+            if (!lines.length) {
                 recalc();
                 return;
             }
-            aggregatedMaterials.forEach((material, index) => {
+            lines.forEach((material, index) => {
                 let row = inputTable.querySelector('.input-row');
                 if (index > 0) {
                     row = row.cloneNode(true);
@@ -334,6 +334,7 @@
                 rebuildInputsFromOutputs();
             }
         });
+        rebuildInputsFromOutputs();
         recalc();
     })();
 </script>
