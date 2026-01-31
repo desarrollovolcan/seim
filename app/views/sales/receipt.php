@@ -91,9 +91,6 @@
             <?php if (!empty($company['address'])): ?>
                 <?php echo e($company['address']); ?><br>
             <?php endif; ?>
-            <?php if (!empty($company['city'])): ?>
-                <?php echo e($company['city']); ?><br>
-            <?php endif; ?>
         </div>
         <div class="divider"></div>
         <div class="meta">

@@ -452,10 +452,8 @@
                 'rut' => $client['rut'] ?? '',
                 'name' => $client['name'] ?? '',
                 'giro' => $client['giro'] ?? '',
-                'activity_code' => $client['activity_code'] ?? '',
                 'address' => $client['address'] ?? '',
                 'commune' => $client['commune'] ?? '',
-                'city' => $client['city'] ?? '',
             ];
             return $carry;
         }, []), JSON_UNESCAPED_UNICODE); ?>;
@@ -463,10 +461,8 @@
             sii_receiver_rut: document.querySelector('[name="sii_receiver_rut"]'),
             sii_receiver_name: document.querySelector('[name="sii_receiver_name"]'),
             sii_receiver_giro: document.querySelector('[name="sii_receiver_giro"]'),
-            sii_receiver_activity_code: document.querySelector('[name="sii_receiver_activity_code"]'),
             sii_receiver_address: document.querySelector('[name="sii_receiver_address"]'),
             sii_receiver_commune: document.querySelector('[name="sii_receiver_commune"]'),
-            sii_receiver_city: document.querySelector('[name="sii_receiver_city"]'),
         };
         const siiWarning = document.querySelector('[data-sii-warning]');
         const siiWarningText = document.querySelector('[data-sii-warning-text]');
@@ -475,10 +471,8 @@
             { key: 'rut', label: 'RUT' },
             { key: 'name', label: 'Razón social' },
             { key: 'giro', label: 'Giro' },
-            { key: 'activity_code', label: 'Código actividad' },
             { key: 'address', label: 'Dirección' },
             { key: 'commune', label: 'Comuna' },
-            { key: 'city', label: 'Ciudad' },
         ];
 
         const updateSiiWarning = (data, clientId) => {
@@ -504,10 +498,8 @@
             if (siiInputs.sii_receiver_rut) siiInputs.sii_receiver_rut.value = data.rut || '';
             if (siiInputs.sii_receiver_name) siiInputs.sii_receiver_name.value = data.name || '';
             if (siiInputs.sii_receiver_giro) siiInputs.sii_receiver_giro.value = data.giro || '';
-            if (siiInputs.sii_receiver_activity_code) siiInputs.sii_receiver_activity_code.value = data.activity_code || '';
             if (siiInputs.sii_receiver_address) siiInputs.sii_receiver_address.value = data.address || '';
             if (siiInputs.sii_receiver_commune) siiInputs.sii_receiver_commune.value = data.commune || '';
-            if (siiInputs.sii_receiver_city) siiInputs.sii_receiver_city.value = data.city || '';
             updateSiiWarning(data, clientId);
         };
 

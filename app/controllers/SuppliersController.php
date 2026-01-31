@@ -38,16 +38,10 @@ class SuppliersController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $suppliers = $this->suppliers->active($companyId);
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('suppliers/create', [
             'title' => 'Nuevo proveedor',
             'pageTitle' => 'Nuevo proveedor',
             'suppliers' => $suppliers,
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -81,9 +75,7 @@ class SuppliersController extends Controller
             'phone' => trim($_POST['phone'] ?? ''),
             'address' => trim($_POST['address'] ?? ''),
             'giro' => trim($_POST['giro'] ?? ''),
-            'activity_code' => trim($_POST['activity_code'] ?? ''),
             'commune' => trim($_POST['commune'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
             'website' => $website,
             'notes' => trim($_POST['notes'] ?? ''),
             'created_at' => date('Y-m-d H:i:s'),
@@ -104,17 +96,11 @@ class SuppliersController extends Controller
         if (!$supplier) {
             $this->redirect('index.php?route=suppliers');
         }
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
 
         $this->render('suppliers/edit', [
             'title' => 'Editar proveedor',
             'pageTitle' => 'Editar proveedor',
             'supplier' => $supplier,
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -153,9 +139,7 @@ class SuppliersController extends Controller
             'phone' => trim($_POST['phone'] ?? ''),
             'address' => trim($_POST['address'] ?? ''),
             'giro' => trim($_POST['giro'] ?? ''),
-            'activity_code' => trim($_POST['activity_code'] ?? ''),
             'commune' => trim($_POST['commune'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
             'website' => $website,
             'notes' => trim($_POST['notes'] ?? ''),
             'updated_at' => date('Y-m-d H:i:s'),

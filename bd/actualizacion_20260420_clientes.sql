@@ -36,29 +36,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @clients_activity_code := (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'activity_code'
-);
-SET @sql := IF(@clients_activity_code = 0, 'ALTER TABLE clients ADD COLUMN activity_code VARCHAR(50) NULL AFTER giro;', 'SELECT 1;');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @clients_commune := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'commune'
 );
-SET @sql := IF(@clients_commune = 0, 'ALTER TABLE clients ADD COLUMN commune VARCHAR(120) NULL AFTER activity_code;', 'SELECT 1;');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
-SET @clients_city := (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'city'
-);
-SET @sql := IF(@clients_city = 0, 'ALTER TABLE clients ADD COLUMN city VARCHAR(120) NULL AFTER commune;', 'SELECT 1;');
+SET @sql := IF(@clients_commune = 0, 'ALTER TABLE clients ADD COLUMN commune VARCHAR(120) NULL AFTER giro;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -67,7 +49,7 @@ SET @clients_contact := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'clients' AND COLUMN_NAME = 'contact'
 );
-SET @sql := IF(@clients_contact = 0, 'ALTER TABLE clients ADD COLUMN contact VARCHAR(150) NULL AFTER city;', 'SELECT 1;');
+SET @sql := IF(@clients_contact = 0, 'ALTER TABLE clients ADD COLUMN contact VARCHAR(150) NULL AFTER commune;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

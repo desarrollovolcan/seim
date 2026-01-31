@@ -49,9 +49,8 @@
                             </div>
                             <div class="col-md-6">
                                 <p class="mb-1"><strong>Giro:</strong> <?php echo e($purchase['sii_receiver_giro'] ?? ''); ?></p>
-                                <p class="mb-1"><strong>Código actividad:</strong> <?php echo e($purchase['sii_receiver_activity_code'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>Dirección:</strong> <?php echo e($purchase['sii_receiver_address'] ?? ''); ?></p>
-                                <p class="mb-1"><strong>Comuna/Ciudad:</strong> <?php echo e(trim(($purchase['sii_receiver_commune'] ?? '') . ' ' . ($purchase['sii_receiver_city'] ?? ''))); ?></p>
+                                <p class="mb-1"><strong>Comuna:</strong> <?php echo e($purchase['sii_receiver_commune'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>Tasa impuesto:</strong> <?php echo e(number_format((float)($purchase['sii_tax_rate'] ?? 0), 2)); ?>%</p>
                                 <p class="mb-1"><strong>Monto exento:</strong> <?php echo e(format_currency((float)($purchase['sii_exempt_amount'] ?? 0))); ?></p>
                             </div>

@@ -26,15 +26,9 @@ class CompaniesController extends Controller
     {
         $this->requireLogin();
         $this->requireRole('admin');
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('companies/create', [
             'title' => 'Nueva Empresa',
             'pageTitle' => 'Nueva Empresa',
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -55,9 +49,7 @@ class CompaniesController extends Controller
             'phone' => trim($_POST['phone'] ?? ''),
             'address' => trim($_POST['address'] ?? ''),
             'giro' => trim($_POST['giro'] ?? ''),
-            'activity_code' => trim($_POST['activity_code'] ?? ''),
             'commune' => trim($_POST['commune'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ];
@@ -76,16 +68,10 @@ class CompaniesController extends Controller
         if (!$company) {
             $this->redirect('index.php?route=companies');
         }
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('companies/edit', [
             'title' => 'Editar Empresa',
             'pageTitle' => 'Editar Empresa',
             'company' => $company,
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -112,9 +98,7 @@ class CompaniesController extends Controller
             'phone' => trim($_POST['phone'] ?? ''),
             'address' => trim($_POST['address'] ?? ''),
             'giro' => trim($_POST['giro'] ?? ''),
-            'activity_code' => trim($_POST['activity_code'] ?? ''),
             'commune' => trim($_POST['commune'] ?? ''),
-            'city' => trim($_POST['city'] ?? ''),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         audit($this->db, Auth::user()['id'], 'update', 'companies', $id);

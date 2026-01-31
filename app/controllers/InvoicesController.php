@@ -449,7 +449,7 @@ class InvoicesController extends Controller
         $total = trim($_POST['total'] ?? '');
         $clientId = (int)($_POST['client_id'] ?? 0);
         $client = $this->db->fetch(
-            'SELECT id, rut, name, giro, activity_code, address, commune, city FROM clients WHERE id = :id AND company_id = :company_id',
+            'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
             ['id' => $clientId, 'company_id' => $companyId]
         );
         if (!$client) {
@@ -621,7 +621,7 @@ class InvoicesController extends Controller
         }
         $clientId = (int)($_POST['client_id'] ?? 0);
         $client = $this->db->fetch(
-            'SELECT id, rut, name, giro, activity_code, address, commune, city FROM clients WHERE id = :id AND company_id = :company_id',
+            'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
             ['id' => $clientId, 'company_id' => $companyId]
         );
         if (!$client) {

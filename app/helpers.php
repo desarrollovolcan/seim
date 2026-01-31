@@ -233,78 +233,6 @@ function login_logo_src(array $companySettings): string
     return $loginLogoVariant === 'dark' ? $logoBlack : $logoColor;
 }
 
-function chile_commune_city_map(Database $db): array
-{
-    static $cache = null;
-    if ($cache !== null) {
-        return $cache;
-    }
-
-    try {
-        $rows = $db->fetchAll(
-            'SELECT communes.name AS commune, cities.name AS city
-            FROM communes
-            JOIN cities ON cities.id = communes.city_id
-            ORDER BY communes.name, cities.name'
-        );
-    } catch (Throwable $e) {
-        log_message('error', 'Failed to load Chile commune list: ' . $e->getMessage());
-        $cache = [];
-        return $cache;
-    }
-
-    $map = [];
-    foreach ($rows as $row) {
-        $commune = trim((string)($row['commune'] ?? ''));
-        $city = trim((string)($row['city'] ?? ''));
-        if ($commune === '') {
-            continue;
-        }
-        $map[$commune] ??= [];
-        if ($city !== '' && !in_array($city, $map[$commune], true)) {
-            $map[$commune][] = $city;
-        }
-    }
-    ksort($map);
-    foreach ($map as &$cities) {
-        sort($cities);
-    }
-    $cache = $map;
-    return $cache;
-}
-
-function chile_communes(Database $db): array
-{
-    return array_keys(chile_commune_city_map($db));
-}
-
-function sii_activity_code_options(Database $db): array
-{
-    static $cache = null;
-    if ($cache !== null) {
-        return $cache;
-    }
-
-    try {
-        $rows = $db->fetchAll('SELECT code, name FROM sii_activity_codes ORDER BY code');
-    } catch (Throwable $e) {
-        log_message('error', 'Failed to load SII activity codes: ' . $e->getMessage());
-        $cache = [];
-        return $cache;
-    }
-
-    $options = [];
-    foreach ($rows as $row) {
-        $code = trim((string)($row['code'] ?? ''));
-        $name = trim((string)($row['name'] ?? ''));
-        if ($code === '' && $name === '') {
-            continue;
-        }
-        $options[] = ['code' => $code, 'name' => $name];
-    }
-    $cache = $options;
-    return $options;
-}
 
 function upload_avatar(?array $file, string $prefix): array
 {
@@ -405,10 +333,8 @@ function sii_receiver_payload(array $entity): array
         'sii_receiver_rut' => normalize_rut($entity['rut'] ?? $entity['tax_id'] ?? ''),
         'sii_receiver_name' => trim((string)($entity['name'] ?? '')),
         'sii_receiver_giro' => trim((string)($entity['giro'] ?? '')),
-        'sii_receiver_activity_code' => trim((string)($entity['activity_code'] ?? '')),
         'sii_receiver_address' => trim((string)($entity['address'] ?? '')),
         'sii_receiver_commune' => trim((string)($entity['commune'] ?? '')),
-        'sii_receiver_city' => trim((string)($entity['city'] ?? '')),
     ];
 }
 
@@ -420,10 +346,8 @@ function sii_document_payload(array $source, array $fallback = []): array
         'sii_receiver_rut' => normalize_rut($source['sii_receiver_rut'] ?? ''),
         'sii_receiver_name' => trim((string)($source['sii_receiver_name'] ?? '')),
         'sii_receiver_giro' => trim((string)($source['sii_receiver_giro'] ?? '')),
-        'sii_receiver_activity_code' => trim((string)($source['sii_receiver_activity_code'] ?? '')),
         'sii_receiver_address' => trim((string)($source['sii_receiver_address'] ?? '')),
         'sii_receiver_commune' => trim((string)($source['sii_receiver_commune'] ?? '')),
-        'sii_receiver_city' => trim((string)($source['sii_receiver_city'] ?? '')),
         'sii_tax_rate' => (float)($source['sii_tax_rate'] ?? 19),
         'sii_exempt_amount' => (float)($source['sii_exempt_amount'] ?? 0),
     ];
@@ -448,7 +372,6 @@ function sii_required_fields(): array
         'sii_receiver_giro' => 'el giro del receptor',
         'sii_receiver_address' => 'la dirección del receptor',
         'sii_receiver_commune' => 'la comuna del receptor',
-        'sii_receiver_city' => 'la ciudad del receptor',
     ];
 }
 
@@ -773,33 +696,12 @@ function permission_catalog(): array
             'view_key' => 'service_types_view',
             'edit_key' => 'service_types_edit',
         ],
-        'sii_activity_codes' => [
-            'label' => 'Actividades SII',
-            'routes' => ['maintainers/sii-activities'],
-            'legacy_key' => 'maintainers',
-            'view_key' => 'sii_activity_codes_view',
-            'edit_key' => null,
-        ],
         'chile_regions' => [
             'label' => 'Regiones',
             'routes' => ['maintainers/chile-regions'],
             'legacy_key' => 'maintainers',
             'view_key' => 'chile_regions_view',
             'edit_key' => 'chile_regions_edit',
-        ],
-        'chile_cities' => [
-            'label' => 'Ciudades',
-            'routes' => ['maintainers/chile-cities'],
-            'legacy_key' => 'maintainers',
-            'view_key' => 'chile_cities_view',
-            'edit_key' => 'chile_cities_edit',
-        ],
-        'chile_communes' => [
-            'label' => 'Comunas',
-            'routes' => ['maintainers/chile-communes'],
-            'legacy_key' => 'maintainers',
-            'view_key' => 'chile_communes_view',
-            'edit_key' => 'chile_communes_edit',
         ],
         'quotes' => [
             'label' => 'Cotizaciones',

@@ -144,12 +144,6 @@
                                                 </div>
                                                 <div class="col-xl-6">
                                                     <div class="mb-3">
-                                                        <label class="form-label">City</label>
-                                                        <input type="text" class="form-control" name="city" placeholder="e.g., New York" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-xl-6">
-                                                    <div class="mb-3">
                                                         <label class="form-label">State</label>
                                                         <input type="text" class="form-control" name="state" placeholder="e.g., California" required>
                                                     </div>
@@ -401,12 +395,6 @@
                                                     </div>
                                                     <div class="col-xl-6">
                                                         <div class="mb-3">
-                                                            <label class="form-label">City</label>
-                                                            <input type="text" class="form-control" name="city" placeholder="e.g., New York" required>
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-xl-6">
-                                                        <div class="mb-3">
                                                             <label class="form-label">State</label>
                                                             <input type="text" class="form-control" name="state" placeholder="e.g., California" required>
                                                         </div>
@@ -645,10 +633,6 @@
                                                         <input type="text" class="form-control" name="street" placeholder="e.g., 123 Main Street" required>
                                                     </div>
                                                     <div class="col-xl-6 mb-3">
-                                                        <label class="form-label">City</label>
-                                                        <input type="text" class="form-control" name="city" placeholder="e.g., New York" required>
-                                                    </div>
-                                                    <div class="col-xl-6 mb-3">
                                                         <label class="form-label">State</label>
                                                         <input type="text" class="form-control" name="state" placeholder="e.g., California" required>
                                                     </div>
@@ -875,12 +859,6 @@
                                                                 <div class="mb-3">
                                                                     <label class="form-label">Street Address</label>
                                                                     <input type="text" class="form-control" name="street" placeholder="e.g., 123 Main St" required>
-                                                                </div>
-                                                            </div>
-                                                            <div class="col-xl-6">
-                                                                <div class="mb-3">
-                                                                    <label class="form-label">City</label>
-                                                                    <input type="text" class="form-control" name="city" placeholder="e.g., New York" required>
                                                                 </div>
                                                             </div>
                                                             <div class="col-xl-6">

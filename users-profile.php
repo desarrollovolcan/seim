@@ -605,19 +605,13 @@
                                                     </div>
                                                 </div>
                                                 <div class="row">
-                                                    <div class="col-md-4">
-                                                        <div class="mb-3">
-                                                            <label for="city" class="form-label">City</label>
-                                                            <input type="text" class="form-control" id="city" placeholder="City">
-                                                        </div>
-                                                    </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-6">
                                                         <div class="mb-3">
                                                             <label for="state" class="form-label">State / Province</label>
                                                             <input type="text" class="form-control" id="state" placeholder="State or Province">
                                                         </div>
                                                     </div>
-                                                    <div class="col-md-4">
+                                                    <div class="col-md-6">
                                                         <div class="mb-3">
                                                             <label for="zipcode" class="form-label">Postal / ZIP Code</label>
                                                             <input type="text" class="form-control" id="zipcode" placeholder="Postal Code">
