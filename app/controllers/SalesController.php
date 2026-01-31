@@ -68,7 +68,9 @@ class SalesController extends Controller
         $clients = $this->clients->active($companyId);
         $services = $this->services->active($companyId);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
-        $taxDefault = !empty($invoiceDefaults['apply_tax']) ? (float)($invoiceDefaults['tax_rate'] ?? 0) : 0;
+        $applyTaxDefault = !empty($invoiceDefaults['apply_tax']);
+        $taxRate = (float)($invoiceDefaults['tax_rate'] ?? 19);
+        $taxDefault = $applyTaxDefault ? $taxRate : 0;
         $session = null;
         $sessionTotals = [];
         $posReady = $this->posTablesReady();
@@ -96,6 +98,8 @@ class SalesController extends Controller
             'services' => $services,
             'today' => date('Y-m-d'),
             'taxDefault' => $taxDefault,
+            'taxRate' => $taxRate,
+            'applyTaxDefault' => $applyTaxDefault,
             'isPos' => $isPos,
             'posSession' => $session,
             'sessionTotals' => $sessionTotals,
@@ -159,7 +163,9 @@ class SalesController extends Controller
         $prefix = $isPos ? 'POS-' : 'VEN-';
         $numero = $this->sales->nextNumber($prefix, $companyId);
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
-        $tax = max(0, (float)($_POST['tax'] ?? 0));
+        $applyTax = !empty($_POST['apply_tax']);
+        $taxRate = (float)($_POST['tax_rate'] ?? 0);
+        $tax = $applyTax ? max(0, round($subtotal * $taxRate / 100, 2)) : 0.0;
         $total = $subtotal + $tax;
         $status = $_POST['status'] ?? ($isPos ? 'pagado' : 'pendiente');
         $allowedStatus = ['pagado', 'pendiente', 'borrador', 'en_espera'];
