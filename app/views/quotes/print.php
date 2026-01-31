@@ -111,7 +111,7 @@
         }
 
         .label {
-            width: 150px;
+            width: 130px;
             font-weight: 600;
             color: #000;
         }
@@ -342,42 +342,6 @@ $validUntil = $quote['valid_until'] ?? '';
                 <td class="label">Estado</td>
                 <td><?php echo e(ucfirst($quote['estado'] ?? 'pendiente')); ?></td>
             </tr>
-            <?php if (!empty($quote['sii_document_type'])): ?>
-                <tr>
-                    <td class="label">Documento SII</td>
-                    <td><?php echo e($quote['sii_document_type']); ?></td>
-                </tr>
-            <?php endif; ?>
-            <?php if (!empty($quote['sii_document_number'])): ?>
-                <tr>
-                    <td class="label">Folio</td>
-                    <td><?php echo e($quote['sii_document_number']); ?></td>
-                </tr>
-            <?php endif; ?>
-            <?php if (!empty($quote['sii_receiver_rut'])): ?>
-                <tr>
-                    <td class="label">RUT receptor</td>
-                    <td><?php echo e($quote['sii_receiver_rut']); ?></td>
-                </tr>
-            <?php endif; ?>
-            <?php if (!empty($quote['sii_receiver_name'])): ?>
-                <tr>
-                    <td class="label">Razón social</td>
-                    <td><?php echo e($quote['sii_receiver_name']); ?></td>
-                </tr>
-            <?php endif; ?>
-            <?php if (!empty($quote['sii_receiver_giro'])): ?>
-                <tr>
-                    <td class="label">Giro</td>
-                    <td><?php echo e($quote['sii_receiver_giro']); ?></td>
-                </tr>
-            <?php endif; ?>
-            <?php if (!empty($quote['sii_receiver_address'])): ?>
-                <tr>
-                    <td class="label">Dirección SII</td>
-                    <td><?php echo e(trim(($quote['sii_receiver_address'] ?? '') . ' ' . ($quote['sii_receiver_commune'] ?? ''))); ?></td>
-                </tr>
-            <?php endif; ?>
             <?php if (!empty($quote['notas'])): ?>
                 <tr>
                     <td class="label">Notas</td>

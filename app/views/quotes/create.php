@@ -44,8 +44,13 @@ $defaultIssueDate = date('Y-m-d');
                 'sii_tax_rate' => 19,
                 'sii_exempt_amount' => 0,
             ];
+            $siiTitle = 'Datos del cliente';
+            $siiHelp = 'Información tomada desde la ficha del cliente.';
+            $siiShowDocumentType = false;
+            $siiShowDocumentNumber = false;
             $siiShowTaxRate = false;
             $siiShowExemptAmount = false;
+            $siiShowWarning = false;
             include __DIR__ . '/../partials/sii-document-fields.php';
             ?>
 
