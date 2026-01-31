@@ -12,7 +12,7 @@ $defaultIssueDate = date('Y-m-d');
             <div class="row">
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Número</label>
-                    <input type="text" name="numero" class="form-control" value="<?php echo e($number); ?>" required>
+                    <input type="text" name="numero" class="form-control" value="<?php echo e($number); ?>" readonly>
                 </div>
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Fecha emisión</label>
@@ -44,6 +44,8 @@ $defaultIssueDate = date('Y-m-d');
                 'sii_tax_rate' => 19,
                 'sii_exempt_amount' => 0,
             ];
+            $siiShowTaxRate = false;
+            $siiShowExemptAmount = false;
             include __DIR__ . '/../partials/sii-document-fields.php';
             ?>
 
@@ -90,9 +92,7 @@ $defaultIssueDate = date('Y-m-d');
                         <div class="col-md-4">Descripción</div>
                         <div class="col-md-2">Cantidad</div>
                         <div class="col-md-2">Precio unitario</div>
-                        <div class="col-md-1">Impuesto %</div>
-                        <div class="col-md-1">Impuesto $</div>
-                        <div class="col-md-1">Total</div>
+                        <div class="col-md-3">Total</div>
                         <div class="col-md-1 text-center">Quitar</div>
                     </div>
                     <div class="row g-2 mb-2" data-item-row>
@@ -105,13 +105,7 @@ $defaultIssueDate = date('Y-m-d');
                         <div class="col-md-2">
                             <input type="number" name="items[0][precio_unitario]" class="form-control" value="0" step="0.01" data-item-price>
                         </div>
-                        <div class="col-md-1">
-                            <input type="number" name="items[0][impuesto_pct]" class="form-control" value="0" data-item-tax-rate>
-                        </div>
-                        <div class="col-md-1">
-                            <input type="number" name="items[0][impuesto_monto]" class="form-control" value="0" data-item-tax readonly>
-                        </div>
-                        <div class="col-md-1">
+                        <div class="col-md-3">
                             <input type="number" name="items[0][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
                         </div>
                         <div class="col-md-1 d-flex align-items-center justify-content-center">
@@ -122,15 +116,13 @@ $defaultIssueDate = date('Y-m-d');
             </div>
 
             <div class="row">
+                <input type="hidden" name="tax_rate" value="<?php echo e($siiData['sii_tax_rate'] ?? 19); ?>" data-tax-rate>
                 <div class="col-md-3 mb-3">
-                    <label class="form-label">Impuesto (%)</label>
-                    <input type="number" step="0.01" name="tax_rate" class="form-control" value="0" data-tax-rate>
-                </div>
-                <div class="col-md-3 mb-3 d-flex align-items-center">
-                    <div class="form-check mt-3">
-                        <input class="form-check-input" type="checkbox" name="apply_tax_display" id="apply_tax_display" data-apply-tax>
-                        <label class="form-check-label" for="apply_tax_display">Aplicar impuesto</label>
-                    </div>
+                    <label class="form-label">Impuesto</label>
+                    <select class="form-select" name="apply_tax_display" data-apply-tax>
+                        <option value="1" selected>Aplicar impuesto</option>
+                        <option value="0">Sin impuesto</option>
+                    </select>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Subtotal</label>
@@ -170,7 +162,7 @@ $defaultIssueDate = date('Y-m-d');
     const impuestosInput = document.querySelector('[data-impuestos]');
     const totalSummaryInput = document.querySelector('[data-total]');
     const taxRateInput = document.querySelector('[data-tax-rate]');
-    const applyTaxCheckbox = document.querySelector('[data-apply-tax]');
+    const applyTaxSelect = document.querySelector('[data-apply-tax]');
     const addManualItemButton = document.querySelector('[data-add-manual-item]');
     const addProductItemButton = document.querySelector('[data-add-product-item]');
     const addProducedItemButton = document.querySelector('[data-add-produced-item]');
@@ -239,17 +231,9 @@ $defaultIssueDate = date('Y-m-d');
         const qty = Number(row.querySelector('[data-item-qty]')?.value || 0);
         const price = Number(row.querySelector('[data-item-price]')?.value || 0);
         const totalField = row.querySelector('[data-item-total]');
-        const taxRateField = row.querySelector('[data-item-tax-rate]');
-        const taxField = row.querySelector('[data-item-tax]');
-        const taxRate = Number(taxRateField?.value || 0);
-        const applyTax = !!applyTaxCheckbox?.checked;
         const rowSubtotal = formatNumber(qty * price);
         if (totalField) {
             totalField.value = rowSubtotal.toFixed(2);
-        }
-        if (taxField) {
-            const taxAmount = applyTax ? formatNumber(rowSubtotal * (taxRate / 100)) : 0;
-            taxField.value = taxAmount.toFixed(2);
         }
     };
 
@@ -264,12 +248,13 @@ $defaultIssueDate = date('Y-m-d');
     const updateFromItems = () => {
         const rows = document.querySelectorAll('[data-item-row]');
         let subtotal = 0;
-        let taxes = 0;
         rows.forEach((row) => {
             updateItemTotal(row);
             subtotal += Number(row.querySelector('[data-item-total]')?.value || 0);
-            taxes += Number(row.querySelector('[data-item-tax]')?.value || 0);
         });
+        const taxRate = Number(taxRateInput?.value || 0);
+        const applyTax = (applyTaxSelect?.value || '1') === '1';
+        const taxes = applyTax ? formatNumber(subtotal * (taxRate / 100)) : 0;
         if (subtotalInput) {
             subtotalInput.value = formatNumber(subtotal).toFixed(2);
         }
@@ -280,7 +265,7 @@ $defaultIssueDate = date('Y-m-d');
     };
 
     document.addEventListener('input', (event) => {
-        if (event.target?.matches('[data-item-qty], [data-item-price], [data-item-tax-rate]')) {
+        if (event.target?.matches('[data-item-qty], [data-item-price]')) {
             updateFromItems();
         }
     });
@@ -291,7 +276,6 @@ $defaultIssueDate = date('Y-m-d');
         const row = document.createElement('div');
         row.className = 'row g-2 mb-2';
         row.setAttribute('data-item-row', 'true');
-        const defaultTaxRate = Number(taxRateInput?.value || 0);
         row.innerHTML = `
             <div class="col-md-4">
                 <input type="text" name="items[${index}][descripcion]" class="form-control" data-item-description value="${description}">
@@ -302,13 +286,7 @@ $defaultIssueDate = date('Y-m-d');
             <div class="col-md-2">
                 <input type="number" name="items[${index}][precio_unitario]" class="form-control" value="${formatNumber(price).toFixed(2)}" step="0.01" data-item-price>
             </div>
-            <div class="col-md-1">
-                <input type="number" name="items[${index}][impuesto_pct]" class="form-control" value="${defaultTaxRate}" data-item-tax-rate>
-            </div>
-            <div class="col-md-1">
-                <input type="number" name="items[${index}][impuesto_monto]" class="form-control" value="0" data-item-tax readonly>
-            </div>
-            <div class="col-md-1">
+            <div class="col-md-3">
                 <input type="number" name="items[${index}][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
             </div>
             <div class="col-md-1 d-flex align-items-center justify-content-center">
@@ -334,7 +312,6 @@ $defaultIssueDate = date('Y-m-d');
         const descriptionInput = row.querySelector('[data-item-description]');
         const priceInput = row.querySelector('[data-item-price]');
         const qtyInput = row.querySelector('[data-item-qty]');
-        const taxRateInputRow = row.querySelector('[data-item-tax-rate]');
         if (descriptionInput) {
             descriptionInput.value = description;
         }
@@ -343,9 +320,6 @@ $defaultIssueDate = date('Y-m-d');
         }
         if (qtyInput && Number(qtyInput.value || 0) === 0) {
             qtyInput.value = '1';
-        }
-        if (taxRateInputRow) {
-            taxRateInputRow.value = taxRateInput?.value || '0';
         }
         updateFromItems();
     };
@@ -386,14 +360,7 @@ $defaultIssueDate = date('Y-m-d');
         producedItemSelect.value = '';
     });
 
-    taxRateInput?.addEventListener('input', () => {
-        document.querySelectorAll('[data-item-tax-rate]').forEach((input) => {
-            input.value = taxRateInput.value;
-        });
-        updateFromItems();
-    });
-
-    applyTaxCheckbox?.addEventListener('change', () => {
+    applyTaxSelect?.addEventListener('change', () => {
         updateFromItems();
     });
 
@@ -414,7 +381,7 @@ $defaultIssueDate = date('Y-m-d');
             row.querySelectorAll('input').forEach((input) => {
                 if (input.matches('[data-item-qty]')) {
                     input.value = '1';
-                } else if (input.matches('[data-item-price], [data-item-tax-rate], [data-item-tax], [data-item-total]')) {
+                } else if (input.matches('[data-item-price], [data-item-total]')) {
                     input.value = '0';
                 } else {
                     input.value = '';
