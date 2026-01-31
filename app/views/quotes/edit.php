@@ -1,11 +1,12 @@
 <?php
 $defaultIssueDate = $quote['fecha_emision'] ?? date('Y-m-d');
-$item = $items[0] ?? [
+$itemsData = $items ?: [[
     'descripcion' => '',
     'cantidad' => 1,
     'precio_unitario' => 0,
     'total' => 0,
-];
+]];
+$applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
 ?>
 
 <div class="card">
@@ -89,75 +90,101 @@ $item = $items[0] ?? [
                 'sii_tax_rate' => $quote['sii_tax_rate'] ?? 19,
                 'sii_exempt_amount' => $quote['sii_exempt_amount'] ?? 0,
             ];
+            $siiTitle = 'Datos del cliente';
+            $siiHelp = 'Información tomada desde la ficha del cliente.';
+            $siiShowDocumentType = false;
+            $siiShowDocumentNumber = false;
+            $siiShowTaxRate = false;
+            $siiShowExemptAmount = false;
+            $siiShowWarning = false;
             include __DIR__ . '/../partials/sii-document-fields.php';
             ?>
 
-            <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
-                <select class="form-select form-select-sm" data-product-select>
-                    <option value="">Selecciona producto</option>
-                    <?php foreach ($products as $product): ?>
-                        <option value="<?php echo $product['id']; ?>"
-                                data-name="<?php echo e($product['name'] ?? ''); ?>"
-                                data-price="<?php echo e($product['price'] ?? 0); ?>">
-                            <?php echo e($product['name']); ?>
-                            <?php if (!empty($product['produced_qty'])): ?>
-                                (Producido: <?php echo (int)$product['produced_qty']; ?>)
-                            <?php endif; ?>
-                        </option>
+            <div class="card mb-3 mt-3">
+                <div class="card-header">
+                    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2">
+                        <h5 class="card-title mb-0">Items de cotización</h5>
+                        <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-2 text-nowrap">
+                            <button type="button" class="btn btn-outline-secondary btn-sm py-1 px-2" data-add-manual-item>Agregar item manual</button>
+                            <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm py-1" data-product-item-select>
+                                    <option value="">Selecciona producto</option>
+                                    <?php foreach ($products as $product): ?>
+                                        <option value="<?php echo $product['id']; ?>"
+                                                data-product-price="<?php echo e($product['price'] ?? 0); ?>"
+                                                data-product-name="<?php echo e($product['name'] ?? ''); ?>">
+                                            <?php echo e($product['name']); ?>
+                                            <?php if (!empty($product['produced_qty'])): ?>
+                                                (Producido: <?php echo (int)$product['produced_qty']; ?>)
+                                            <?php endif; ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-success btn-sm py-1 px-2" data-add-product-item>Agregar producto</button>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <select class="form-select form-select-sm py-1" data-produced-item-select>
+                                    <option value="">Selecciona producto fabricado</option>
+                                    <?php foreach ($producedProducts as $producedProduct): ?>
+                                        <option value="<?php echo $producedProduct['id']; ?>"
+                                                data-produced-price="<?php echo e($producedProduct['price'] ?? 0); ?>"
+                                                data-produced-name="<?php echo e($producedProduct['name'] ?? ''); ?>">
+                                            <?php echo e($producedProduct['name']); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                                <button type="button" class="btn btn-outline-dark btn-sm py-1 px-2" data-add-produced-item>Agregar fabricado</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-2 mb-2 fw-semibold text-muted small">
+                        <div class="col-md-4">Descripción</div>
+                        <div class="col-md-2">Cantidad</div>
+                        <div class="col-md-2">Precio unitario</div>
+                        <div class="col-md-3">Total</div>
+                        <div class="col-md-1 text-center">Quitar</div>
+                    </div>
+                    <?php foreach ($itemsData as $index => $item): ?>
+                        <div class="row g-2 mb-2" data-item-row>
+                            <div class="col-md-4">
+                                <input type="text" name="items[<?php echo $index; ?>][descripcion]" class="form-control" value="<?php echo e($item['descripcion']); ?>" data-item-description>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" name="items[<?php echo $index; ?>][cantidad]" class="form-control" value="<?php echo e($item['cantidad']); ?>" min="1" data-item-qty>
+                            </div>
+                            <div class="col-md-2">
+                                <input type="number" name="items[<?php echo $index; ?>][precio_unitario]" class="form-control" value="<?php echo e($item['precio_unitario']); ?>" step="0.01" data-item-price>
+                            </div>
+                            <div class="col-md-3">
+                                <input type="number" name="items[<?php echo $index; ?>][total]" class="form-control" value="<?php echo e($item['total']); ?>" step="0.01" readonly data-item-total>
+                            </div>
+                            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                                <button type="button" class="btn btn-link text-danger p-0" data-remove-row aria-label="Eliminar">✕</button>
+                            </div>
+                        </div>
                     <?php endforeach; ?>
-                </select>
-                <button type="button" class="btn btn-outline-success btn-sm" data-apply-product>Usar producto</button>
-                <select class="form-select form-select-sm" data-produced-select>
-                    <option value="">Selecciona producto fabricado</option>
-                    <?php foreach ($producedProducts as $producedProduct): ?>
-                        <option value="<?php echo $producedProduct['id']; ?>"
-                                data-name="<?php echo e($producedProduct['name'] ?? ''); ?>"
-                                data-price="<?php echo e($producedProduct['price'] ?? 0); ?>">
-                            <?php echo e($producedProduct['name']); ?>
-                        </option>
-                    <?php endforeach; ?>
-                </select>
-                <button type="button" class="btn btn-outline-dark btn-sm" data-apply-produced>Usar fabricado</button>
-            </div>
-
-            <div class="table-responsive mt-3">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Descripción</th>
-                            <th style="width: 120px;">Cantidad</th>
-                            <th style="width: 160px;">Precio unitario</th>
-                            <th style="width: 160px;">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <input type="text" name="items[0][descripcion]" class="form-control" value="<?php echo e($item['descripcion']); ?>" data-item-description>
-                            </td>
-                            <td>
-                                <input type="number" name="items[0][cantidad]" class="form-control" value="<?php echo e($item['cantidad']); ?>" min="1" data-item-qty>
-                            </td>
-                            <td>
-                                <input type="number" name="items[0][precio_unitario]" class="form-control" value="<?php echo e($item['precio_unitario']); ?>" step="0.01" data-item-price>
-                            </td>
-                            <td>
-                                <input type="number" name="items[0][total]" class="form-control" value="<?php echo e($item['total']); ?>" step="0.01" readonly data-item-total>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+                </div>
             </div>
 
             <div class="row justify-content-end">
                 <div class="col-md-4">
+                    <input type="hidden" name="tax_rate" value="<?php echo e($quote['sii_tax_rate'] ?? 19); ?>" data-tax-rate>
+                    <div class="mb-3">
+                        <label class="form-label">Impuesto</label>
+                        <select class="form-select" name="apply_tax_display" data-apply-tax>
+                            <option value="1" <?php echo $applyTaxDefault === '1' ? 'selected' : ''; ?>>Aplicar impuesto</option>
+                            <option value="0" <?php echo $applyTaxDefault === '0' ? 'selected' : ''; ?>>Sin impuesto</option>
+                        </select>
+                    </div>
                     <div class="mb-3">
                         <label class="form-label">Subtotal</label>
                         <input type="number" name="subtotal" class="form-control" value="<?php echo e($quote['subtotal'] ?? 0); ?>" step="0.01" readonly data-subtotal>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Impuestos</label>
-                        <input type="number" name="impuestos" class="form-control" value="<?php echo e($quote['impuestos'] ?? 0); ?>" step="0.01" data-taxes>
+                        <input type="number" name="impuestos" class="form-control" value="<?php echo e($quote['impuestos'] ?? 0); ?>" step="0.01" readonly data-impuestos>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Total</label>
@@ -187,19 +214,18 @@ $item = $items[0] ?? [
 <script>
     const serviceSelect = document.querySelector('[data-service-select]');
     const projectSelect = document.querySelector('[data-project-select]');
-    const descriptionInput = document.querySelector('[data-item-description]');
-    const qtyInput = document.querySelector('[data-item-qty]');
-    const priceInput = document.querySelector('[data-item-price]');
-    const totalInput = document.querySelector('[data-item-total]');
     const subtotalInput = document.querySelector('[data-subtotal]');
-    const taxesInput = document.querySelector('[data-taxes]');
+    const impuestosInput = document.querySelector('[data-impuestos]');
     const totalSummaryInput = document.querySelector('[data-total]');
+    const taxRateInput = document.querySelector('[data-tax-rate]');
+    const applyTaxSelect = document.querySelector('[data-apply-tax]');
     const clientSelect = document.querySelector('select[name="client_id"]');
-    const productSelect = document.querySelector('[data-product-select]');
-    const applyProductButton = document.querySelector('[data-apply-product]');
-    const producedSelect = document.querySelector('[data-produced-select]');
-    const applyProducedButton = document.querySelector('[data-apply-produced]');
-        const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
+    const addManualItemButton = document.querySelector('[data-add-manual-item]');
+    const addProductItemButton = document.querySelector('[data-add-product-item]');
+    const addProducedItemButton = document.querySelector('[data-add-produced-item]');
+    const productItemSelect = document.querySelector('[data-product-item-select]');
+    const producedItemSelect = document.querySelector('[data-produced-item-select]');
+    const clientSiiMap = <?php echo json_encode(array_reduce($clients ?? [], static function (array $carry, array $client): array {
             $carry[$client['id']] = [
                 'rut' => $client['rut'] ?? '',
                 'name' => $client['name'] ?? '',
@@ -256,75 +282,143 @@ $item = $items[0] ?? [
         updateSiiWarning(data, clientId);
     };
 
-    const updateTotals = () => {
-        const qty = Number(qtyInput?.value || 0);
-        const price = Number(priceInput?.value || 0);
-        const subtotal = qty * price;
-        if (totalInput) {
-            totalInput.value = subtotal.toFixed(2);
-        }
-        if (subtotalInput) {
-            subtotalInput.value = subtotal.toFixed(2);
-        }
-        const taxes = Number(taxesInput?.value || 0);
-        if (totalSummaryInput) {
-            totalSummaryInput.value = (subtotal + taxes).toFixed(2);
+    const formatNumber = (value) => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+
+    const updateItemTotal = (row) => {
+        const qty = Number(row.querySelector('[data-item-qty]')?.value || 0);
+        const price = Number(row.querySelector('[data-item-price]')?.value || 0);
+        const totalField = row.querySelector('[data-item-total]');
+        const rowSubtotal = formatNumber(qty * price);
+        if (totalField) {
+            totalField.value = rowSubtotal.toFixed(2);
         }
     };
 
-    const applySourceData = (option) => {
-        if (!option) {
-            return;
+    const updateTotals = () => {
+        const rows = document.querySelectorAll('[data-item-row]');
+        let subtotal = 0;
+        rows.forEach((row) => {
+            updateItemTotal(row);
+            subtotal += Number(row.querySelector('[data-item-total]')?.value || 0);
+        });
+        const taxRate = Number(taxRateInput?.value || 0);
+        const applyTax = (applyTaxSelect?.value || '1') === '1';
+        const taxes = applyTax ? formatNumber(subtotal * (taxRate / 100)) : 0;
+        if (subtotalInput) {
+            subtotalInput.value = formatNumber(subtotal).toFixed(2);
         }
-        const name = option.dataset.name || '';
-        const price = option.dataset.price || 0;
+        if (impuestosInput) {
+            impuestosInput.value = formatNumber(taxes).toFixed(2);
+        }
+        if (totalSummaryInput) {
+            totalSummaryInput.value = formatNumber(subtotal + taxes).toFixed(2);
+        }
+    };
+
+    document.addEventListener('input', (event) => {
+        if (event.target?.matches('[data-item-qty], [data-item-price]')) {
+            updateTotals();
+        }
+    });
+
+    const addItemRow = ({ description = '', price = 0 } = {}) => {
+        const rows = document.querySelectorAll('[data-item-row]');
+        const index = rows.length;
+        const row = document.createElement('div');
+        row.className = 'row g-2 mb-2';
+        row.setAttribute('data-item-row', 'true');
+        row.innerHTML = `
+            <div class="col-md-4">
+                <input type="text" name="items[${index}][descripcion]" class="form-control" data-item-description value="${description}">
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="items[${index}][cantidad]" class="form-control" value="1" min="1" data-item-qty>
+            </div>
+            <div class="col-md-2">
+                <input type="number" name="items[${index}][precio_unitario]" class="form-control" value="${formatNumber(price).toFixed(2)}" step="0.01" data-item-price>
+            </div>
+            <div class="col-md-3">
+                <input type="number" name="items[${index}][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
+            </div>
+            <div class="col-md-1 d-flex align-items-center justify-content-center">
+                <button type="button" class="btn btn-link text-danger p-0" data-remove-row aria-label="Eliminar">✕</button>
+            </div>
+        `;
+        rows[rows.length - 1]?.after(row);
+        updateTotals();
+    };
+
+    addManualItemButton?.addEventListener('click', () => {
+        addItemRow();
+    });
+
+    const findFirstEmptyRow = () => {
+        return Array.from(document.querySelectorAll('[data-item-row]')).find((row) => {
+            const description = row.querySelector('[data-item-description]')?.value || '';
+            return description.trim() === '';
+        }) || null;
+    };
+
+    const fillRow = (row, { description = '', price = 0 } = {}) => {
+        const descriptionInput = row.querySelector('[data-item-description]');
+        const priceInput = row.querySelector('[data-item-price]');
+        const qtyInput = row.querySelector('[data-item-qty]');
         if (descriptionInput) {
-            descriptionInput.value = name;
+            descriptionInput.value = description;
         }
         if (priceInput) {
-            priceInput.value = Number(price).toFixed(2);
+            priceInput.value = formatNumber(price).toFixed(2);
+        }
+        if (qtyInput && Number(qtyInput.value || 0) === 0) {
+            qtyInput.value = '1';
         }
         updateTotals();
     };
 
-    serviceSelect?.addEventListener('change', (event) => {
-        if (projectSelect) {
-            projectSelect.value = '';
+    addProductItemButton?.addEventListener('click', () => {
+        const selected = productItemSelect?.selectedOptions?.[0];
+        if (!selected || !selected.value) {
+            return;
         }
-        applySourceData(event.target.selectedOptions[0]);
+        const payload = {
+            description: selected.dataset.productName || selected.textContent?.trim() || '',
+            price: Number(selected.dataset.productPrice || 0),
+        };
+        const emptyRow = findFirstEmptyRow();
+        if (emptyRow) {
+            fillRow(emptyRow, payload);
+        } else {
+            addItemRow(payload);
+        }
+        productItemSelect.value = '';
     });
 
-    applyProductButton?.addEventListener('click', () => {
-        if (serviceSelect) {
-            serviceSelect.value = '';
+    addProducedItemButton?.addEventListener('click', () => {
+        const selected = producedItemSelect?.selectedOptions?.[0];
+        if (!selected || !selected.value) {
+            return;
         }
-        if (projectSelect) {
-            projectSelect.value = '';
+        const payload = {
+            description: selected.dataset.producedName || selected.textContent?.trim() || '',
+            price: Number(selected.dataset.producedPrice || 0),
+        };
+        const emptyRow = findFirstEmptyRow();
+        if (emptyRow) {
+            fillRow(emptyRow, payload);
+        } else {
+            addItemRow(payload);
         }
-        applySourceData(productSelect?.selectedOptions?.[0]);
-        if (productSelect) {
-            productSelect.value = '';
-        }
+        producedItemSelect.value = '';
     });
 
-    applyProducedButton?.addEventListener('click', () => {
-        if (serviceSelect) {
-            serviceSelect.value = '';
-        }
-        if (projectSelect) {
-            projectSelect.value = '';
-        }
-        applySourceData(producedSelect?.selectedOptions?.[0]);
-        if (producedSelect) {
-            producedSelect.value = '';
-        }
+    applyTaxSelect?.addEventListener('change', () => {
+        updateTotals();
     });
 
     projectSelect?.addEventListener('change', (event) => {
         if (serviceSelect) {
             serviceSelect.value = '';
         }
-        applySourceData(event.target.selectedOptions[0]);
         const clientId = event.target.selectedOptions[0]?.dataset?.clientId;
         if (clientSelect && clientId) {
             clientSelect.value = clientId;
@@ -332,11 +426,34 @@ $item = $items[0] ?? [
         }
     });
 
-    qtyInput?.addEventListener('input', updateTotals);
-    priceInput?.addEventListener('input', updateTotals);
-    taxesInput?.addEventListener('input', updateTotals);
     clientSelect?.addEventListener('change', () => {
         applyClientSii(Number(clientSelect?.value || 0));
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!event.target?.matches('[data-remove-row]')) {
+            return;
+        }
+        const rows = document.querySelectorAll('[data-item-row]');
+        const row = event.target.closest('[data-item-row]');
+        if (!row) {
+            return;
+        }
+        if (rows.length <= 1) {
+            row.querySelectorAll('input').forEach((input) => {
+                if (input.matches('[data-item-qty]')) {
+                    input.value = '1';
+                } else if (input.matches('[data-item-price], [data-item-total]')) {
+                    input.value = '0';
+                } else {
+                    input.value = '';
+                }
+            });
+            updateTotals();
+            return;
+        }
+        row.remove();
+        updateTotals();
     });
 
     updateTotals();

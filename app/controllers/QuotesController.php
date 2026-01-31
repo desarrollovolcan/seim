@@ -78,6 +78,9 @@ class QuotesController extends Controller
         $impuestos = trim($_POST['impuestos'] ?? '');
         $total = trim($_POST['total'] ?? '');
         $numero = trim($_POST['numero'] ?? '');
+        if ($numero === '') {
+            $numero = $this->quotes->nextNumber('COT-', $companyId);
+        }
         $clientId = (int)($_POST['client_id'] ?? 0);
         $client = $this->db->fetch(
             'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
