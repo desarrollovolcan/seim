@@ -187,9 +187,6 @@ $portalToken = $client['portal_token'] ?? '';
                             <a href="index.php?route=clients/portal&token=<?php echo urlencode($portalToken); ?>" class="btn btn-light">
                                 <i class="ti ti-arrow-left me-1"></i> Volver
                             </a>
-                            <button type="button" class="btn btn-info" id="downloadPdf">
-                                <i class="ti ti-download me-1"></i> Descargar PDF
-                            </button>
                         </div>
                     </div>
                 </div>
@@ -197,95 +194,3 @@ $portalToken = $client['portal_token'] ?? '';
         </div>
     </div>
 </div>
-
-<script src="assets/plugins/datatables/pdfmake.min.js"></script>
-<script src="assets/plugins/datatables/vfs_fonts.js"></script>
-<script>
-    const invoiceData = <?php echo json_encode($invoiceData); ?>;
-
-    const buildPdfDefinition = (data) => {
-        const items = (data.items || []).map((item, index) => ([
-            { text: String(index + 1), alignment: 'center' },
-            { text: item.descripcion || '', alignment: 'left' },
-            { text: String(item.cantidad || ''), alignment: 'center' },
-            { text: item.precio_unitario_formatted || '', alignment: 'right' },
-            { text: item.total_formatted || '', alignment: 'right' },
-        ]));
-
-        const body = [
-            [
-                { text: '#', style: 'tableHeader' },
-                { text: 'Detalle', style: 'tableHeader' },
-                { text: 'Qty', style: 'tableHeader' },
-                { text: 'Precio unitario', style: 'tableHeader' },
-                { text: 'Total', style: 'tableHeader' },
-            ],
-            ...items,
-        ];
-
-        const content = [];
-        if (data.company.logo) {
-            content.push({ image: data.company.logo, width: 120, margin: [0, 0, 0, 12] });
-        }
-        content.push({ text: `Factura #${data.invoice.numero || ''}`, style: 'header' });
-
-        return {
-            content: [
-                ...content,
-                {
-                    columns: [
-                        [
-                            { text: data.company.name || 'Empresa', bold: true },
-                            data.company.rut ? `RUT: ${data.company.rut}` : '',
-                            data.company.email ? `Email: ${data.company.email}` : '',
-                        ].filter(Boolean),
-                        [
-                            { text: 'Cliente', bold: true },
-                            data.client.name || '',
-                            data.client.address || '',
-                            data.client.email || '',
-                        ].filter(Boolean),
-                    ],
-                    columnGap: 20,
-                },
-                { text: `Emisión: ${data.invoice.fecha_emision || ''}`, margin: [0, 8, 0, 0] },
-                { text: `Vencimiento: ${data.invoice.fecha_vencimiento || ''}` },
-                {
-                    table: {
-                        headerRows: 1,
-                        widths: [20, '*', 40, 80, 80],
-                        body,
-                    },
-                    layout: 'lightHorizontalLines',
-                    margin: [0, 16, 0, 0],
-                },
-                {
-                    columns: [
-                        { text: '' },
-                        {
-                            table: {
-                                body: [
-                                    ['Subtotal', data.invoice.subtotal_formatted || ''],
-                                    ['Impuestos', data.invoice.impuestos_formatted || ''],
-                                    ['Total', data.invoice.total_formatted || ''],
-                                ],
-                            },
-                            layout: 'noBorders',
-                            alignment: 'right',
-                        },
-                    ],
-                    margin: [0, 12, 0, 0],
-                },
-            ],
-            styles: {
-                header: { fontSize: 18, bold: true, margin: [0, 0, 0, 8] },
-                tableHeader: { bold: true, fillColor: '#f3f4f6' },
-            },
-        };
-    };
-
-    document.getElementById('downloadPdf')?.addEventListener('click', () => {
-        const docDefinition = buildPdfDefinition(invoiceData);
-        pdfMake.createPdf(docDefinition).download(`Factura-${invoiceData.invoice.numero || 'sin-numero'}.pdf`);
-    });
-</script>

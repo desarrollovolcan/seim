@@ -5,7 +5,6 @@ class ChileCitiesController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         try {
             $cities = $this->db->fetchAll(
                 'SELECT cities.id, cities.name, regions.name AS region
@@ -27,7 +26,6 @@ class ChileCitiesController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $regions = $this->loadRegions();
         $this->render('maintainers/chile-cities/create', [
             'title' => 'Nueva ciudad',
@@ -39,7 +37,6 @@ class ChileCitiesController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $name = trim($_POST['name'] ?? '');
         $regionId = (int)($_POST['region_id'] ?? 0);
@@ -72,7 +69,6 @@ class ChileCitiesController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $city = $this->db->fetch(
             'SELECT id, name, region_id FROM cities WHERE id = :id',
@@ -93,7 +89,6 @@ class ChileCitiesController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $city = $this->db->fetch(
@@ -134,7 +129,6 @@ class ChileCitiesController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $city = $this->db->fetch(
