@@ -78,8 +78,13 @@ $totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantit
         .meta {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 4px 10px;
+            gap: 6px 12px;
             font-size: 10px;
+            margin-bottom: 6px;
+        }
+        .meta span {
+            display: block;
+            word-break: break-word;
         }
         .meta span {
             display: block;
@@ -170,7 +175,7 @@ $totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantit
             </div>
         </div>
         <div class="meta">
-            <span><strong>Venta:</strong> <?php echo e($sale['numero'] ?? ''); ?></span>
+            <span><strong>N° venta:</strong> <?php echo e($sale['numero'] ?? ''); ?></span>
             <span><strong>Fecha:</strong> <?php echo e(format_date($sale['sale_date'] ?? null)); ?></span>
             <span><strong>Canal:</strong> <?php echo e(strtoupper($sale['channel'] ?? 'POS')); ?></span>
             <span><strong>Estado:</strong> <?php echo e($sale['status'] ?? 'pagado'); ?></span>

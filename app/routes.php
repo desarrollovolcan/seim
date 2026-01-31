@@ -92,6 +92,7 @@ return [
     'pos' => ['SalesController', 'pos'],
     'pos/open' => ['SalesController', 'openSession'],
     'pos/close' => ['SalesController', 'closeSession'],
+    'pos/withdraw' => ['SalesController', 'withdrawSession'],
     'accounting/chart' => ['AccountingController', 'chart'],
     'accounting/chart/create' => ['AccountingController', 'chartCreate'],
     'accounting/chart/store' => ['AccountingController', 'chartStore'],

@@ -34,4 +34,31 @@ class PosSessionsModel extends Model
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
     }
+
+    public function listSummary(int $companyId, int $limit = 10): array
+    {
+        $limit = max(1, $limit);
+        $sql = '
+            SELECT ps.*,
+                   u.name AS user_name,
+                   COALESCE(sales.total, 0) AS sales_total,
+                   COALESCE(withdrawals.total, 0) AS withdrawals_total
+            FROM pos_sessions ps
+            LEFT JOIN users u ON ps.user_id = u.id
+            LEFT JOIN (
+                SELECT s.pos_session_id, SUM(sp.amount) AS total
+                FROM sales s
+                INNER JOIN sale_payments sp ON sp.sale_id = s.id
+                GROUP BY s.pos_session_id
+            ) sales ON sales.pos_session_id = ps.id
+            LEFT JOIN (
+                SELECT pos_session_id, SUM(amount) AS total
+                FROM pos_session_withdrawals
+                GROUP BY pos_session_id
+            ) withdrawals ON withdrawals.pos_session_id = ps.id
+            WHERE ps.company_id = :company_id
+            ORDER BY ps.opened_at DESC
+            LIMIT ' . $limit;
+        return $this->db->fetchAll($sql, ['company_id' => $companyId]);
+    }
 }

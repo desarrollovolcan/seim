@@ -348,6 +348,19 @@ CREATE TABLE IF NOT EXISTS pos_sessions (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+CREATE TABLE IF NOT EXISTS pos_session_withdrawals (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    pos_session_id INT NOT NULL,
+    company_id INT NOT NULL,
+    user_id INT NOT NULL,
+    amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    reason VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    FOREIGN KEY (pos_session_id) REFERENCES pos_sessions(id),
+    FOREIGN KEY (company_id) REFERENCES companies(id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
 CREATE TABLE IF NOT EXISTS sales (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
