@@ -466,6 +466,20 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     height: 160px;
 }
 
+@media (max-width: 575.98px) {
+    .dashboard-chart {
+        height: 200px;
+    }
+
+    .dashboard-chart-sm {
+        height: 170px;
+    }
+
+    .dashboard-chart-xs {
+        height: 140px;
+    }
+}
+
 .quick-link {
     border: 1px solid var(--ins-border);
     border-radius: 12px;

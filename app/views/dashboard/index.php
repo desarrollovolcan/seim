@@ -211,8 +211,19 @@ foreach (($lowStockProducts ?? []) as $item) {
     const lowStockMinimums = <?php echo json_encode($lowStockMinimums, JSON_UNESCAPED_UNICODE); ?>;
 
     if (window.Chart) {
+        const isMobile = window.innerWidth <= 576;
+        const buildGradient = (ctx, start, end) => {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 240);
+            gradient.addColorStop(0, start);
+            gradient.addColorStop(1, end);
+            return gradient;
+        };
+        const baseGrid = { color: 'rgba(148, 163, 184, 0.25)' };
+        const axisFont = { size: isMobile ? 10 : 12 };
+
         const productCostCtx = document.getElementById('productCostChart');
         if (productCostCtx) {
+            const productCostGradient = buildGradient(productCostCtx.getContext('2d'), 'rgba(90, 77, 225, 0.65)', 'rgba(90, 77, 225, 0.15)');
             new Chart(productCostCtx, {
                 type: 'bar',
                 data: {
@@ -220,18 +231,21 @@ foreach (($lowStockProducts ?? []) as $item) {
                     datasets: [{
                         label: 'Costo unitario',
                         data: productCostTotals,
-                        backgroundColor: '#5a4de1',
-                        borderRadius: 6,
-                        maxBarThickness: 36
+                        backgroundColor: productCostGradient,
+                        borderColor: '#5a4de1',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        maxBarThickness: isMobile ? 18 : 36
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
+                    indexAxis: isMobile ? 'y' : 'x',
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.25)' }, beginAtZero: true }
+                        x: { grid: { display: false }, ticks: { font: axisFont } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
                     }
                 }
             });
@@ -239,6 +253,7 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const salesCtx = document.getElementById('salesByProductChart');
         if (salesCtx) {
+            const salesGradient = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.35)', 'rgba(34, 181, 154, 0.05)');
             new Chart(salesCtx, {
                 type: 'line',
                 data: {
@@ -247,10 +262,11 @@ foreach (($lowStockProducts ?? []) as $item) {
                         label: 'Ventas',
                         data: salesTotals,
                         borderColor: '#22b59a',
-                        backgroundColor: 'rgba(34, 181, 154, 0.18)',
+                        backgroundColor: salesGradient,
                         fill: true,
                         tension: 0.35,
-                        pointRadius: 3,
+                        pointRadius: isMobile ? 2 : 3,
+                        pointHoverRadius: isMobile ? 3 : 4,
                         pointBackgroundColor: '#22b59a'
                     }]
                 },
@@ -259,8 +275,8 @@ foreach (($lowStockProducts ?? []) as $item) {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.25)' }, beginAtZero: true }
+                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
                     }
                 }
             });
@@ -268,6 +284,7 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const profitCtx = document.getElementById('profitByProductChart');
         if (profitCtx) {
+            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
             new Chart(profitCtx, {
                 type: 'bar',
                 data: {
@@ -275,18 +292,21 @@ foreach (($lowStockProducts ?? []) as $item) {
                     datasets: [{
                         label: 'Ganancia',
                         data: profitTotals,
-                        backgroundColor: '#f3a257',
-                        borderRadius: 6,
-                        maxBarThickness: 36
+                        backgroundColor: profitGradient,
+                        borderColor: '#f3a257',
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        maxBarThickness: isMobile ? 18 : 36
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
+                    indexAxis: isMobile ? 'y' : 'x',
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.25)' }, beginAtZero: true }
+                        x: { grid: { display: false }, ticks: { font: axisFont } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
                     }
                 }
             });
@@ -294,6 +314,8 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const lowStockCtx = document.getElementById('lowStockChart');
         if (lowStockCtx) {
+            const lowStockGradient = buildGradient(lowStockCtx.getContext('2d'), 'rgba(240, 108, 108, 0.65)', 'rgba(240, 108, 108, 0.2)');
+            const lowStockMinGradient = buildGradient(lowStockCtx.getContext('2d'), 'rgba(148, 163, 184, 0.7)', 'rgba(148, 163, 184, 0.25)');
             new Chart(lowStockCtx, {
                 type: 'bar',
                 data: {
@@ -302,26 +324,31 @@ foreach (($lowStockProducts ?? []) as $item) {
                         {
                             label: 'Stock actual',
                             data: lowStockValues,
-                            backgroundColor: '#f06c6c',
-                            borderRadius: 6,
-                            maxBarThickness: 36
+                            backgroundColor: lowStockGradient,
+                            borderColor: '#f06c6c',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 18 : 36
                         },
                         {
                             label: 'Stock mínimo',
                             data: lowStockMinimums,
-                            backgroundColor: '#94a3b8',
-                            borderRadius: 6,
-                            maxBarThickness: 36
+                            backgroundColor: lowStockMinGradient,
+                            borderColor: '#94a3b8',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 18 : 36
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10 } } },
+                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: axisFont } } },
+                    indexAxis: isMobile ? 'y' : 'x',
                     scales: {
-                        x: { grid: { display: false } },
-                        y: { grid: { color: 'rgba(148, 163, 184, 0.25)' }, beginAtZero: true }
+                        x: { grid: { display: false }, ticks: { font: axisFont } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
                     }
                 }
             });

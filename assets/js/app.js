@@ -751,13 +751,21 @@ class LayoutCustomizer {
 
         toggle('input[name="sidebar-user"]', config.sidenav.user === true);
 
+        const viewportWidth = window.innerWidth;
+        let sidenavSize = config.sidenav.size;
+        if (viewportWidth <= 767.98) {
+            sidenavSize = 'offcanvas';
+        } else if (viewportWidth <= 1140 && !['offcanvas'].includes(sidenavSize)) {
+            sidenavSize = 'condensed';
+        }
+
         [
             ['data-skin', config.skin],
             ['data-bs-theme', config.theme],
             ['data-layout-position', config.layout.position],
             ['data-topbar-color', config.topbar.color],
             ['data-menu-color', config.menu.color],
-            ['data-sidenav-size', config.sidenav.size]
+            ['data-sidenav-size', sidenavSize]
         ].forEach(([name, val]) => {
             const el = select(name, val);
             if (el) el.checked = true;
