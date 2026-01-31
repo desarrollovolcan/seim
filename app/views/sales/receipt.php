@@ -86,6 +86,9 @@ $totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantit
             display: block;
             word-break: break-word;
         }
+        .meta span {
+            display: block;
+        }
         .items {
             width: 100%;
             border-collapse: collapse;
