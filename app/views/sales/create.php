@@ -231,6 +231,8 @@
                                 'sii_exempt_amount' => 0,
                             ];
                             $siiRequired = !$isPos;
+                            $siiShowTaxRate = !$isPos;
+                            $siiShowExemptAmount = !$isPos;
                             include __DIR__ . '/../partials/sii-document-fields.php';
                             ?>
                         </div>
@@ -282,7 +284,14 @@
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Impuestos</span>
-                                    <input type="number" name="tax" id="sale-tax" class="form-control form-control-sm w-auto" style="width: 160px;" step="0.01" min="0" value="<?php echo e($taxDefault ?? 0); ?>">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select name="apply_tax" id="apply-tax" class="form-select form-select-sm w-auto" style="width: 170px;">
+                                            <option value="1" <?php echo !empty($applyTaxDefault) ? 'selected' : ''; ?>>Calcular impuesto</option>
+                                            <option value="0" <?php echo empty($applyTaxDefault) ? 'selected' : ''; ?>>No calcular</option>
+                                        </select>
+                                        <input type="number" name="tax" id="sale-tax" class="form-control form-control-sm w-auto text-end" style="width: 140px;" step="0.01" min="0" value="<?php echo e($taxDefault ?? 0); ?>" readonly>
+                                        <input type="hidden" name="tax_rate" id="tax-rate" value="<?php echo e($taxRate ?? 19); ?>">
+                                    </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Forma de pago</span>
@@ -434,6 +443,8 @@
         const subtotalDisplay = document.getElementById('sale-subtotal');
         const totalDisplay = document.getElementById('sale-total');
         const taxInput = document.getElementById('sale-tax');
+        const applyTaxSelect = document.getElementById('apply-tax');
+        const taxRateInput = document.getElementById('tax-rate');
         const statusSelect = document.querySelector('select[name=\"status\"]');
         const holdButton = document.getElementById('mark-hold');
         const productSelectors = document.querySelectorAll('.add-product');
@@ -517,7 +528,12 @@
                 row.querySelector('.item-subtotal').innerText = formatCurrency(total);
             });
             subtotalDisplay.innerText = formatCurrency(subtotal);
-            const tax = parseFloat(taxInput.value) || 0;
+            const rate = parseFloat(taxRateInput?.value) || 0;
+            const shouldApplyTax = applyTaxSelect?.value === '1';
+            const tax = shouldApplyTax ? Math.round(subtotal * rate) / 100 : 0;
+            if (taxInput) {
+                taxInput.value = tax.toFixed(2);
+            }
             totalDisplay.innerText = formatCurrency(subtotal + tax);
         }
 
@@ -554,7 +570,7 @@
             }
         });
 
-        taxInput?.addEventListener('input', recalc);
+        applyTaxSelect?.addEventListener('change', recalc);
         clientSelect?.addEventListener('change', () => {
             applyClientSii(Number(clientSelect?.value || 0));
         });
