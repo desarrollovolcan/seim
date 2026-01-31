@@ -8,12 +8,12 @@
         /* ===== CONFIG IMPRESIÓN ===== */
         @page {
             size: Letter;
-            margin: 20mm;
+            margin: 16mm;
         }
 
         body {
             font-family: "Segoe UI", Arial, Helvetica, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
             color: #1f2933;
             margin: 0;
         }
@@ -33,7 +33,7 @@
         hr {
             border: none;
             border-top: 2px solid var(--azul);
-            margin: 14px 0;
+            margin: 10px 0;
         }
 
         /* ===== HEADER ===== */
@@ -53,9 +53,18 @@
         }
 
         .logo {
-            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
             font-weight: 700;
             color: var(--azul);
+        }
+
+        .logo img {
+            max-height: 36px;
+            max-width: 140px;
+            object-fit: contain;
         }
 
         .company-data {
@@ -65,7 +74,7 @@
         }
 
         .quote-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
             color: var(--azul);
         }
@@ -78,7 +87,7 @@
 
         /* ===== SECCIONES ===== */
         .section {
-            margin-top: 16px;
+            margin-top: 12px;
         }
 
         .section-title {
@@ -98,7 +107,7 @@
         }
 
         .table-info td {
-            padding: 5px 6px;
+            padding: 4px 6px;
         }
 
         .label {
@@ -118,14 +127,14 @@
             background: var(--azul);
             color: #fff;
             font-weight: 600;
-            padding: 8px;
+            padding: 6px;
             text-align: left;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         .table-items td {
             border-bottom: 1px solid var(--gris-claro);
-            padding: 8px;
+            padding: 6px;
         }
 
         .table-items tr:last-child td {
@@ -139,11 +148,11 @@
         /* ===== TOTALES ===== */
         .totals {
             width: 100%;
-            margin-top: 14px;
+            margin-top: 10px;
         }
 
         .totals td {
-            padding: 6px;
+            padding: 4px 6px;
         }
 
         .totals .label {
@@ -152,7 +161,7 @@
         }
 
         .total-final {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
             color: var(--azul);
             border-top: 2px solid var(--azul);
@@ -172,14 +181,14 @@
         /* ===== FOOTER ===== */
         .footer {
             position: fixed;
-            bottom: 15mm;
-            left: 20mm;
-            right: 20mm;
-            font-size: 10px;
+            bottom: 12mm;
+            left: 16mm;
+            right: 16mm;
+            font-size: 9px;
             text-align: center;
             color: var(--gris);
             border-top: 1px solid var(--gris-claro);
-            padding-top: 6px;
+            padding-top: 4px;
         }
 
         .print-actions {
@@ -214,6 +223,20 @@ $companyEmail = $company['email'] ?? '';
 $companyPhone = $company['phone'] ?? '';
 $companyAddress = $company['address'] ?? '';
 $companyGiro = $company['giro'] ?? '';
+$companyLogoColor = $company['logo_color'] ?? 'assets/images/logo.png';
+$companyLogoDataUri = '';
+if ($companyLogoColor !== '') {
+    $logoFilePath = __DIR__ . '/../../../' . ltrim($companyLogoColor, '/');
+    if (is_file($logoFilePath)) {
+        $logoContents = @file_get_contents($logoFilePath);
+        if ($logoContents !== false) {
+            $mimeType = function_exists('mime_content_type')
+                ? (mime_content_type($logoFilePath) ?: 'image/png')
+                : 'image/png';
+            $companyLogoDataUri = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+        }
+    }
+}
 $clientRut = $client['rut'] ?? '';
 $clientContact = $client['contact_name'] ?? '';
 $clientGiro = $client['giro'] ?? '';
@@ -229,7 +252,12 @@ $validUntil = $quote['valid_until'] ?? '';
     </div>
     <div class="header">
         <div class="left">
-            <div class="logo"><?php echo e($companyName); ?></div>
+            <div class="logo">
+                <?php if ($companyLogoDataUri !== ''): ?>
+                    <img src="<?php echo e($companyLogoDataUri); ?>" alt="Logo">
+                <?php endif; ?>
+                <span><?php echo e($companyName); ?></span>
+            </div>
             <div class="company-data">
                 <?php if ($companyRut !== ''): ?>
                     RUT: <?php echo e($companyRut); ?><br>

@@ -2,6 +2,8 @@
 $siiData = $siiData ?? [];
 $siiLabel = $siiLabel ?? 'Receptor';
 $siiRequired = $siiRequired ?? true;
+$siiShowTaxRate = $siiShowTaxRate ?? true;
+$siiShowExemptAmount = $siiShowExemptAmount ?? true;
 $requiredAttr = $siiRequired ? 'required' : '';
 $documentTypes = sii_document_types();
 $receiverHelp = $siiLabel === 'Proveedor'
@@ -35,14 +37,22 @@ $receiverHelp = $siiLabel === 'Proveedor'
                 <label class="form-label">Folio / Nº documento</label>
                 <input type="text" name="sii_document_number" class="form-control" value="<?php echo e($siiData['sii_document_number'] ?? ''); ?>" <?php echo $requiredAttr; ?>>
             </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">Tasa impuesto (%)</label>
-                <input type="number" name="sii_tax_rate" class="form-control" step="0.01" min="0" max="100" value="<?php echo e($siiData['sii_tax_rate'] ?? 19); ?>">
-            </div>
-            <div class="col-md-2 mb-3">
-                <label class="form-label">Monto exento</label>
-                <input type="number" name="sii_exempt_amount" class="form-control" step="0.01" min="0" value="<?php echo e($siiData['sii_exempt_amount'] ?? 0); ?>">
-            </div>
+            <?php if ($siiShowTaxRate): ?>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Tasa impuesto (%)</label>
+                    <input type="number" name="sii_tax_rate" class="form-control" step="0.01" min="0" max="100" value="<?php echo e($siiData['sii_tax_rate'] ?? 19); ?>">
+                </div>
+            <?php else: ?>
+                <input type="hidden" name="sii_tax_rate" value="<?php echo e($siiData['sii_tax_rate'] ?? 19); ?>">
+            <?php endif; ?>
+            <?php if ($siiShowExemptAmount): ?>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Monto exento</label>
+                    <input type="number" name="sii_exempt_amount" class="form-control" step="0.01" min="0" value="<?php echo e($siiData['sii_exempt_amount'] ?? 0); ?>">
+                </div>
+            <?php else: ?>
+                <input type="hidden" name="sii_exempt_amount" value="<?php echo e($siiData['sii_exempt_amount'] ?? 0); ?>">
+            <?php endif; ?>
         </div>
         <div class="row">
             <div class="col-md-4 mb-3">
