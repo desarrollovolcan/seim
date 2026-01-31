@@ -1,3 +1,18 @@
+<?php
+$companyLogo = $company['logo_black'] ?? $company['logo_color'] ?? '';
+$companyLogoDataUri = '';
+if ($companyLogo !== '') {
+    $logoFilePath = __DIR__ . '/../../../' . ltrim($companyLogo, '/');
+    if (is_file($logoFilePath)) {
+        $logoContents = @file_get_contents($logoFilePath);
+        if ($logoContents !== false) {
+            $mimeType = mime_content_type($logoFilePath) ?: 'image/png';
+            $companyLogoDataUri = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+        }
+    }
+}
+$totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantity'] ?? 0), $items));
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -32,11 +47,44 @@
             border-top: 1px dashed #000;
             margin: 8px 0;
         }
-        .meta {
+        .brand {
             display: flex;
-            justify-content: space-between;
+            align-items: center;
             gap: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #000;
+            margin-bottom: 6px;
+        }
+        .logo {
+            width: 30mm;
+            text-align: left;
+        }
+        .logo img {
+            max-width: 100%;
+            max-height: 22mm;
+            object-fit: contain;
+            filter: grayscale(100%);
+        }
+        .brand-info {
+            flex: 1;
             font-size: 10px;
+            line-height: 1.3;
+        }
+        .title {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px 12px;
+            font-size: 10px;
+            margin-bottom: 6px;
+        }
+        .meta span {
+            display: block;
+            word-break: break-word;
         }
         .items {
             width: 100%;
@@ -65,6 +113,12 @@
         .totals td:last-child {
             text-align: right;
         }
+        .summary {
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            gap: 8px;
+        }
         .copy-label {
             font-size: 10px;
             text-align: right;
@@ -83,28 +137,48 @@
 <?php for ($copy = 1; $copy <= $copies; $copy++): ?>
     <div class="receipt<?php echo $copy < $copies ? ' page-break' : ''; ?>">
         <div class="copy-label">Copia <?php echo $copy; ?> de <?php echo $copies; ?></div>
-        <div class="center">
-            <strong><?php echo e($company['name'] ?? ''); ?></strong><br>
-            <?php if (!empty($company['rut'])): ?>
-                RUT: <?php echo e($company['rut']); ?><br>
+        <div class="brand">
+            <?php if ($companyLogoDataUri !== ''): ?>
+                <div class="logo">
+                    <img src="<?php echo e($companyLogoDataUri); ?>" alt="Logo">
+                </div>
             <?php endif; ?>
-            <?php if (!empty($company['address'])): ?>
-                <?php echo e($company['address']); ?><br>
-            <?php endif; ?>
+            <div class="brand-info">
+                <div class="title">COMPROBANTE</div>
+                <strong><?php echo e($company['name'] ?? ''); ?></strong>
+                <?php if (!empty($company['rut'])): ?>
+                    <div>RUT: <?php echo e($company['rut']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($company['giro'])): ?>
+                    <div><?php echo e($company['giro']); ?></div>
+                <?php endif; ?>
+                <?php if (!empty($company['address']) || !empty($company['commune'])): ?>
+                    <div>
+                        <?php echo e($company['address'] ?? ''); ?>
+                        <?php if (!empty($company['commune'])): ?>
+                            <?php echo $company['address'] ? ' · ' : ''; ?><?php echo e($company['commune']); ?>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
+                <?php if (!empty($company['phone']) || !empty($company['email'])): ?>
+                    <div>
+                        <?php echo e($company['phone'] ?? ''); ?>
+                        <?php if (!empty($company['phone']) && !empty($company['email'])): ?>
+                            ·
+                        <?php endif; ?>
+                        <?php echo e($company['email'] ?? ''); ?>
+                    </div>
+                <?php endif; ?>
+            </div>
         </div>
-        <div class="divider"></div>
         <div class="meta">
-            <div>
-                <div>Venta: <?php echo e($sale['numero'] ?? ''); ?></div>
-                <div>Fecha: <?php echo e(format_date($sale['sale_date'] ?? null)); ?></div>
-            </div>
-            <div>
-                <div>Canal: <?php echo e(strtoupper($sale['channel'] ?? 'POS')); ?></div>
-                <div>Estado: <?php echo e($sale['status'] ?? 'pagado'); ?></div>
-            </div>
+            <span><strong>N° venta:</strong> <?php echo e($sale['numero'] ?? ''); ?></span>
+            <span><strong>Fecha:</strong> <?php echo e(format_date($sale['sale_date'] ?? null)); ?></span>
+            <span><strong>Canal:</strong> <?php echo e(strtoupper($sale['channel'] ?? 'POS')); ?></span>
+            <span><strong>Estado:</strong> <?php echo e($sale['status'] ?? 'pagado'); ?></span>
+            <span><strong>Cliente:</strong> <?php echo e($sale['client_name'] ?? 'Consumidor final'); ?></span>
+            <span><strong>Ítems:</strong> <?php echo count($items); ?> (<?php echo $totalUnits; ?> uds)</span>
         </div>
-        <div class="divider"></div>
-        <div><strong>Cliente:</strong> <?php echo e($sale['client_name'] ?? 'Consumidor final'); ?></div>
         <div class="divider"></div>
         <table class="items">
             <thead>
@@ -149,7 +223,10 @@
             <div><strong>Notas:</strong> <?php echo nl2br(e($sale['notes'] ?? '')); ?></div>
         <?php endif; ?>
         <div class="divider"></div>
-        <div class="center">Gracias por su compra</div>
+        <div class="summary">
+            <span>Gracias por su compra.</span>
+            <span><?php echo e(date('H:i')); ?></span>
+        </div>
     </div>
 <?php endfor; ?>
 </body>

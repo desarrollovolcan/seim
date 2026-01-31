@@ -11,6 +11,7 @@ class SalesController extends Controller
     private ServicesModel $services;
     private SettingsModel $settings;
     private ProducedProductsModel $producedProducts;
+    private PosSessionWithdrawalsModel $posWithdrawals;
 
     public function __construct(array $config, Database $db)
     {
@@ -24,6 +25,7 @@ class SalesController extends Controller
         $this->services = new ServicesModel($db);
         $this->settings = new SettingsModel($db);
         $this->producedProducts = new ProducedProductsModel($db);
+        $this->posWithdrawals = new PosSessionWithdrawalsModel($db);
     }
 
     private function requireCompany(): int
@@ -68,11 +70,21 @@ class SalesController extends Controller
         $clients = $this->clients->active($companyId);
         $services = $this->services->active($companyId);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
-        $taxDefault = !empty($invoiceDefaults['apply_tax']) ? (float)($invoiceDefaults['tax_rate'] ?? 0) : 0;
+        $applyTaxDefault = $isPos ? true : !empty($invoiceDefaults['apply_tax']);
+        $taxRate = (float)($invoiceDefaults['tax_rate'] ?? 19);
+        $taxDefault = $applyTaxDefault ? $taxRate : 0;
         $session = null;
         $sessionTotals = [];
+        $sessionWithdrawals = 0.0;
         $posReady = $this->posTablesReady();
         $recentSessionSales = [];
+        $posSessionsSummary = [];
+        $posSummaryTotals = [
+            'opening' => 0.0,
+            'sales' => 0.0,
+            'withdrawals' => 0.0,
+            'closing' => 0.0,
+        ];
         $printSaleId = 0;
         if ($isPos) {
             if ($posReady) {
@@ -80,6 +92,14 @@ class SalesController extends Controller
                 if ($session) {
                     $sessionTotals = $this->salePayments->totalsBySession((int)$session['id']);
                     $recentSessionSales = $this->sales->recentBySession((int)$session['id'], $companyId);
+                    $sessionWithdrawals = $this->posWithdrawals->totalBySession((int)$session['id']);
+                }
+                $posSessionsSummary = $this->posSessions->listSummary($companyId, 12);
+                foreach ($posSessionsSummary as $summary) {
+                    $posSummaryTotals['opening'] += (float)($summary['opening_amount'] ?? 0);
+                    $posSummaryTotals['sales'] += (float)($summary['sales_total'] ?? 0);
+                    $posSummaryTotals['withdrawals'] += (float)($summary['withdrawals_total'] ?? 0);
+                    $posSummaryTotals['closing'] += (float)($summary['closing_amount'] ?? 0);
                 }
             } else {
                 flash('error', 'Faltan tablas/columnas para el POS. Ejecuta la actualización de base de datos.');
@@ -96,11 +116,16 @@ class SalesController extends Controller
             'services' => $services,
             'today' => date('Y-m-d'),
             'taxDefault' => $taxDefault,
+            'taxRate' => $taxRate,
+            'applyTaxDefault' => $applyTaxDefault,
             'isPos' => $isPos,
             'posSession' => $session,
             'sessionTotals' => $sessionTotals,
+            'sessionWithdrawals' => $sessionWithdrawals,
             'posReady' => $posReady,
             'recentSessionSales' => $recentSessionSales,
+            'posSessionsSummary' => $posSessionsSummary,
+            'posSummaryTotals' => $posSummaryTotals,
             'printSaleId' => $printSaleId,
         ]);
     }
@@ -159,7 +184,9 @@ class SalesController extends Controller
         $prefix = $isPos ? 'POS-' : 'VEN-';
         $numero = $this->sales->nextNumber($prefix, $companyId);
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
-        $tax = max(0, (float)($_POST['tax'] ?? 0));
+        $applyTax = !empty($_POST['apply_tax']);
+        $taxRate = (float)($_POST['tax_rate'] ?? 0);
+        $tax = $applyTax ? max(0, round($subtotal * $taxRate / 100, 2)) : 0.0;
         $total = $subtotal + $tax;
         $status = $_POST['status'] ?? ($isPos ? 'pagado' : 'pendiente');
         $allowedStatus = ['pagado', 'pendiente', 'borrador', 'en_espera'];
@@ -431,6 +458,43 @@ class SalesController extends Controller
         $this->redirect('index.php?route=pos');
     }
 
+    public function withdrawSession(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $userId = (int)(Auth::user()['id'] ?? 0);
+        if (!$this->posTablesReady()) {
+            flash('error', 'El POS no está disponible hasta aplicar las migraciones de BD.');
+            $this->redirect('index.php?route=pos');
+        }
+        $amount = max(0, (float)($_POST['withdraw_amount'] ?? 0));
+        $reason = trim((string)($_POST['withdraw_reason'] ?? ''));
+        if ($amount <= 0) {
+            flash('error', 'Indica un monto válido para el retiro.');
+            $this->redirect('index.php?route=pos');
+        }
+        if ($reason === '') {
+            flash('error', 'Indica el motivo del retiro.');
+            $this->redirect('index.php?route=pos');
+        }
+        $session = $this->posSessions->activeForUser($companyId, $userId);
+        if (!$session) {
+            flash('error', 'No hay una sesión abierta.');
+            $this->redirect('index.php?route=pos');
+        }
+        $this->posWithdrawals->create([
+            'pos_session_id' => (int)$session['id'],
+            'company_id' => $companyId,
+            'user_id' => $userId,
+            'amount' => $amount,
+            'reason' => $reason,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+        flash('success', 'Retiro registrado correctamente.');
+        $this->redirect('index.php?route=pos');
+    }
+
     private function tableExists(string $table): bool
     {
         $row = $this->db->fetch(
@@ -457,6 +521,7 @@ class SalesController extends Controller
         }
         $ready = $this->tableExists('pos_sessions')
             && $this->tableExists('sale_payments')
+            && $this->tableExists('pos_session_withdrawals')
             && $this->columnExists('sales', 'pos_session_id');
         return $ready;
     }

@@ -818,9 +818,14 @@ class LayoutCustomizer {
         const current = this.html.getAttribute('data-sidenav-size');
         const isOffcanvas = current === 'offcanvas';
         const configSize = this.config.sidenav.size;
+        const willEnable = !this.html.classList.contains('sidebar-enable');
 
         if (isOffcanvas) {
-            this.showBackdrop();
+            if (willEnable) {
+                this.showBackdrop();
+            } else {
+                this.hideBackdrop();
+            }
         } else if (configSize === 'compact') {
             this.changeLeftbarSize(current === 'condensed' ? 'compact' : 'condensed', false);
         } else {

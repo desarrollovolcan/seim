@@ -138,6 +138,7 @@
                         <div class="d-flex align-items-center gap-1 flex-nowrap overflow-auto">
                             <span class="pos-chip text-nowrap"><small>Apertura</small> <?php echo format_currency((float)($posSession['opening_amount'] ?? 0)); ?></span>
                             <span class="pos-chip text-nowrap"><small>Recaudado</small> <?php echo format_currency(array_sum($sessionTotals)); ?></span>
+                            <span class="pos-chip text-nowrap"><small>Retiros</small> <?php echo format_currency((float)($sessionWithdrawals ?? 0)); ?></span>
                             <?php if (!empty($sessionTotals)): ?>
                                 <?php foreach ($sessionTotals as $method => $total): ?>
                                     <span class="pos-chip text-capitalize text-nowrap"><?php echo e($method); ?> <?php echo format_currency((float)$total); ?></span>
@@ -153,6 +154,12 @@
                                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                                     <input type="number" step="0.01" min="0" name="closing_amount" class="form-control form-control-sm text-nowrap" placeholder="Monto cierre" required style="width: 100px;">
                                     <button class="btn btn-outline-danger btn-sm text-nowrap px-2">Cerrar caja</button>
+                                </form>
+                                <form method="post" action="index.php?route=pos/withdraw" class="d-flex align-items-center gap-1 flex-nowrap">
+                                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                    <input type="number" step="0.01" min="0" name="withdraw_amount" class="form-control form-control-sm text-nowrap" placeholder="Retiro" required style="width: 90px;">
+                                    <input type="text" name="withdraw_reason" class="form-control form-control-sm text-nowrap" placeholder="Motivo" required style="width: 140px;">
+                                    <button class="btn btn-outline-dark btn-sm text-nowrap px-2">Retirar</button>
                                 </form>
                             <?php else: ?>
                                 <form method="post" action="index.php?route=pos/open" class="d-flex align-items-center gap-1 flex-nowrap">
@@ -192,7 +199,7 @@
                         <?php if ($isPos): ?>
                             <div class="col-12">
                                 <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="quick-sale-toggle" name="quick_sale" value="1">
+                                    <input class="form-check-input" type="checkbox" id="quick-sale-toggle" name="quick_sale" value="1" <?php echo $isPos ? 'checked' : ''; ?>>
                                     <label class="form-check-label" for="quick-sale-toggle">Venta rápida (sin cliente)</label>
                                 </div>
                             </div>
@@ -231,6 +238,10 @@
                                 'sii_exempt_amount' => 0,
                             ];
                             $siiRequired = !$isPos;
+                            $siiShowDocumentType = !$isPos;
+                            $siiShowDocumentNumber = !$isPos;
+                            $siiShowTaxRate = !$isPos;
+                            $siiShowExemptAmount = !$isPos;
                             include __DIR__ . '/../partials/sii-document-fields.php';
                             ?>
                         </div>
@@ -282,7 +293,14 @@
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Impuestos</span>
-                                    <input type="number" name="tax" id="sale-tax" class="form-control form-control-sm w-auto" style="width: 160px;" step="0.01" min="0" value="<?php echo e($taxDefault ?? 0); ?>">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <select name="apply_tax" id="apply-tax" class="form-select form-select-sm w-auto" style="width: 170px;">
+                                            <option value="1" <?php echo !empty($applyTaxDefault) ? 'selected' : ''; ?>>Calcular impuesto</option>
+                                            <option value="0" <?php echo empty($applyTaxDefault) ? 'selected' : ''; ?>>No calcular</option>
+                                        </select>
+                                        <input type="number" name="tax" id="sale-tax" class="form-control form-control-sm w-auto text-end" style="width: 140px;" step="0.01" min="0" value="<?php echo e($taxDefault ?? 0); ?>" readonly>
+                                        <input type="hidden" name="tax_rate" id="tax-rate" value="<?php echo e($taxRate ?? 19); ?>">
+                                    </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Forma de pago</span>
@@ -425,6 +443,77 @@
             </div>
         </div>
     </div>
+    <div class="row mt-3">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <h5 class="card-title mb-0">Resumen de cajas</h5>
+                        <small class="text-muted">Montos consolidados de aperturas, ventas y retiros.</small>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <?php if (!empty($posSessionsSummary)): ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($posSessionsSummary as $summary): ?>
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                        <div>
+                                            <div class="fw-semibold">Caja #<?php echo e($summary['id']); ?> · <?php echo e($summary['user_name'] ?? ''); ?></div>
+                                            <small class="text-muted">
+                                                <?php echo e(date('d/m/Y H:i', strtotime((string)$summary['opened_at']))); ?>
+                                                <?php if (!empty($summary['closed_at'])): ?>
+                                                    · Cerrada <?php echo e(date('d/m/Y H:i', strtotime((string)$summary['closed_at']))); ?>
+                                                <?php endif; ?>
+                                            </small>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3 text-end">
+                                            <div>
+                                                <small class="text-muted d-block">Apertura</small>
+                                                <strong><?php echo format_currency((float)($summary['opening_amount'] ?? 0)); ?></strong>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Ventas</small>
+                                                <strong><?php echo format_currency((float)($summary['sales_total'] ?? 0)); ?></strong>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Retiros</small>
+                                                <strong><?php echo format_currency((float)($summary['withdrawals_total'] ?? 0)); ?></strong>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Cierre</small>
+                                                <strong><?php echo format_currency((float)($summary['closing_amount'] ?? 0)); ?></strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <div class="pt-3 mt-3 border-top d-flex flex-wrap gap-3 justify-content-end">
+                            <div class="text-end">
+                                <small class="text-muted d-block">Total aperturas</small>
+                                <strong><?php echo format_currency((float)($posSummaryTotals['opening'] ?? 0)); ?></strong>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Total ventas</small>
+                                <strong><?php echo format_currency((float)($posSummaryTotals['sales'] ?? 0)); ?></strong>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Total retiros</small>
+                                <strong><?php echo format_currency((float)($posSummaryTotals['withdrawals'] ?? 0)); ?></strong>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-muted d-block">Total cierres</small>
+                                <strong><?php echo format_currency((float)($posSummaryTotals['closing'] ?? 0)); ?></strong>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <p class="text-muted mb-0">Aún no hay cajas registradas.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
 <?php endif; ?>
 
 <script>
@@ -434,6 +523,8 @@
         const subtotalDisplay = document.getElementById('sale-subtotal');
         const totalDisplay = document.getElementById('sale-total');
         const taxInput = document.getElementById('sale-tax');
+        const applyTaxSelect = document.getElementById('apply-tax');
+        const taxRateInput = document.getElementById('tax-rate');
         const statusSelect = document.querySelector('select[name=\"status\"]');
         const holdButton = document.getElementById('mark-hold');
         const productSelectors = document.querySelectorAll('.add-product');
@@ -517,7 +608,12 @@
                 row.querySelector('.item-subtotal').innerText = formatCurrency(total);
             });
             subtotalDisplay.innerText = formatCurrency(subtotal);
-            const tax = parseFloat(taxInput.value) || 0;
+            const rate = parseFloat(taxRateInput?.value) || 0;
+            const shouldApplyTax = applyTaxSelect?.value === '1';
+            const tax = shouldApplyTax ? Math.round(subtotal * rate) / 100 : 0;
+            if (taxInput) {
+                taxInput.value = tax.toFixed(2);
+            }
             totalDisplay.innerText = formatCurrency(subtotal + tax);
         }
 
@@ -554,7 +650,7 @@
             }
         });
 
-        taxInput?.addEventListener('input', recalc);
+        applyTaxSelect?.addEventListener('change', recalc);
         clientSelect?.addEventListener('change', () => {
             applyClientSii(Number(clientSelect?.value || 0));
         });
