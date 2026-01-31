@@ -78,7 +78,6 @@
                                 <div class="col-12">
                                     <?php
                                     $communeValue = '';
-                                    $cityValue = '';
                                     include __DIR__ . '/../partials/commune-city-fields.php';
                                     ?>
                                 </div>
@@ -203,7 +202,6 @@
         giro: 'giro',
         activity_code: 'activity_code',
         commune: 'commune',
-        city: 'city',
         status: 'status',
         notes: 'notes',
     };
@@ -227,9 +225,6 @@
                 input.value = data[key];
             }
         });
-        if (typeof window.syncCommuneCitySelects === 'function') {
-            window.syncCommuneCitySelects();
-        }
     };
 
     const showMatch = (client) => {

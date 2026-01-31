@@ -5,14 +5,12 @@ class ChileCommunesController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         try {
             $communes = $this->db->fetchAll(
-                'SELECT communes.id, communes.name AS commune, cities.name AS city, regions.name AS region
+                'SELECT communes.id, communes.name AS commune, regions.name AS region
                 FROM communes
-                JOIN cities ON cities.id = communes.city_id
-                JOIN regions ON regions.id = cities.region_id
-                ORDER BY communes.name, cities.name'
+                JOIN regions ON regions.id = communes.region_id
+                ORDER BY communes.name'
             );
         } catch (Throwable $e) {
             log_message('error', 'Failed to load Chile communes: ' . $e->getMessage());
@@ -28,41 +26,46 @@ class ChileCommunesController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
-        $cities = $this->loadCities();
         $this->render('maintainers/chile-communes/create', [
             'title' => 'Nueva comuna',
             'pageTitle' => 'Nueva comuna',
-            'cities' => $cities,
+            'regions' => $this->loadRegions(),
         ]);
     }
 
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $commune = trim($_POST['commune'] ?? '');
-        $cityId = (int)($_POST['city_id'] ?? 0);
-        if ($commune === '' || $cityId === 0) {
-            flash('error', 'Completa comuna y ciudad.');
+        $regionId = (int)($_POST['region_id'] ?? 0);
+        if ($commune === '' || $regionId === 0) {
+            flash('error', 'Completa comuna y región.');
             $this->redirect('index.php?route=maintainers/chile-communes/create');
         }
         $duplicate = $this->db->fetch(
-            'SELECT id FROM communes WHERE name = :commune AND city_id = :city_id',
-            ['commune' => $commune, 'city_id' => $cityId]
+            'SELECT id FROM communes WHERE name = :commune AND region_id = :region_id',
+            ['commune' => $commune, 'region_id' => $regionId]
         );
         if ($duplicate) {
-            flash('error', 'La comuna ya existe en la ciudad seleccionada.');
+            flash('error', 'La comuna ya existe en la región seleccionada.');
             $this->redirect('index.php?route=maintainers/chile-communes/create');
         }
         try {
             $this->db->execute(
-                'INSERT INTO communes (name, city_id) VALUES (:commune, :city_id)',
-                ['commune' => $commune, 'city_id' => $cityId]
+                'INSERT INTO communes (name, region_id) VALUES (:commune, :region_id)',
+                ['commune' => $commune, 'region_id' => $regionId]
             );
-            audit($this->db, Auth::user()['id'], 'create', 'chile_communes');
-            flash('success', 'Comuna creada correctamente.');
+            $saved = $this->db->fetch(
+                'SELECT id FROM communes WHERE name = :commune AND region_id = :region_id',
+                ['commune' => $commune, 'region_id' => $regionId]
+            );
+            if (!$saved) {
+                flash('error', 'No se pudo confirmar el guardado de la comuna.');
+            } else {
+                audit($this->db, Auth::user()['id'], 'create', 'chile_communes', (int)$saved['id']);
+                flash('success', 'Comuna creada correctamente.');
+            }
         } catch (Throwable $e) {
             log_message('error', 'Failed to create Chile commune: ' . $e->getMessage());
             flash('error', 'No se pudo guardar la comuna.');
@@ -73,32 +76,28 @@ class ChileCommunesController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $commune = $this->db->fetch(
-            'SELECT communes.id, communes.name AS commune, communes.city_id, cities.name AS city, regions.name AS region
+            'SELECT communes.id, communes.name AS commune, communes.region_id, regions.name AS region
             FROM communes
-            JOIN cities ON cities.id = communes.city_id
-            JOIN regions ON regions.id = cities.region_id
+            JOIN regions ON regions.id = communes.region_id
             WHERE communes.id = :id',
             ['id' => $id]
         );
         if (!$commune) {
             $this->redirect('index.php?route=maintainers/chile-communes');
         }
-        $cities = $this->loadCities();
         $this->render('maintainers/chile-communes/edit', [
             'title' => 'Editar comuna',
             'pageTitle' => 'Editar comuna',
             'commune' => $commune,
-            'cities' => $cities,
+            'regions' => $this->loadRegions(),
         ]);
     }
 
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $commune = $this->db->fetch(
@@ -109,23 +108,23 @@ class ChileCommunesController extends Controller
             $this->redirect('index.php?route=maintainers/chile-communes');
         }
         $communeName = trim($_POST['commune'] ?? '');
-        $cityId = (int)($_POST['city_id'] ?? 0);
-        if ($communeName === '' || $cityId === 0) {
-            flash('error', 'Completa comuna y ciudad.');
+        $regionId = (int)($_POST['region_id'] ?? 0);
+        if ($communeName === '' || $regionId === 0) {
+            flash('error', 'Completa comuna y región.');
             $this->redirect('index.php?route=maintainers/chile-communes/edit&id=' . $id);
         }
         $duplicate = $this->db->fetch(
-            'SELECT id FROM communes WHERE name = :commune AND city_id = :city_id AND id != :id',
-            ['commune' => $communeName, 'city_id' => $cityId, 'id' => $id]
+            'SELECT id FROM communes WHERE name = :commune AND region_id = :region_id AND id != :id',
+            ['commune' => $communeName, 'region_id' => $regionId, 'id' => $id]
         );
         if ($duplicate) {
-            flash('error', 'La comuna ya está asignada a otra ciudad.');
+            flash('error', 'La comuna ya está asignada a otra región.');
             $this->redirect('index.php?route=maintainers/chile-communes/edit&id=' . $id);
         }
         try {
             $this->db->execute(
-                'UPDATE communes SET name = :commune, city_id = :city_id WHERE id = :id',
-                ['commune' => $communeName, 'city_id' => $cityId, 'id' => $id]
+                'UPDATE communes SET name = :commune, region_id = :region_id WHERE id = :id',
+                ['commune' => $communeName, 'region_id' => $regionId, 'id' => $id]
             );
             audit($this->db, Auth::user()['id'], 'update', 'chile_communes', $id);
             flash('success', 'Comuna actualizada correctamente.');
@@ -139,7 +138,6 @@ class ChileCommunesController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $commune = $this->db->fetch(
@@ -161,17 +159,12 @@ class ChileCommunesController extends Controller
         $this->redirect('index.php?route=maintainers/chile-communes');
     }
 
-    private function loadCities(): array
+    private function loadRegions(): array
     {
         try {
-            return $this->db->fetchAll(
-                'SELECT cities.id, cities.name, regions.name AS region
-                FROM cities
-                JOIN regions ON regions.id = cities.region_id
-                ORDER BY regions.name, cities.name'
-            );
+            return $this->db->fetchAll('SELECT id, name FROM regions ORDER BY name');
         } catch (Throwable $e) {
-            log_message('error', 'Failed to load Chile cities: ' . $e->getMessage());
+            log_message('error', 'Failed to load Chile regions: ' . $e->getMessage());
             return [];
         }
     }

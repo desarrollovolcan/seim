@@ -17,8 +17,7 @@ class SettingsController extends Controller
         $billing = $this->settings->get('billing_defaults', []);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
         $currencyFormat = $this->settings->get('currency_format', $this->config['currency_format'] ?? []);
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
+        $communes = chile_communes($this->db);
         $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('settings/index', [
             'title' => 'Configuración',
@@ -28,7 +27,6 @@ class SettingsController extends Controller
             'invoiceDefaults' => $invoiceDefaults,
             'currencyFormat' => $currencyFormat,
             'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
             'activityCodeOptions' => $activityCodeOptions,
         ]);
     }

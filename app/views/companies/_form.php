@@ -33,7 +33,6 @@
     <div class="col-12 mb-3">
         <?php
         $communeValue = $company['commune'] ?? '';
-        $cityValue = $company['city'] ?? '';
         include __DIR__ . '/../partials/commune-city-fields.php';
         ?>
     </div>

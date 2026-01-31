@@ -233,7 +233,7 @@ function login_logo_src(array $companySettings): string
     return $loginLogoVariant === 'dark' ? $logoBlack : $logoColor;
 }
 
-function chile_commune_city_map(Database $db): array
+function chile_communes(Database $db): array
 {
     static $cache = null;
     if ($cache !== null) {
@@ -241,41 +241,22 @@ function chile_commune_city_map(Database $db): array
     }
 
     try {
-        $rows = $db->fetchAll(
-            'SELECT communes.name AS commune, cities.name AS city
-            FROM communes
-            JOIN cities ON cities.id = communes.city_id
-            ORDER BY communes.name, cities.name'
-        );
+        $rows = $db->fetchAll('SELECT name FROM communes ORDER BY name');
     } catch (Throwable $e) {
         log_message('error', 'Failed to load Chile commune list: ' . $e->getMessage());
         $cache = [];
         return $cache;
     }
 
-    $map = [];
+    $communes = [];
     foreach ($rows as $row) {
-        $commune = trim((string)($row['commune'] ?? ''));
-        $city = trim((string)($row['city'] ?? ''));
-        if ($commune === '') {
-            continue;
-        }
-        $map[$commune] ??= [];
-        if ($city !== '' && !in_array($city, $map[$commune], true)) {
-            $map[$commune][] = $city;
+        $name = trim((string)($row['name'] ?? ''));
+        if ($name !== '') {
+            $communes[] = $name;
         }
     }
-    ksort($map);
-    foreach ($map as &$cities) {
-        sort($cities);
-    }
-    $cache = $map;
+    $cache = $communes;
     return $cache;
-}
-
-function chile_communes(Database $db): array
-{
-    return array_keys(chile_commune_city_map($db));
 }
 
 function sii_activity_code_options(Database $db): array
@@ -525,16 +506,20 @@ function upload_company_logo(?array $file, string $prefix): array
 function audit(Database $db, int $userId, string $action, string $entity, ?int $entityId = null): void
 {
     $companyId = current_company_id();
-    $db->execute(
-        'INSERT INTO audit_logs (company_id, user_id, action, entity, entity_id, created_at) VALUES (:company_id, :user_id, :action, :entity, :entity_id, NOW())',
-        [
-            'company_id' => $companyId,
-            'user_id' => $userId,
-            'action' => $action,
-            'entity' => $entity,
-            'entity_id' => $entityId,
-        ]
-    );
+    try {
+        $db->execute(
+            'INSERT INTO audit_logs (company_id, user_id, action, entity, entity_id, created_at) VALUES (:company_id, :user_id, :action, :entity, :entity_id, NOW())',
+            [
+                'company_id' => $companyId,
+                'user_id' => $userId,
+                'action' => $action,
+                'entity' => $entity,
+                'entity_id' => $entityId,
+            ]
+        );
+    } catch (Throwable $e) {
+        log_message('error', sprintf('Failed to write audit log for %s: %s', $entity, $e->getMessage()));
+    }
 }
 
 function render_template_vars(string $html, array $context = []): string
@@ -781,21 +766,14 @@ function permission_catalog(): array
             'routes' => ['maintainers/chile-regions'],
             'legacy_key' => 'maintainers',
             'view_key' => 'chile_regions_view',
-            'edit_key' => null,
-        ],
-        'chile_cities' => [
-            'label' => 'Ciudades',
-            'routes' => ['maintainers/chile-cities'],
-            'legacy_key' => 'maintainers',
-            'view_key' => 'chile_cities_view',
-            'edit_key' => null,
+            'edit_key' => 'chile_regions_edit',
         ],
         'chile_communes' => [
             'label' => 'Comunas',
             'routes' => ['maintainers/chile-communes'],
             'legacy_key' => 'maintainers',
             'view_key' => 'chile_communes_view',
-            'edit_key' => null,
+            'edit_key' => 'chile_communes_edit',
         ],
         'quotes' => [
             'label' => 'Cotizaciones',

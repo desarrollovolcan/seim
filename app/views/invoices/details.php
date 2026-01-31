@@ -141,9 +141,6 @@ $badgeClass = $invoiceStatus === 'pagada' ? 'success' : ($invoiceStatus === 'ven
                             <a href="index.php?route=invoices/show&id=<?php echo (int)$invoice['id']; ?>" class="btn btn-light">
                                 <i class="ti ti-arrow-left me-1"></i> Volver
                             </a>
-                            <a href="index.php?route=invoices/download-pdf&id=<?php echo (int)$invoice['id']; ?>" class="btn btn-info">
-                                <i class="ti ti-download me-1"></i> Descargar PDF
-                            </a>
                         </div>
                     </div>
                 </div>

@@ -5,7 +5,6 @@ class ChileRegionsController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         try {
             $regions = $this->db->fetchAll('SELECT id, name FROM regions ORDER BY name');
         } catch (Throwable $e) {
@@ -22,7 +21,6 @@ class ChileRegionsController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $this->render('maintainers/chile-regions/create', [
             'title' => 'Nueva región',
             'pageTitle' => 'Nueva región',
@@ -32,7 +30,6 @@ class ChileRegionsController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $name = trim($_POST['name'] ?? '');
         if ($name === '') {
@@ -52,8 +49,16 @@ class ChileRegionsController extends Controller
                 'INSERT INTO regions (name) VALUES (:name)',
                 ['name' => $name]
             );
-            audit($this->db, Auth::user()['id'], 'create', 'regions');
-            flash('success', 'Región creada correctamente.');
+            $saved = $this->db->fetch(
+                'SELECT id FROM regions WHERE name = :name',
+                ['name' => $name]
+            );
+            if (!$saved) {
+                flash('error', 'No se pudo confirmar el guardado de la región.');
+            } else {
+                audit($this->db, Auth::user()['id'], 'create', 'regions', (int)$saved['id']);
+                flash('success', 'Región creada correctamente.');
+            }
         } catch (Throwable $e) {
             log_message('error', 'Failed to create Chile region: ' . $e->getMessage());
             flash('error', 'No se pudo guardar la región.');
@@ -64,7 +69,6 @@ class ChileRegionsController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $region = $this->db->fetch(
             'SELECT id, name FROM regions WHERE id = :id',
@@ -83,7 +87,6 @@ class ChileRegionsController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $region = $this->db->fetch(
@@ -123,7 +126,6 @@ class ChileRegionsController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $region = $this->db->fetch(
@@ -134,12 +136,12 @@ class ChileRegionsController extends Controller
             flash('error', 'Región no encontrada.');
             $this->redirect('index.php?route=maintainers/chile-regions');
         }
-        $hasCities = $this->db->fetch(
-            'SELECT id FROM cities WHERE region_id = :id LIMIT 1',
+        $hasCommunes = $this->db->fetch(
+            'SELECT id FROM communes WHERE region_id = :id LIMIT 1',
             ['id' => $id]
         );
-        if ($hasCities) {
-            flash('error', 'No se puede eliminar la región mientras tenga ciudades asociadas.');
+        if ($hasCommunes) {
+            flash('error', 'No se puede eliminar la región mientras tenga comunas asociadas.');
             $this->redirect('index.php?route=maintainers/chile-regions');
         }
         try {

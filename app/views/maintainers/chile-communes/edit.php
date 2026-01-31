@@ -11,12 +11,12 @@
                 <input type="text" name="commune" class="form-control" value="<?php echo e($commune['commune']); ?>" required>
             </div>
             <div class="mb-3">
-                <label class="form-label">Ciudad</label>
-                <select name="city_id" class="form-select" required>
-                    <option value="">Selecciona ciudad</option>
-                    <?php foreach ($cities as $city): ?>
-                        <option value="<?php echo $city['id']; ?>" <?php echo ((int)$city['id'] === (int)$commune['city_id']) ? 'selected' : ''; ?>>
-                            <?php echo e($city['name']); ?> (<?php echo e($city['region']); ?>)
+                <label class="form-label">Región</label>
+                <select name="region_id" class="form-select" required>
+                    <option value="">Selecciona región</option>
+                    <?php foreach ($regions as $region): ?>
+                        <option value="<?php echo $region['id']; ?>" <?php echo ((int)$region['id'] === (int)$commune['region_id']) ? 'selected' : ''; ?>>
+                            <?php echo e($region['name']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

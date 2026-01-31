@@ -52,7 +52,6 @@
                         <div class="col-12">
                             <?php
                             $communeValue = $supplier['commune'] ?? '';
-                            $cityValue = $supplier['city'] ?? '';
                             include __DIR__ . '/../partials/commune-city-fields.php';
                             ?>
                         </div>

@@ -72,11 +72,10 @@
                                     <input type="text" name="address" class="form-control" value="<?php echo e($client['address'] ?? ''); ?>">
                                 </div>
                                 <div class="col-12">
-                                    <?php
-                                    $communeValue = $client['commune'] ?? '';
-                                    $cityValue = $client['city'] ?? '';
-                                    include __DIR__ . '/../partials/commune-city-fields.php';
-                                    ?>
+                            <?php
+                            $communeValue = $client['commune'] ?? '';
+                            include __DIR__ . '/../partials/commune-city-fields.php';
+                            ?>
                                 </div>
                             </div>
                         </section>

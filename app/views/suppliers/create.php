@@ -64,7 +64,6 @@
                                 <div class="col-12">
                                     <?php
                                     $communeValue = '';
-                                    $cityValue = '';
                                     include __DIR__ . '/../partials/commune-city-fields.php';
                                     ?>
                                 </div>

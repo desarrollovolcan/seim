@@ -54,8 +54,6 @@ Listado de formularios detectados en app/views. Estado inicial: pendiente hasta 
 | invoices | `invoices/edit.php` | en progreso |
 | invoices | `invoices/index.php` | pendiente |
 | invoices | `invoices/show.php` | pendiente |
-| maintainers | `maintainers/chile-cities/create.php` | pendiente |
-| maintainers | `maintainers/chile-cities/edit.php` | pendiente |
 | maintainers | `maintainers/chile-communes/create.php` | pendiente |
 | maintainers | `maintainers/chile-communes/edit.php` | pendiente |
 | maintainers | `maintainers/chile-regions/create.php` | pendiente |
