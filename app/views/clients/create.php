@@ -64,23 +64,13 @@
                                     <label class="form-label fw-semibold">Giro</label>
                                     <input type="text" name="giro" class="form-control" placeholder="Ej: Servicios informáticos">
                                 </div>
-                                <div class="col-md-6">
-                                    <?php
-                                    $activityCodeValue = '';
-                                    $activityCodeOptions = $activityCodeOptions ?? [];
-                                    include __DIR__ . '/../partials/activity-code-field.php';
-                                    ?>
-                                </div>
                                 <div class="col-12">
                                     <label class="form-label fw-semibold">Dirección tributaria</label>
                                     <input type="text" name="address" class="form-control" autocomplete="street-address">
                                 </div>
                                 <div class="col-12">
-                                    <?php
-                                    $communeValue = '';
-                                    $cityValue = '';
-                                    include __DIR__ . '/../partials/commune-city-fields.php';
-                                    ?>
+                                    <label class="form-label fw-semibold">Comuna</label>
+                                    <input type="text" name="commune" class="form-control" autocomplete="address-level2">
                                 </div>
                             </div>
                         </section>
@@ -201,9 +191,7 @@
         mandante_email: 'mandante_email',
         address: 'address',
         giro: 'giro',
-        activity_code: 'activity_code',
         commune: 'commune',
-        city: 'city',
         status: 'status',
         notes: 'notes',
     };
@@ -227,9 +215,6 @@
                 input.value = data[key];
             }
         });
-        if (typeof window.syncCommuneCitySelects === 'function') {
-            window.syncCommuneCitySelects();
-        }
     };
 
     const showMatch = (client) => {

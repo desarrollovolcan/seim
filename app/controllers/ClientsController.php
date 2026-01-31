@@ -24,15 +24,9 @@ class ClientsController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('clients/create', [
             'title' => 'Nuevo Cliente',
             'pageTitle' => 'Nuevo Cliente',
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -103,9 +97,7 @@ class ClientsController extends Controller
             'phone' => $this->normalizeOptional($_POST['phone'] ?? null),
             'address' => $this->normalizeOptional($_POST['address'] ?? null),
             'giro' => $this->normalizeOptional($_POST['giro'] ?? null),
-            'activity_code' => $this->normalizeOptional($_POST['activity_code'] ?? null),
             'commune' => $this->normalizeOptional($_POST['commune'] ?? null),
-            'city' => $this->normalizeOptional($_POST['city'] ?? null),
             'contact' => $this->normalizeOptional($_POST['contact'] ?? null),
             'mandante_name' => $this->normalizeOptional($_POST['mandante_name'] ?? null),
             'mandante_rut' => $this->normalizeOptional($mandanteRut),
@@ -143,17 +135,11 @@ class ClientsController extends Controller
         if (!$client) {
             $this->redirect('index.php?route=clients');
         }
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('clients/edit', [
             'title' => 'Editar Cliente',
             'pageTitle' => 'Editar Cliente',
             'client' => $client,
             'portalUrl' => $this->buildPortalUrl($client),
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -227,9 +213,7 @@ class ClientsController extends Controller
                 'phone' => $this->normalizeOptional($_POST['phone'] ?? null),
                 'address' => $this->normalizeOptional($_POST['address'] ?? null),
                 'giro' => $this->normalizeOptional($_POST['giro'] ?? null),
-                'activity_code' => $this->normalizeOptional($_POST['activity_code'] ?? null),
                 'commune' => $this->normalizeOptional($_POST['commune'] ?? null),
-                'city' => $this->normalizeOptional($_POST['city'] ?? null),
                 'contact' => $this->normalizeOptional($_POST['contact'] ?? null),
                 'mandante_name' => $this->normalizeOptional($_POST['mandante_name'] ?? null),
                 'mandante_rut' => $this->normalizeOptional($mandanteRut),
@@ -539,9 +523,7 @@ class ClientsController extends Controller
                 'mandante_email' => $client['mandante_email'] ?? '',
                 'address' => $client['address'] ?? '',
                 'giro' => $client['giro'] ?? '',
-                'activity_code' => $client['activity_code'] ?? '',
                 'commune' => $client['commune'] ?? '',
-                'city' => $client['city'] ?? '',
                 'status' => $client['status'] ?? 'activo',
                 'notes' => $client['notes'] ?? '',
             ],

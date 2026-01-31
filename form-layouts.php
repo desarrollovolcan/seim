@@ -317,11 +317,7 @@
                                     </div>
 
                                     <div class="row g-2">
-                                        <div class="mb-3 col-md-6">
-                                            <label for="inputCity" class="form-label">City</label>
-                                            <input type="text" class="form-control" id="inputCity">
-                                        </div>
-                                        <div class="mb-3 col-md-4">
+                                        <div class="mb-3 col-md-8">
                                             <label for="inputState" class="form-label">State</label>
                                             <select id="inputState" class="form-select">
                                                 <option>Choose</option>
@@ -330,7 +326,7 @@
                                                 <option>Option 3</option>
                                             </select>
                                         </div>
-                                        <div class="mb-3 col-md-2">
+                                        <div class="mb-3 col-md-4">
                                             <label for="inputZip" class="form-label">Zip</label>
                                             <input type="text" class="form-control" id="inputZip">
                                         </div>

@@ -60,23 +60,13 @@
                                     <label class="form-label fw-semibold">Giro</label>
                                     <input type="text" name="giro" class="form-control" value="<?php echo e($client['giro'] ?? ''); ?>" placeholder="Ej: Servicios informáticos">
                                 </div>
-                                <div class="col-md-6">
-                                    <?php
-                                    $activityCodeValue = $client['activity_code'] ?? '';
-                                    $activityCodeOptions = $activityCodeOptions ?? [];
-                                    include __DIR__ . '/../partials/activity-code-field.php';
-                                    ?>
-                                </div>
                                 <div class="col-12">
                                     <label class="form-label fw-semibold">Dirección tributaria</label>
                                     <input type="text" name="address" class="form-control" value="<?php echo e($client['address'] ?? ''); ?>">
                                 </div>
                                 <div class="col-12">
-                                    <?php
-                                    $communeValue = $client['commune'] ?? '';
-                                    $cityValue = $client['city'] ?? '';
-                                    include __DIR__ . '/../partials/commune-city-fields.php';
-                                    ?>
+                                    <label class="form-label fw-semibold">Comuna</label>
+                                    <input type="text" name="commune" class="form-control" value="<?php echo e($client['commune'] ?? ''); ?>">
                                 </div>
                             </div>
                         </section>

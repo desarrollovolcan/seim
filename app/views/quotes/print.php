@@ -214,14 +214,12 @@ $companyEmail = $company['email'] ?? '';
 $companyPhone = $company['phone'] ?? '';
 $companyAddress = $company['address'] ?? '';
 $companyGiro = $company['giro'] ?? '';
-$companyCity = $company['city'] ?? '';
 $clientRut = $client['rut'] ?? '';
 $clientContact = $client['contact_name'] ?? '';
 $clientGiro = $client['giro'] ?? '';
 $clientPhone = $client['phone'] ?? '';
 $clientAddress = $client['address'] ?? '';
 $clientCommune = $client['commune'] ?? '';
-$clientCity = $client['city'] ?? '';
 $validUntil = $quote['valid_until'] ?? '';
 ?>
 
@@ -240,9 +238,6 @@ $validUntil = $quote['valid_until'] ?? '';
                     Giro: <?php echo e($companyGiro); ?><br>
                 <?php endif; ?>
                 <?php echo e($companyAddress); ?>
-                <?php if ($companyCity !== ''): ?>
-                    , <?php echo e($companyCity); ?>
-                <?php endif; ?>
                 <br>
                 <?php echo e($companyEmail); ?>
                 <?php if ($companyPhone !== ''): ?>
@@ -287,8 +282,8 @@ $validUntil = $quote['valid_until'] ?? '';
                     <td class="label">Dirección</td>
                     <td>
                         <?php echo e($clientAddress); ?>
-                        <?php if ($clientCommune !== '' || $clientCity !== ''): ?>
-                            <?php echo e(trim($clientCommune . ' ' . $clientCity)); ?>
+                        <?php if ($clientCommune !== ''): ?>
+                            <?php echo e($clientCommune); ?>
                         <?php endif; ?>
                     </td>
                 </tr>
@@ -352,7 +347,7 @@ $validUntil = $quote['valid_until'] ?? '';
             <?php if (!empty($quote['sii_receiver_address'])): ?>
                 <tr>
                     <td class="label">Dirección SII</td>
-                    <td><?php echo e(trim(($quote['sii_receiver_address'] ?? '') . ' ' . ($quote['sii_receiver_commune'] ?? '') . ' ' . ($quote['sii_receiver_city'] ?? ''))); ?></td>
+                    <td><?php echo e(trim(($quote['sii_receiver_address'] ?? '') . ' ' . ($quote['sii_receiver_commune'] ?? ''))); ?></td>
                 </tr>
             <?php endif; ?>
             <?php if (!empty($quote['notas'])): ?>

@@ -119,9 +119,9 @@ class SalesController extends Controller
         }
         if ($clientId > 0) {
             $client = $this->db->fetch(
-                'SELECT id, rut, name, giro, activity_code, address, commune, city FROM clients WHERE id = :id AND company_id = :company_id',
-                ['id' => $clientId, 'company_id' => $companyId]
-            );
+            'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
+            ['id' => $clientId, 'company_id' => $companyId]
+        );
             if (!$client) {
                 flash('error', 'Cliente no válido para esta empresa.');
                 $this->redirect('index.php?route=sales/create');

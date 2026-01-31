@@ -43,8 +43,8 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO roles (name, created_at, updated_at)
 VALUES ('admin', NOW(), NOW());
 
-INSERT INTO companies (name, rut, email, phone, address, giro, activity_code, commune, city, created_at, updated_at)
-VALUES ('Centro de entrenamiento Spin Squad', '', 'contacto@spinsquad.cl', '', '', '', '', '', '', NOW(), NOW());
+INSERT INTO companies (name, rut, email, phone, address, giro, commune, created_at, updated_at)
+VALUES ('Centro de entrenamiento Spin Squad', '', 'contacto@spinsquad.cl', '', '', '', '', NOW(), NOW());
 
 INSERT INTO users (company_id, name, email, password, role_id, created_at, updated_at)
 VALUES (1, 'Super Root', 'superroot@spinsquad.cl', '$2y$12$tIKTo718MqFkKmugLnFsZubWmY/83AvlBWGyX2VABozLEyUtKSjZG', 1, NOW(), NOW());

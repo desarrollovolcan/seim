@@ -45,33 +45,25 @@ $receiverHelp = $siiLabel === 'Proveedor'
             </div>
         </div>
         <div class="row">
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label">RUT <?php echo e($siiLabel); ?></label>
                 <input type="text" name="sii_receiver_rut" class="form-control" placeholder="12.345.678-9" value="<?php echo e($siiData['sii_receiver_rut'] ?? ''); ?>" readonly data-sii-field="rut">
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label">Razón social</label>
                 <input type="text" name="sii_receiver_name" class="form-control" value="<?php echo e($siiData['sii_receiver_name'] ?? ''); ?>" readonly data-sii-field="name">
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
                 <label class="form-label">Giro</label>
                 <input type="text" name="sii_receiver_giro" class="form-control" value="<?php echo e($siiData['sii_receiver_giro'] ?? ''); ?>" readonly data-sii-field="giro">
             </div>
-            <div class="col-md-3 mb-3">
-                <label class="form-label">Código actividad</label>
-                <input type="text" name="sii_receiver_activity_code" class="form-control" value="<?php echo e($siiData['sii_receiver_activity_code'] ?? ''); ?>" readonly data-sii-field="activity_code">
-            </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <label class="form-label">Dirección</label>
                 <input type="text" name="sii_receiver_address" class="form-control" value="<?php echo e($siiData['sii_receiver_address'] ?? ''); ?>" readonly data-sii-field="address">
             </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                 <label class="form-label">Comuna</label>
                 <input type="text" name="sii_receiver_commune" class="form-control" value="<?php echo e($siiData['sii_receiver_commune'] ?? ''); ?>" readonly data-sii-field="commune">
-            </div>
-            <div class="col-md-4 mb-3">
-                <label class="form-label">Ciudad</label>
-                <input type="text" name="sii_receiver_city" class="form-control" value="<?php echo e($siiData['sii_receiver_city'] ?? ''); ?>" readonly data-sii-field="city">
             </div>
         </div>
     </div>

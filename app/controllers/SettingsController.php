@@ -17,9 +17,6 @@ class SettingsController extends Controller
         $billing = $this->settings->get('billing_defaults', []);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
         $currencyFormat = $this->settings->get('currency_format', $this->config['currency_format'] ?? []);
-        $communeCityMap = chile_commune_city_map($this->db);
-        $communes = array_keys($communeCityMap);
-        $activityCodeOptions = sii_activity_code_options($this->db);
         $this->render('settings/index', [
             'title' => 'Configuración',
             'pageTitle' => 'Configuración',
@@ -27,9 +24,6 @@ class SettingsController extends Controller
             'billing' => $billing,
             'invoiceDefaults' => $invoiceDefaults,
             'currencyFormat' => $currencyFormat,
-            'communes' => $communes,
-            'communeCityMap' => $communeCityMap,
-            'activityCodeOptions' => $activityCodeOptions,
         ]);
     }
 
@@ -67,9 +61,7 @@ class SettingsController extends Controller
                 'phone' => trim($_POST['phone'] ?? ''),
                 'address' => trim($_POST['address'] ?? ''),
                 'giro' => trim($_POST['giro'] ?? ''),
-                'activity_code' => trim($_POST['activity_code'] ?? ''),
                 'commune' => trim($_POST['commune'] ?? ''),
-                'city' => trim($_POST['city'] ?? ''),
                 'signature' => trim($_POST['signature'] ?? ''),
                 'logo_color' => $company['logo_color'] ?? null,
                 'logo_black' => $company['logo_black'] ?? null,
@@ -94,9 +86,7 @@ class SettingsController extends Controller
                     'phone' => $companyData['phone'],
                     'address' => $companyData['address'],
                     'giro' => $companyData['giro'],
-                    'activity_code' => $companyData['activity_code'],
                     'commune' => $companyData['commune'],
-                    'city' => $companyData['city'],
                     'logo_color' => $companyData['logo_color'],
                     'logo_black' => $companyData['logo_black'],
                     'updated_at' => date('Y-m-d H:i:s'),

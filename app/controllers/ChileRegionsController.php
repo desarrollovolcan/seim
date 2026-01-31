@@ -128,14 +128,6 @@ class ChileRegionsController extends Controller
             flash('error', 'Región no encontrada.');
             $this->redirect('index.php?route=maintainers/chile-regions');
         }
-        $hasCities = $this->db->fetch(
-            'SELECT id FROM cities WHERE region_id = :id LIMIT 1',
-            ['id' => $id]
-        );
-        if ($hasCities) {
-            flash('error', 'No se puede eliminar la región mientras tenga ciudades asociadas.');
-            $this->redirect('index.php?route=maintainers/chile-regions');
-        }
         try {
             $this->db->execute('DELETE FROM regions WHERE id = :id', ['id' => $id]);
             audit($this->db, Auth::user()['id'], 'delete', 'regions', $id);

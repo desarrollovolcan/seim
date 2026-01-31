@@ -43,18 +43,8 @@
                             <input type="text" name="giro" class="form-control" value="<?php echo e($supplier['giro'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 col-xl-4">
-                            <?php
-                            $activityCodeValue = $supplier['activity_code'] ?? '';
-                            $activityCodeOptions = $activityCodeOptions ?? [];
-                            include __DIR__ . '/../partials/activity-code-field.php';
-                            ?>
-                        </div>
-                        <div class="col-12">
-                            <?php
-                            $communeValue = $supplier['commune'] ?? '';
-                            $cityValue = $supplier['city'] ?? '';
-                            include __DIR__ . '/../partials/commune-city-fields.php';
-                            ?>
+                            <label class="form-label">Comuna</label>
+                            <input type="text" name="commune" class="form-control" value="<?php echo e($supplier['commune'] ?? ''); ?>">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Notas</label>
