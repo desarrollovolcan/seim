@@ -525,16 +525,20 @@ function upload_company_logo(?array $file, string $prefix): array
 function audit(Database $db, int $userId, string $action, string $entity, ?int $entityId = null): void
 {
     $companyId = current_company_id();
-    $db->execute(
-        'INSERT INTO audit_logs (company_id, user_id, action, entity, entity_id, created_at) VALUES (:company_id, :user_id, :action, :entity, :entity_id, NOW())',
-        [
-            'company_id' => $companyId,
-            'user_id' => $userId,
-            'action' => $action,
-            'entity' => $entity,
-            'entity_id' => $entityId,
-        ]
-    );
+    try {
+        $db->execute(
+            'INSERT INTO audit_logs (company_id, user_id, action, entity, entity_id, created_at) VALUES (:company_id, :user_id, :action, :entity, :entity_id, NOW())',
+            [
+                'company_id' => $companyId,
+                'user_id' => $userId,
+                'action' => $action,
+                'entity' => $entity,
+                'entity_id' => $entityId,
+            ]
+        );
+    } catch (Throwable $e) {
+        log_message('error', sprintf('Failed to write audit log for %s: %s', $entity, $e->getMessage()));
+    }
 }
 
 function render_template_vars(string $html, array $context = []): string
