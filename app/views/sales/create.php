@@ -300,7 +300,7 @@
                                     <span class="text-muted">Descuento</span>
                                     <div class="d-flex align-items-center gap-2">
                                         <input type="number" name="discount_total" id="sale-discount-total" class="form-control form-control-sm w-auto text-end" style="width: 120px;" step="0.01" min="0" value="0">
-                                        <select name="discount_total_type" id="sale-discount-total-type" class="form-select form-select-sm w-auto">
+                                        <select name="discount_total_type" id="sale-discount-total-type" class="form-select form-select-sm w-auto" style="min-width: 72px;">
                                             <option value="amount" selected>$</option>
                                             <option value="percent">%</option>
                                         </select>
