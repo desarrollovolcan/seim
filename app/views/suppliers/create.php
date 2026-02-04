@@ -21,6 +21,10 @@
                                     <input type="text" name="name" class="form-control" autocomplete="organization" required>
                                 </div>
                                 <div class="col-md-6">
+                                    <label class="form-label fw-semibold">Código</label>
+                                    <input type="text" name="code" class="form-control" placeholder="PROV-001" required>
+                                </div>
+                                <div class="col-md-6">
                                     <label class="form-label fw-semibold">RUT / ID</label>
                                     <input type="text" name="tax_id" class="form-control" placeholder="12.345.678-9" autocomplete="off">
                                 </div>
@@ -99,6 +103,7 @@
                         <thead>
                             <tr>
                                 <th>ID</th>
+                                <th>Código</th>
                                 <th>Nombre</th>
                                 <th>Contacto</th>
                                 <th>RUT / ID</th>
@@ -114,6 +119,7 @@
                                 <?php foreach ($suppliers as $supplier): ?>
                                     <tr>
                                         <td class="text-muted"><?php echo render_id_badge($supplier['id'] ?? null); ?></td>
+                                        <td><?php echo e($supplier['code'] ?? ''); ?></td>
                                         <td><?php echo e($supplier['name'] ?? ''); ?></td>
                                         <td><?php echo e($supplier['contact_name'] ?? ''); ?></td>
                                         <td><?php echo e($supplier['tax_id'] ?? ''); ?></td>
@@ -142,7 +148,7 @@
                                 <?php endforeach; ?>
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="9" class="text-center text-muted">Aún no hay proveedores registrados.</td>
+                                    <td colspan="10" class="text-center text-muted">Aún no hay proveedores registrados.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>
