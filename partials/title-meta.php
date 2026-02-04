@@ -1,12 +1,18 @@
 <?php
 $themeColor = '#6658dd';
 $appName = 'SEIM';
+$appIcon = 'assets/images/logo.png';
 $baseUrl = '';
 
 if (function_exists('get_municipalidad')) {
     $municipalidad = get_municipalidad();
     $themeColor = $municipalidad['color_primary'] ?? $themeColor;
     $appName = $municipalidad['nombre'] ?? $appName;
+}
+
+if (isset($companySettings) && is_array($companySettings)) {
+    $appName = $companySettings['name'] ?? $appName;
+    $appIcon = $companySettings['logo_color'] ?? $appIcon;
 }
 
 if (function_exists('base_url')) {
@@ -27,6 +33,6 @@ if (function_exists('base_url')) {
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 
 <!-- App favicon -->
-<link rel="shortcut icon" href="assets/images/favicon.ico">
-<link rel="apple-touch-icon" href="assets/images/logo.png">
-<link rel="manifest" href="<?php echo $baseUrl; ?>/manifest.webmanifest">
+<link rel="shortcut icon" href="<?php echo htmlspecialchars($appIcon, ENT_QUOTES); ?>">
+<link rel="apple-touch-icon" href="<?php echo htmlspecialchars($appIcon, ENT_QUOTES); ?>">
+<link rel="manifest" href="<?php echo $baseUrl; ?>/manifest.php">
