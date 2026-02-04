@@ -1304,6 +1304,42 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
+SET @quotes_discount_total := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quotes' AND COLUMN_NAME = 'discount_total'
+);
+SET @sql := IF(@quotes_discount_total = 0, 'ALTER TABLE quotes ADD COLUMN discount_total DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER subtotal;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @quotes_discount_total_type := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quotes' AND COLUMN_NAME = 'discount_total_type'
+);
+SET @sql := IF(@quotes_discount_total_type = 0, 'ALTER TABLE quotes ADD COLUMN discount_total_type VARCHAR(20) NOT NULL DEFAULT ''amount'' AFTER discount_total;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @quote_items_discount := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quote_items' AND COLUMN_NAME = 'descuento'
+);
+SET @sql := IF(@quote_items_discount = 0, 'ALTER TABLE quote_items ADD COLUMN descuento DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER precio_unitario;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @quote_items_discount_type := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quote_items' AND COLUMN_NAME = 'discount_type'
+);
+SET @sql := IF(@quote_items_discount_type = 0, 'ALTER TABLE quote_items ADD COLUMN discount_type VARCHAR(20) NOT NULL DEFAULT ''amount'' AFTER descuento;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 SET @purchases_sii_document_type := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'purchases' AND COLUMN_NAME = 'sii_document_type'
@@ -1466,6 +1502,42 @@ SET @sales_sii_exempt_amount := (
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = 'sii_exempt_amount'
 );
 SET @sql := IF(@sales_sii_exempt_amount = 0, 'ALTER TABLE sales ADD COLUMN sii_exempt_amount DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER sii_tax_rate;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sales_discount_total := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = 'discount_total'
+);
+SET @sql := IF(@sales_discount_total = 0, 'ALTER TABLE sales ADD COLUMN discount_total DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER subtotal;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sales_discount_total_type := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = 'discount_total_type'
+);
+SET @sql := IF(@sales_discount_total_type = 0, 'ALTER TABLE sales ADD COLUMN discount_total_type VARCHAR(20) NOT NULL DEFAULT ''amount'' AFTER discount_total;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sale_items_discount := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sale_items' AND COLUMN_NAME = 'discount'
+);
+SET @sql := IF(@sale_items_discount = 0, 'ALTER TABLE sale_items ADD COLUMN discount DECIMAL(12,2) NOT NULL DEFAULT 0 AFTER unit_price;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @sale_items_discount_type := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sale_items' AND COLUMN_NAME = 'discount_type'
+);
+SET @sql := IF(@sale_items_discount_type = 0, 'ALTER TABLE sale_items ADD COLUMN discount_type VARCHAR(20) NOT NULL DEFAULT ''amount'' AFTER discount;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;

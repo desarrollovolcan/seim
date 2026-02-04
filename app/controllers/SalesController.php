@@ -217,10 +217,18 @@ class SalesController extends Controller
         $prefix = $isPos ? 'POS-' : 'VEN-';
         $numero = $this->sales->nextNumber($prefix, $companyId);
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
+        $discountTotal = max(0.0, (float)($_POST['discount_total'] ?? 0));
+        $discountTotalType = $_POST['discount_total_type'] ?? 'amount';
         $applyTax = !empty($_POST['apply_tax']);
         $taxRate = (float)($_POST['tax_rate'] ?? 0);
-        $tax = $applyTax ? max(0, round($subtotal * $taxRate / 100, 2)) : 0.0;
-        $total = $subtotal + $tax;
+        $discountTotalType = $discountTotalType === 'percent' ? 'percent' : 'amount';
+        $discountTotalAmount = $discountTotalType === 'percent'
+            ? ($subtotal * $discountTotal / 100)
+            : $discountTotal;
+        $discountTotalAmount = min($subtotal, max(0.0, $discountTotalAmount));
+        $taxableBase = max(0.0, $subtotal - $discountTotalAmount);
+        $tax = $applyTax ? max(0, round($taxableBase * $taxRate / 100, 2)) : 0.0;
+        $total = $taxableBase + $tax;
         $status = $_POST['status'] ?? ($isPos ? 'pagado' : 'pendiente');
         $allowedStatus = ['pagado', 'pendiente', 'borrador', 'en_espera'];
         if (!in_array($status, $allowedStatus, true)) {
@@ -240,6 +248,8 @@ class SalesController extends Controller
                 'sale_date' => trim($_POST['sale_date'] ?? date('Y-m-d')),
                 'status' => $status,
                 'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'discount_total_type' => $discountTotalType,
                 'tax' => $tax,
                 'total' => $total,
                 'notes' => trim($_POST['notes'] ?? ''),
@@ -255,6 +265,8 @@ class SalesController extends Controller
                     'service_id' => $item['service']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
+                    'discount' => $item['discount'],
+                    'discount_type' => $item['discount_type'],
                     'subtotal' => $item['subtotal'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
@@ -376,6 +388,8 @@ class SalesController extends Controller
         $serviceIds = $_POST['service_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitPrices = $_POST['unit_price'] ?? [];
+        $discounts = $_POST['discount'] ?? [];
+        $discountTypes = $_POST['discount_type'] ?? [];
         $types = $_POST['item_type'] ?? [];
         $items = [];
 
@@ -387,6 +401,8 @@ class SalesController extends Controller
             $serviceId = (int)($serviceIds[$index] ?? 0);
             $quantity = max(0, (int)($quantities[$index] ?? 0));
             $unitPrice = max(0.0, (float)($unitPrices[$index] ?? 0));
+            $discount = max(0.0, (float)($discounts[$index] ?? 0));
+            $discountType = ($discountTypes[$index] ?? 'amount') === 'percent' ? 'percent' : 'amount';
             if ($quantity <= 0) {
                 continue;
             }
@@ -396,13 +412,20 @@ class SalesController extends Controller
                     continue;
                 }
                 $price = $unitPrice > 0 ? $unitPrice : (float)($service['cost'] ?? 0);
+                $lineBase = $quantity * $price;
+                $discountAmount = $discountType === 'percent'
+                    ? ($lineBase * $discount / 100)
+                    : $discount;
+                $discountAmount = min($lineBase, max(0.0, $discountAmount));
                 $items[] = [
                     'product' => null,
                     'produced_product' => null,
                     'service' => $service,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'subtotal' => $quantity * $price,
+                    'discount' => $discount,
+                    'discount_type' => $discountType,
+                    'subtotal' => max(0.0, $lineBase - $discountAmount),
                 ];
                 continue;
             }
@@ -416,13 +439,20 @@ class SalesController extends Controller
                     $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales/create');
                 }
                 $price = $unitPrice > 0 ? $unitPrice : (float)($producedProduct['price'] ?? 0);
+                $lineBase = $quantity * $price;
+                $discountAmount = $discountType === 'percent'
+                    ? ($lineBase * $discount / 100)
+                    : $discount;
+                $discountAmount = min($lineBase, max(0.0, $discountAmount));
                 $items[] = [
                     'product' => null,
                     'produced_product' => $producedProduct,
                     'service' => null,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'subtotal' => $quantity * $price,
+                    'discount' => $discount,
+                    'discount_type' => $discountType,
+                    'subtotal' => max(0.0, $lineBase - $discountAmount),
                 ];
                 continue;
             }
@@ -435,13 +465,21 @@ class SalesController extends Controller
                     flash('error', sprintf('Stock insuficiente para %s. Disponible: %d', $product['name'], (int)$product['stock']));
                     $this->redirect($isPos ? 'index.php?route=pos' : 'index.php?route=sales/create');
                 }
+                $unitPriceValue = $unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0);
+                $lineBase = $quantity * $unitPriceValue;
+                $discountAmount = $discountType === 'percent'
+                    ? ($lineBase * $discount / 100)
+                    : $discount;
+                $discountAmount = min($lineBase, max(0.0, $discountAmount));
                 $items[] = [
                     'product' => $product,
                     'produced_product' => null,
                     'service' => null,
                     'quantity' => $quantity,
-                    'unit_price' => $unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0),
-                    'subtotal' => $quantity * ($unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0)),
+                    'unit_price' => $unitPriceValue,
+                    'discount' => $discount,
+                    'discount_type' => $discountType,
+                    'subtotal' => max(0.0, $lineBase - $discountAmount),
                 ];
             }
         }

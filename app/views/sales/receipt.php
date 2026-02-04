@@ -212,6 +212,17 @@ $totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantit
                 <td>Subtotal</td>
                 <td><?php echo e(format_currency((float)($sale['subtotal'] ?? 0))); ?></td>
             </tr>
+            <?php
+            $saleDiscountType = $sale['discount_total_type'] ?? 'amount';
+            $saleDiscountValue = (float)($sale['discount_total'] ?? 0);
+            $saleDiscountLabel = $saleDiscountType === 'percent'
+                ? sprintf('%s%%', rtrim(rtrim(number_format($saleDiscountValue, 2), '0'), '.'))
+                : format_currency($saleDiscountValue);
+            ?>
+            <tr>
+                <td>Descuento</td>
+                <td><?php echo e($saleDiscountLabel); ?></td>
+            </tr>
             <tr>
                 <td>Impuestos</td>
                 <td><?php echo e(format_currency((float)($sale['tax'] ?? 0))); ?></td>
