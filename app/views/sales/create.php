@@ -290,11 +290,11 @@
                                 <td><button type="button" class="btn btn-link text-danger p-0 remove-row" aria-label="Eliminar">✕</button></td>
                             </tr>
                         </template>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <label class="form-label">Notas</label>
                             <textarea name="notes" class="form-control" rows="4" placeholder="Detalles adicionales o instrucciones"></textarea>
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-12">
                             <div class="pos-summary">
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Subtotal</span>
