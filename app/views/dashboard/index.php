@@ -61,6 +61,61 @@ foreach (($lowStockProducts ?? []) as $item) {
         </div>
     </div>
     <div class="row g-2 mt-2">
+        <div class="col-12">
+            <div class="card dashboard-hero dashboard-hero-light">
+                <div class="card-body d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+                    <div>
+                        <h3 class="mb-1">Resumen operativo</h3>
+                        <p class="mb-0">Monitorea producción, ventas y stock con indicadores rápidos y gráficos claros.</p>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a href="index.php?route=production/stock" class="btn btn-primary btn-sm">Producción</a>
+                        <a href="index.php?route=sales" class="btn btn-outline-primary btn-sm">Ventas</a>
+                        <a href="index.php?route=inventory/movements" class="btn btn-outline-primary btn-sm">Inventario</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-2 mt-2 dashboard-metrics">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Unidades producidas</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$totalProduced; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Total acumulado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ventas totales</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalSales)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Ingresos por producto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ganancia estimada</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalProfit)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Margen neto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Stock en riesgo</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$lowStockCount; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Productos bajo mínimo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row g-2 mt-2">
         <div class="col-xl-6">
             <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center">
@@ -99,7 +154,7 @@ foreach (($lowStockProducts ?? []) as $item) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="dashboard-chart mt-3">
+                    <div class="dashboard-chart dashboard-chart-lg mt-3">
                         <canvas id="productCostChart"></canvas>
                     </div>
                 </div>
@@ -141,7 +196,7 @@ foreach (($lowStockProducts ?? []) as $item) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="dashboard-chart dashboard-chart-sm mt-3">
+                    <div class="dashboard-chart dashboard-chart-lg mt-3">
                         <canvas id="salesByProductChart"></canvas>
                     </div>
                 </div>
@@ -188,7 +243,7 @@ foreach (($lowStockProducts ?? []) as $item) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="dashboard-chart dashboard-chart-sm mt-3">
+                    <div class="dashboard-chart mt-3">
                         <canvas id="profitByProductChart"></canvas>
                     </div>
                 </div>
@@ -230,7 +285,7 @@ foreach (($lowStockProducts ?? []) as $item) {
                             </tbody>
                         </table>
                     </div>
-                    <div class="dashboard-chart dashboard-chart-sm mt-3">
+                    <div class="dashboard-chart mt-3">
                         <canvas id="lowStockChart"></canvas>
                     </div>
                 </div>

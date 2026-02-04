@@ -415,13 +415,23 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     font-weight: 700;
 }
 
+.dashboard-hero {
+    border: 1px solid rgba(90, 77, 225, 0.12);
+}
+
+.dashboard-hero .btn {
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+}
+
 .dashboard-metrics {
     margin-bottom: 0.5rem;
 }
 
 .dashboard-metric-card {
-    background: linear-gradient(140deg, rgba(90, 77, 225, 0.08), rgba(90, 77, 225, 0.02));
+    background: linear-gradient(140deg, rgba(90, 77, 225, 0.1), rgba(90, 77, 225, 0.02));
     border: 1px solid rgba(90, 77, 225, 0.12);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
 }
 
 .dashboard-metric-title {
@@ -443,11 +453,15 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
 }
 
 .dashboard-chart {
-    min-height: 240px;
+    min-height: 280px;
 }
 
 .dashboard-chart-sm {
-    min-height: 200px;
+    min-height: 240px;
+}
+
+.dashboard-chart-lg {
+    min-height: 340px;
 }
 
 .dashboard-table td {
@@ -464,11 +478,15 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     }
 
     .dashboard-chart {
-        min-height: 200px;
+        min-height: 240px;
     }
 
     .dashboard-chart-sm {
-        min-height: 170px;
+        min-height: 220px;
+    }
+
+    .dashboard-chart-lg {
+        min-height: 280px;
     }
 
     .dashboard-table thead {
