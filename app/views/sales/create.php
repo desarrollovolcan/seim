@@ -291,10 +291,6 @@
                             </tr>
                         </template>
                         <div class="col-12">
-                            <label class="form-label">Notas</label>
-                            <textarea name="notes" class="form-control" rows="4" placeholder="Detalles adicionales o instrucciones"></textarea>
-                        </div>
-                        <div class="col-12">
                             <div class="pos-summary">
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Subtotal</span>
@@ -334,6 +330,10 @@
                                     <span class="h5 mb-0" id="sale-total"><?php echo format_currency(0); ?></span>
                                 </div>
                             </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notas</label>
+                            <textarea name="notes" class="form-control" rows="4" placeholder="Detalles adicionales o instrucciones"></textarea>
                         </div>
                         <div class="col-12 d-flex align-items-center gap-2">
                             <button type="submit" class="btn btn-primary" <?php echo ($isPos && (empty($posSession) || empty($posReady))) ? 'disabled' : ''; ?>><?php echo $isPos ? 'Cobrar venta' : 'Guardar venta'; ?></button>
