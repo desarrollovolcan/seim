@@ -11,7 +11,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle dashboard-table">
                             <thead>
                                 <tr>
                                     <th>Producto</th>
@@ -28,10 +28,10 @@
                                 <?php else: ?>
                                     <?php foreach ($producedProducts as $item): ?>
                                         <tr>
-                                            <td><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end"><?php echo (int)($item['produced_quantity'] ?? 0); ?></td>
-                                            <td class="text-end"><?php echo e(format_currency((float)($item['cost'] ?? 0))); ?></td>
-                                            <td class="text-end"><?php echo (int)($item['stock'] ?? 0); ?></td>
+                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
+                                            <td class="text-end" data-label="Unidades producidas"><?php echo (int)($item['produced_quantity'] ?? 0); ?></td>
+                                            <td class="text-end" data-label="Costo unitario"><?php echo e(format_currency((float)($item['cost'] ?? 0))); ?></td>
+                                            <td class="text-end" data-label="Stock actual"><?php echo (int)($item['stock'] ?? 0); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -52,7 +52,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle dashboard-table">
                             <thead>
                                 <tr>
                                     <th>Producto</th>
@@ -68,9 +68,9 @@
                                 <?php else: ?>
                                     <?php foreach ($salesByProduct as $item): ?>
                                         <tr>
-                                            <td><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end"><?php echo (int)($item['quantity'] ?? 0); ?></td>
-                                            <td class="text-end"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
+                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
+                                            <td class="text-end" data-label="Unidades"><?php echo (int)($item['quantity'] ?? 0); ?></td>
+                                            <td class="text-end" data-label="Ventas"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -94,7 +94,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle dashboard-table">
                             <thead>
                                 <tr>
                                     <th>Producto</th>
@@ -111,10 +111,10 @@
                                 <?php else: ?>
                                     <?php foreach ($profitByProduct as $item): ?>
                                         <tr>
-                                            <td><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
-                                            <td class="text-end"><?php echo e(format_currency((float)($item['total_cost'] ?? 0))); ?></td>
-                                            <td class="text-end"><?php echo e(format_currency((float)($item['profit'] ?? 0))); ?></td>
+                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
+                                            <td class="text-end" data-label="Ventas"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
+                                            <td class="text-end" data-label="Costo"><?php echo e(format_currency((float)($item['total_cost'] ?? 0))); ?></td>
+                                            <td class="text-end" data-label="Ganancia"><?php echo e(format_currency((float)($item['profit'] ?? 0))); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
@@ -135,7 +135,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table table-sm align-middle">
+                        <table class="table table-sm align-middle dashboard-table">
                             <thead>
                                 <tr>
                                     <th>Producto</th>
@@ -151,9 +151,9 @@
                                 <?php else: ?>
                                     <?php foreach ($lowStockProducts as $item): ?>
                                         <tr>
-                                            <td><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end"><?php echo (int)($item['stock'] ?? 0); ?></td>
-                                            <td class="text-end"><?php echo (int)($item['stock_min'] ?? 0); ?></td>
+                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
+                                            <td class="text-end" data-label="Stock actual"><?php echo (int)($item['stock'] ?? 0); ?></td>
+                                            <td class="text-end" data-label="Stock mínimo"><?php echo (int)($item['stock_min'] ?? 0); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 <?php endif; ?>
