@@ -5,12 +5,25 @@ class AuthController extends Controller
     public function showLogin(): void
     {
         $companies = (new CompaniesModel($this->db))->active();
+        $companyLogos = [];
+        if (!empty($companies)) {
+            $settingsModel = new SettingsModel($this->db);
+            foreach ($companies as $company) {
+                $companyId = (int)($company['id'] ?? 0);
+                if ($companyId === 0) {
+                    continue;
+                }
+                $settings = $settingsModel->get('company', [], $companyId);
+                $companyLogos[$companyId] = login_logo_src($settings);
+            }
+        }
         $this->renderPublic('auth/login', [
             'title' => 'Acceso Administrador',
             'pageTitle' => 'Acceso Administrador',
             'hidePortalHeader' => true,
             'companies' => $companies,
             'hasCompanies' => !empty($companies),
+            'companyLogos' => $companyLogos,
         ]);
     }
 
@@ -32,10 +45,10 @@ class AuthController extends Controller
             $this->redirect('login.php');
         }
 
-        $user = $this->db->fetch('SELECT users.*, roles.name as role FROM users JOIN roles ON users.role_id = roles.id WHERE users.email = :email AND users.company_id = :company_id AND users.deleted_at IS NULL', [
-            'email' => $email,
-            'company_id' => $companyId,
-        ]);
+        $user = $this->db->fetch(
+            'SELECT users.*, roles.name as role FROM users JOIN roles ON users.role_id = roles.id WHERE users.email = :email AND users.deleted_at IS NULL',
+            ['email' => $email]
+        );
         if ($user) {
             $companyIds = user_company_ids($this->db, $user);
             if (!in_array($companyId, $companyIds, true)) {
