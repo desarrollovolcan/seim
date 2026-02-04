@@ -74,9 +74,8 @@ class QuotesController extends Controller
         $serviceId = trim($_POST['system_service_id'] ?? '');
         $projectId = trim($_POST['project_id'] ?? '');
         $issueDate = trim($_POST['fecha_emision'] ?? '');
-        $subtotal = trim($_POST['subtotal'] ?? '');
-        $impuestos = trim($_POST['impuestos'] ?? '');
-        $total = trim($_POST['total'] ?? '');
+        $discountTotal = (float)($_POST['discount_total'] ?? 0);
+        $discountTotalType = $_POST['discount_total_type'] ?? 'amount';
         $numero = trim($_POST['numero'] ?? '');
         if ($numero === '') {
             $numero = $this->quotes->nextNumber('COT-', $companyId);
@@ -108,17 +107,48 @@ class QuotesController extends Controller
         }
 
         $items = $_POST['items'] ?? [];
-        $hasItems = false;
+        $normalizedItems = [];
+        $subtotal = 0.0;
         foreach ($items as $item) {
-            if (!empty($item['descripcion'])) {
-                $hasItems = true;
-                break;
+            if (empty($item['descripcion'])) {
+                continue;
             }
+            $qty = max(1, (int)($item['cantidad'] ?? 1));
+            $price = max(0.0, (float)($item['precio_unitario'] ?? 0));
+            $discountValue = max(0.0, (float)($item['descuento'] ?? 0));
+            $discountType = $item['discount_type'] ?? 'amount';
+            $lineBase = $qty * $price;
+            $discountAmount = $discountType === 'percent'
+                ? ($lineBase * $discountValue / 100)
+                : $discountValue;
+            $discountAmount = min($lineBase, max(0.0, $discountAmount));
+            $lineTotal = max(0.0, $lineBase - $discountAmount);
+            $subtotal += $lineTotal;
+            $normalizedItems[] = [
+                'descripcion' => $item['descripcion'],
+                'cantidad' => $qty,
+                'precio_unitario' => $price,
+                'descuento' => $discountValue,
+                'discount_type' => $discountType,
+                'total' => $lineTotal,
+            ];
         }
-        if (!$hasItems) {
+        if (empty($normalizedItems)) {
             flash('error', 'Agrega al menos un ítem a la cotización.');
             $this->redirect('index.php?route=quotes/create');
         }
+
+        $applyTax = ($_POST['apply_tax_display'] ?? '1') === '1';
+        $taxRate = (float)($_POST['tax_rate'] ?? 0);
+        $discountTotal = max(0.0, $discountTotal);
+        $discountTotalType = $discountTotalType === 'percent' ? 'percent' : 'amount';
+        $discountTotalAmount = $discountTotalType === 'percent'
+            ? ($subtotal * $discountTotal / 100)
+            : $discountTotal;
+        $discountTotalAmount = min($subtotal, max(0.0, $discountTotalAmount));
+        $taxableBase = max(0.0, $subtotal - $discountTotalAmount);
+        $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
+        $total = $taxableBase + $impuestos;
 
         $quoteId = $this->quotes->create(array_merge([
             'company_id' => $companyId,
@@ -128,25 +158,26 @@ class QuotesController extends Controller
             'numero' => $numero,
             'fecha_emision' => $issueDate !== '' ? $issueDate : date('Y-m-d'),
             'estado' => $_POST['estado'] ?? 'pendiente',
-            'subtotal' => $subtotal !== '' ? $subtotal : 0,
-            'impuestos' => $impuestos !== '' ? $impuestos : 0,
-            'total' => $total !== '' ? $total : 0,
+            'subtotal' => $subtotal,
+            'discount_total' => $discountTotal,
+            'discount_total_type' => $discountTotalType,
+            'impuestos' => $impuestos,
+            'total' => $total,
             'notas' => trim($_POST['notas'] ?? ''),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ], $siiData));
 
         $itemsModel = new QuoteItemsModel($this->db);
-        foreach ($items as $item) {
-            if (empty($item['descripcion'])) {
-                continue;
-            }
+        foreach ($normalizedItems as $item) {
             $itemsModel->create([
                 'quote_id' => $quoteId,
                 'descripcion' => $item['descripcion'],
-                'cantidad' => $item['cantidad'] ?? 1,
-                'precio_unitario' => $item['precio_unitario'] ?? 0,
-                'total' => $item['total'] ?? 0,
+                'cantidad' => $item['cantidad'],
+                'precio_unitario' => $item['precio_unitario'],
+                'descuento' => $item['descuento'],
+                'discount_type' => $item['discount_type'],
+                'total' => $item['total'],
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
@@ -258,9 +289,7 @@ class QuotesController extends Controller
         $serviceId = trim($_POST['system_service_id'] ?? '');
         $projectId = trim($_POST['project_id'] ?? '');
         $issueDate = trim($_POST['fecha_emision'] ?? '');
-        $subtotal = trim($_POST['subtotal'] ?? '');
-        $impuestos = trim($_POST['impuestos'] ?? '');
-        $total = trim($_POST['total'] ?? '');
+        $discountTotal = (float)($_POST['discount_total'] ?? 0);
 
         if ($serviceId !== '') {
             $service = $this->db->fetch(
@@ -288,17 +317,48 @@ class QuotesController extends Controller
             $this->redirect('index.php?route=quotes/edit&id=' . $id);
         }
         $items = $_POST['items'] ?? [];
-        $hasItems = false;
+        $normalizedItems = [];
+        $subtotal = 0.0;
         foreach ($items as $item) {
-            if (!empty($item['descripcion'])) {
-                $hasItems = true;
-                break;
+            if (empty($item['descripcion'])) {
+                continue;
             }
+            $qty = max(1, (int)($item['cantidad'] ?? 1));
+            $price = max(0.0, (float)($item['precio_unitario'] ?? 0));
+            $discountValue = max(0.0, (float)($item['descuento'] ?? 0));
+            $discountType = $item['discount_type'] ?? 'amount';
+            $lineBase = $qty * $price;
+            $discountAmount = $discountType === 'percent'
+                ? ($lineBase * $discountValue / 100)
+                : $discountValue;
+            $discountAmount = min($lineBase, max(0.0, $discountAmount));
+            $lineTotal = max(0.0, $lineBase - $discountAmount);
+            $subtotal += $lineTotal;
+            $normalizedItems[] = [
+                'descripcion' => $item['descripcion'],
+                'cantidad' => $qty,
+                'precio_unitario' => $price,
+                'descuento' => $discountValue,
+                'discount_type' => $discountType,
+                'total' => $lineTotal,
+            ];
         }
-        if (!$hasItems) {
+        if (empty($normalizedItems)) {
             flash('error', 'Agrega al menos un ítem a la cotización.');
             $this->redirect('index.php?route=quotes/edit&id=' . $id);
         }
+
+        $applyTax = ($_POST['apply_tax_display'] ?? '1') === '1';
+        $taxRate = (float)($_POST['tax_rate'] ?? 0);
+        $discountTotal = max(0.0, $discountTotal);
+        $discountTotalType = $discountTotalType === 'percent' ? 'percent' : 'amount';
+        $discountTotalAmount = $discountTotalType === 'percent'
+            ? ($subtotal * $discountTotal / 100)
+            : $discountTotal;
+        $discountTotalAmount = min($subtotal, max(0.0, $discountTotalAmount));
+        $taxableBase = max(0.0, $subtotal - $discountTotalAmount);
+        $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
+        $total = $taxableBase + $impuestos;
 
         $this->quotes->update($id, array_merge([
             'client_id' => $clientId,
@@ -307,25 +367,26 @@ class QuotesController extends Controller
             'numero' => trim($_POST['numero'] ?? ''),
             'fecha_emision' => $issueDate !== '' ? $issueDate : $quote['fecha_emision'],
             'estado' => $_POST['estado'] ?? 'pendiente',
-            'subtotal' => $subtotal !== '' ? $subtotal : 0,
-            'impuestos' => $impuestos !== '' ? $impuestos : 0,
-            'total' => $total !== '' ? $total : 0,
+            'subtotal' => $subtotal,
+            'discount_total' => $discountTotal,
+            'discount_total_type' => $discountTotalType,
+            'impuestos' => $impuestos,
+            'total' => $total,
             'notas' => trim($_POST['notas'] ?? ''),
             'updated_at' => date('Y-m-d H:i:s'),
         ], $siiData));
 
         $this->db->execute('DELETE FROM quote_items WHERE quote_id = :quote_id', ['quote_id' => $id]);
         $itemsModel = new QuoteItemsModel($this->db);
-        foreach ($items as $item) {
-            if (empty($item['descripcion'])) {
-                continue;
-            }
+        foreach ($normalizedItems as $item) {
             $itemsModel->create([
                 'quote_id' => $id,
                 'descripcion' => $item['descripcion'],
-                'cantidad' => $item['cantidad'] ?? 1,
-                'precio_unitario' => $item['precio_unitario'] ?? 0,
-                'total' => $item['total'] ?? 0,
+                'cantidad' => $item['cantidad'],
+                'precio_unitario' => $item['precio_unitario'],
+                'descuento' => $item['descuento'],
+                'discount_type' => $item['discount_type'],
+                'total' => $item['total'],
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
