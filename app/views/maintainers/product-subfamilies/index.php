@@ -9,6 +9,7 @@
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Código</th>
                         <th>Subfamilia</th>
                         <th>Familia</th>
                         <th class="text-end">Acciones</th>
@@ -18,6 +19,7 @@
                     <?php foreach ($subfamilies as $subfamily): ?>
                         <tr>
                             <td class="text-muted"><?php echo render_id_badge($subfamily['id'] ?? null); ?></td>
+                            <td><?php echo e($subfamily['code'] ?? ''); ?></td>
                             <td><?php echo e($subfamily['name'] ?? ''); ?></td>
                             <td><?php echo e($familiesById[(int)($subfamily['family_id'] ?? 0)]['name'] ?? ''); ?></td>
                             <td class="text-end">
