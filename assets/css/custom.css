@@ -256,6 +256,26 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
         row-gap: 0.5rem;
     }
 
+    .app-topbar .logo-topbar {
+        display: none;
+    }
+
+    html[data-sidenav-size="offcanvas"] .sidenav-menu {
+        left: auto;
+        right: 0;
+        margin-left: 0;
+        transform: translateX(100%);
+        transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+        pointer-events: none;
+    }
+
+    html.sidebar-enable .sidenav-menu {
+        opacity: 1;
+        z-index: 1055;
+        transform: translateX(0);
+        pointer-events: auto;
+    }
+
     .sidenav-menu .logo {
         justify-content: flex-start;
         padding: 0 16px;

@@ -20,6 +20,7 @@ class App {
         this.initCounter();
         this.initCodePreview();
         this.initToggle();
+        this.initMobileSidebarFallback();
         this.initDismissible();
         this.initLeftSidebar(); // Menu Link Activation (Vertical Menu)
         this.initTopbarMenu(); // Menu Link Activation (Horizontal Menu)
@@ -488,6 +489,49 @@ class App {
         });
     }
 
+    initMobileSidebarFallback() {
+        const toggleBtn = document.querySelector('.sidenav-toggle-button');
+        if (!toggleBtn) return;
+
+        toggleBtn.addEventListener('click', () => {
+            if (window.__layoutCustomizerReady) {
+                return;
+            }
+
+            const html = document.documentElement;
+            const isMobile = window.innerWidth <= 767.98;
+            const isOffcanvas = html.getAttribute('data-sidenav-size') === 'offcanvas' || isMobile;
+            if (!isOffcanvas) {
+                return;
+            }
+
+            html.setAttribute('data-sidenav-size', 'offcanvas');
+            html.classList.toggle('sidebar-enable');
+
+            const backdropId = 'custom-backdrop';
+            const existing = document.getElementById(backdropId);
+            if (html.classList.contains('sidebar-enable')) {
+                if (!existing) {
+                    const backdrop = document.createElement('div');
+                    backdrop.id = backdropId;
+                    backdrop.className = 'offcanvas-backdrop fade show';
+                    document.body.appendChild(backdrop);
+                    document.body.style.overflow = 'hidden';
+                    backdrop.addEventListener('click', () => {
+                        html.classList.remove('sidebar-enable');
+                        backdrop.remove();
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                    });
+                }
+            } else if (existing) {
+                existing.remove();
+                document.body.style.overflow = '';
+                document.body.style.paddingRight = '';
+            }
+        });
+    }
+
     // Topbar Menu Link Activation (Horizontal Menu)
     initTopbarMenu() {
         const navbarNav = document.querySelector('.navbar-nav');
@@ -546,6 +590,7 @@ class LayoutCustomizer {
     }
 
     init() {
+        window.__layoutCustomizerReady = true;
         this.initConfig();
         this.initSwitchListener();
         this.monochromeMode()
