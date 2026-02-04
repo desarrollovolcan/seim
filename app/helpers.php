@@ -39,6 +39,31 @@ function mb_substr_safe(string $value, int $start, ?int $length = null): string
     return $length === null ? substr($value, $start) : substr($value, $start, $length);
 }
 
+function generate_three_letter_code(string $name): string
+{
+    $value = trim($name);
+    if ($value === '') {
+        return '';
+    }
+
+    $normalized = $value;
+    if (function_exists('iconv')) {
+        $converted = @iconv('UTF-8', 'ASCII//TRANSLIT', $value);
+        if ($converted !== false) {
+            $normalized = $converted;
+        }
+    }
+
+    $normalized = strtoupper($normalized);
+    $normalized = preg_replace('/[^A-Z]/', '', $normalized) ?? '';
+
+    if ($normalized === '') {
+        $normalized = strtoupper(preg_replace('/\\s+/', '', $value) ?? $value);
+    }
+
+    return mb_substr_safe($normalized, 0, 3);
+}
+
 function app_config(?string $key = null, mixed $default = null): mixed
 {
     static $config = null;
@@ -674,6 +699,13 @@ function permission_catalog(): array
             'legacy_key' => 'product_subfamilies',
             'view_key' => 'product_subfamilies_view',
             'edit_key' => 'product_subfamilies_edit',
+        ],
+        'competitor_companies' => [
+            'label' => 'Empresas competencia',
+            'routes' => ['maintainers/competitor-companies'],
+            'legacy_key' => 'competitor_companies',
+            'view_key' => 'competitor_companies_view',
+            'edit_key' => 'competitor_companies_edit',
         ],
         'services' => [
             'label' => 'Servicios (clientes)',
