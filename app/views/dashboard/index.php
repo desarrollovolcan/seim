@@ -22,6 +22,44 @@ foreach (($lowStockProducts ?? []) as $item) {
 ?>
 
 <div class="dashboard-compact">
+    <div class="row g-2 mt-2 dashboard-metrics">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Unidades producidas</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$totalProduced; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Total acumulado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ventas totales</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalSales)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Ingresos por producto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ganancia estimada</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalProfit)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Margen neto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Stock en riesgo</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$lowStockCount; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Productos bajo mínimo</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row g-2 mt-2">
         <div class="col-12">
             <div class="card dashboard-hero dashboard-hero-light">
@@ -400,7 +438,7 @@ foreach (($lowStockProducts ?? []) as $item) {
             const salesArea = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.45)', 'rgba(74, 163, 255, 0.08)');
             const profitArea = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.4)', 'rgba(34, 181, 154, 0.05)');
             new Chart(salesCtx, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
                     labels: salesLabels,
                     datasets: [
@@ -445,15 +483,14 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const profitCtx = document.getElementById('profitByProductChart');
         if (profitCtx) {
-            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
+            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.45)', 'rgba(243, 162, 87, 0.05)');
             new Chart(profitCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: profitLabels,
                     datasets: [{
                         label: 'Ganancia',
                         data: profitTotals,
-                        backgroundColor: profitGradient,
                         borderColor: '#f3a257',
                         borderWidth: 1,
                         borderRadius: 8,
