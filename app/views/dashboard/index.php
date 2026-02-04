@@ -3,6 +3,7 @@ $totalProduced = 0;
 $totalSales = 0.0;
 $totalProfit = 0.0;
 $lowStockCount = 0;
+$totalProducts = max(1, count($producedProducts ?? []));
 
 foreach (($producedProducts ?? []) as $item) {
     $totalProduced += (int)($item['produced_quantity'] ?? 0);
@@ -62,12 +63,12 @@ foreach (($lowStockProducts ?? []) as $item) {
     <div class="row g-2 mt-2">
         <div class="col-xl-6">
             <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="card-title mb-0">Costos de productos</h4>
-                        <small class="text-muted">Costos unitarios y unidades producidas.</small>
-                    </div>
-                    <a href="index.php?route=production/stock" class="btn btn-outline-primary btn-sm">Ver stock producido</a>
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="card-title mb-0">Costos de productos</h4>
+                            <small class="text-muted">Costos unitarios y unidades producidas.</small>
+                        </div>
+                        <a href="index.php?route=production/stock" class="btn btn-outline-primary btn-sm">Ver stock producido</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -106,9 +107,12 @@ foreach (($lowStockProducts ?? []) as $item) {
         </div>
         <div class="col-xl-6">
             <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Ventas por producto</h4>
-                    <small class="text-muted">Totales vendidos y unidades.</small>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-0">Ventas por producto</h4>
+                        <small class="text-muted">Totales vendidos y unidades.</small>
+                    </div>
+                    <a href="index.php?route=sales" class="btn btn-outline-primary btn-sm">Ver ventas</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -148,9 +152,12 @@ foreach (($lowStockProducts ?? []) as $item) {
     <div class="row g-2 mt-2">
         <div class="col-xl-6">
             <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Ganancias por producto</h4>
-                    <small class="text-muted">Margen estimado según costo y ventas.</small>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-0">Ganancias por producto</h4>
+                        <small class="text-muted">Margen estimado según costo y ventas.</small>
+                    </div>
+                    <a href="index.php?route=accounting/financial-statements" class="btn btn-outline-primary btn-sm">Ver resultados</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -189,9 +196,12 @@ foreach (($lowStockProducts ?? []) as $item) {
         </div>
         <div class="col-xl-6">
             <div class="card h-100">
-                <div class="card-header">
-                    <h4 class="card-title mb-0">Stock bajo</h4>
-                    <small class="text-muted">Productos bajo su stock mínimo.</small>
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="card-title mb-0">Stock bajo</h4>
+                        <small class="text-muted">Productos bajo su stock mínimo.</small>
+                    </div>
+                    <a href="index.php?route=inventory/movements" class="btn btn-outline-primary btn-sm">Ver inventario</a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -232,9 +242,13 @@ foreach (($lowStockProducts ?? []) as $item) {
 <?php
 $productCostLabels = [];
 $productCostTotals = [];
+$productCostUnits = [];
+$productCostStocks = [];
 foreach (($producedProducts ?? []) as $item) {
     $productCostLabels[] = $item['name'] ?? '';
     $productCostTotals[] = (float)($item['cost'] ?? 0);
+    $productCostUnits[] = (int)($item['produced_quantity'] ?? 0);
+    $productCostStocks[] = (int)($item['stock'] ?? 0);
 }
 $salesLabels = [];
 $salesTotals = [];
@@ -262,6 +276,8 @@ foreach (($lowStockProducts ?? []) as $item) {
 <script>
     const productCostLabels = <?php echo json_encode($productCostLabels, JSON_UNESCAPED_UNICODE); ?>;
     const productCostTotals = <?php echo json_encode($productCostTotals, JSON_UNESCAPED_UNICODE); ?>;
+    const productCostUnits = <?php echo json_encode($productCostUnits, JSON_UNESCAPED_UNICODE); ?>;
+    const productCostStocks = <?php echo json_encode($productCostStocks, JSON_UNESCAPED_UNICODE); ?>;
     const salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
     const salesTotals = <?php echo json_encode($salesTotals, JSON_UNESCAPED_UNICODE); ?>;
     const profitLabels = <?php echo json_encode($profitLabels, JSON_UNESCAPED_UNICODE); ?>;
@@ -269,6 +285,7 @@ foreach (($lowStockProducts ?? []) as $item) {
     const lowStockLabels = <?php echo json_encode($lowStockLabels, JSON_UNESCAPED_UNICODE); ?>;
     const lowStockValues = <?php echo json_encode($lowStockValues, JSON_UNESCAPED_UNICODE); ?>;
     const lowStockMinimums = <?php echo json_encode($lowStockMinimums, JSON_UNESCAPED_UNICODE); ?>;
+    const totalProducts = <?php echo json_encode($totalProducts, JSON_UNESCAPED_UNICODE); ?>;
 
     if (window.Chart) {
         const isMobile = window.innerWidth <= 576;
@@ -279,33 +296,83 @@ foreach (($lowStockProducts ?? []) as $item) {
             return gradient;
         };
         const baseGrid = { color: 'rgba(148, 163, 184, 0.25)' };
-        const axisFont = { size: isMobile ? 10 : 12 };
+        const axisFont = { size: isMobile ? 9 : 12 };
+        const mobileLabelLimit = isMobile ? 6 : undefined;
+        const shortenLabel = (value) => {
+            if (!isMobile || typeof value !== 'string') return value;
+            return value.length > 12 ? `${value.slice(0, 12)}…` : value;
+        };
+        const yTickOptions = {
+            font: axisFont,
+            beginAtZero: true,
+            ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined }
+        };
+        const xTickOptions = {
+            grid: { display: false },
+            ticks: {
+                font: axisFont,
+                maxTicksLimit: isMobile ? 4 : undefined,
+                callback: shortenLabel
+            }
+        };
 
         const productCostCtx = document.getElementById('productCostChart');
         if (productCostCtx) {
-            const productCostGradient = buildGradient(productCostCtx.getContext('2d'), 'rgba(90, 77, 225, 0.65)', 'rgba(90, 77, 225, 0.15)');
             new Chart(productCostCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: productCostLabels,
-                    datasets: [{
-                        label: 'Costo unitario',
-                        data: productCostTotals,
-                        backgroundColor: productCostGradient,
-                        borderColor: '#5a4de1',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        maxBarThickness: isMobile ? 18 : 36
-                    }]
+                    datasets: [
+                        {
+                            label: 'Costo unitario',
+                            data: productCostTotals,
+                            borderColor: '#5a4de1',
+                            backgroundColor: 'rgba(90, 77, 225, 0.15)',
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 3 : 4
+                        },
+                        {
+                            label: 'Unidades producidas',
+                            data: productCostUnits,
+                            borderColor: '#22b59a',
+                            backgroundColor: 'rgba(34, 181, 154, 0.12)',
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 3 : 4
+                        },
+                        {
+                            label: 'Stock actual',
+                            data: productCostStocks,
+                            borderColor: '#f3a257',
+                            backgroundColor: 'rgba(243, 162, 87, 0.12)',
+                            fill: false,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 3 : 4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    indexAxis: isMobile ? 'y' : 'x',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
+                        }
+                    },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel }
+                        },
+                        y: {
+                            grid: baseGrid,
+                            ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined }
+                        }
                     }
                 }
             });
@@ -313,27 +380,47 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const salesCtx = document.getElementById('salesByProductChart');
         if (salesCtx) {
-            const salesPalette = ['#22b59a', '#5a4de1', '#f3a257', '#4aa3ff', '#f06c6c', '#7c8bff'];
+            const salesArea = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.45)', 'rgba(74, 163, 255, 0.08)');
+            const profitArea = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.4)', 'rgba(34, 181, 154, 0.05)');
             new Chart(salesCtx, {
                 type: 'doughnut',
                 data: {
                     labels: salesLabels,
-                    datasets: [{
-                        label: 'Ventas',
-                        data: salesTotals,
-                        backgroundColor: salesPalette,
-                        borderWidth: 0
-                    }]
+                    datasets: [
+                        {
+                            label: 'Ventas',
+                            data: salesTotals,
+                            borderColor: '#4aa3ff',
+                            backgroundColor: salesArea,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 3 : 4
+                        },
+                        {
+                            label: 'Ganancia',
+                            data: profitTotals,
+                            borderColor: '#22b59a',
+                            backgroundColor: profitArea,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 3 : 4
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: isMobile ? '60%' : '70%',
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont }
+                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
                         }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
                     }
                 }
             });
@@ -350,12 +437,11 @@ foreach (($lowStockProducts ?? []) as $item) {
                         label: 'Ganancia',
                         data: profitTotals,
                         borderColor: '#f3a257',
-                        backgroundColor: profitGradient,
-                        fill: true,
-                        tension: 0.35,
-                        pointRadius: isMobile ? 2 : 3,
-                        pointHoverRadius: isMobile ? 3 : 4,
-                        pointBackgroundColor: '#f3a257'
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        maxBarThickness: isMobile ? 14 : 32,
+                        barPercentage: isMobile ? 0.7 : 0.85,
+                        categoryPercentage: isMobile ? 0.7 : 0.8
                     }]
                 },
                 options: {
@@ -363,8 +449,8 @@ foreach (($lowStockProducts ?? []) as $item) {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
                     scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
+                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
                     }
                 }
             });
@@ -372,43 +458,49 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const lowStockCtx = document.getElementById('lowStockChart');
         if (lowStockCtx) {
-            const lowStockGradient = buildGradient(lowStockCtx.getContext('2d'), 'rgba(240, 108, 108, 0.65)', 'rgba(240, 108, 108, 0.2)');
-            const lowStockMinGradient = buildGradient(lowStockCtx.getContext('2d'), 'rgba(148, 163, 184, 0.7)', 'rgba(148, 163, 184, 0.25)');
+            const lowStockCount = lowStockLabels.length;
+            const safeCount = lowStockCount > 0 ? lowStockCount : 0;
+            const totalCount = Math.max(totalProducts, safeCount);
+            const remainder = Math.max(0, totalCount - safeCount);
+            const donutPlugin = {
+                id: 'centerText',
+                afterDraw(chart) {
+                    const { ctx } = chart;
+                    const meta = chart.getDatasetMeta(0);
+                    if (!meta?.data?.length) return;
+                    ctx.save();
+                    ctx.font = `${isMobile ? 20 : 28}px Nunito, sans-serif`;
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const { x, y } = meta.data[0];
+                    ctx.fillText(String(safeCount), x, y);
+                    ctx.restore();
+                }
+            };
+
             new Chart(lowStockCtx, {
-                type: 'bar',
+                type: 'doughnut',
                 data: {
-                    labels: lowStockLabels,
-                    datasets: [
-                        {
-                            label: 'Stock actual',
-                            data: lowStockValues,
-                            backgroundColor: lowStockGradient,
-                            borderColor: '#f06c6c',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 18 : 36
-                        },
-                        {
-                            label: 'Stock mínimo',
-                            data: lowStockMinimums,
-                            backgroundColor: lowStockMinGradient,
-                            borderColor: '#94a3b8',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 18 : 36
-                        }
-                    ]
+                    labels: ['Stock bajo', 'OK'],
+                    datasets: [{
+                        data: [safeCount, remainder],
+                        backgroundColor: ['#f59e0b', '#e2e8f0'],
+                        borderWidth: 0
+                    }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, boxHeight: 10, font: axisFont } } },
-                    indexAxis: isMobile ? 'y' : 'x',
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
+                    cutout: isMobile ? '65%' : '72%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
+                        }
                     }
-                }
+                },
+                plugins: [donutPlugin]
             });
         }
     }
