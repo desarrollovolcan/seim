@@ -346,6 +346,21 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
         width: 100%;
     }
 
+    html[data-sidenav-size="offcanvas"] .sidenav-menu {
+        left: auto;
+        right: 0;
+        margin-left: 0;
+        transform: translateX(100%);
+        transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+    }
+
+    html.sidebar-enable .sidenav-menu {
+        margin-left: 0;
+        opacity: 1;
+        z-index: 1055;
+        transform: translateX(0);
+    }
+
     .side-nav .menu-icon {
         width: 32px;
         height: 32px;
