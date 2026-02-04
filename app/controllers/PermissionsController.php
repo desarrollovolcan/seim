@@ -15,7 +15,6 @@ class PermissionsController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $roles = $this->roles->all();
         $selectedRoleId = (int)($_GET['role_id'] ?? ($roles[0]['id'] ?? 0));
         $selectedPermissions = [];
@@ -37,7 +36,6 @@ class PermissionsController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $roleId = (int)($_POST['role_id'] ?? 0);
         $permissions = $_POST['permissions'] ?? [];

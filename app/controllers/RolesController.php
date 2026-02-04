@@ -13,7 +13,6 @@ class RolesController extends Controller
     public function index(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $roles = $this->roles->all();
         $userCounts = $this->db->fetchAll('SELECT role_id, COUNT(*) as total FROM users WHERE deleted_at IS NULL GROUP BY role_id');
         $countByRole = [];
@@ -32,7 +31,6 @@ class RolesController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $this->render('roles/create', [
             'title' => 'Nuevo rol',
             'pageTitle' => 'Nuevo rol',
@@ -42,7 +40,6 @@ class RolesController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $name = trim($_POST['name'] ?? '');
         if ($name === '') {
@@ -69,7 +66,6 @@ class RolesController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $role = $this->roles->find($id);
         if (!$role) {
@@ -86,7 +82,6 @@ class RolesController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $role = $this->roles->find($id);
@@ -116,7 +111,6 @@ class RolesController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $role = $this->roles->find($id);
