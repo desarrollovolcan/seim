@@ -1,11 +1,7 @@
 <?php
 require __DIR__ . '/app/bootstrap.php';
 $companySettings = login_company_settings($db);
-$logoColor = $companySettings['logo_color'] ?? 'assets/images/logo.png';
-$logoBlack = $companySettings['logo_black'] ?? 'assets/images/logo-black.png';
-$loginLogoVariant = $companySettings['login_logo_variant'] ?? 'light';
-$loginLogo = $companySettings['login_logo'] ?? '';
-$loginLogoSrc = $loginLogo !== '' ? $loginLogo : ($loginLogoVariant === 'dark' ? $logoBlack : $logoColor);
+$loginLogoSrc = login_logo_src($companySettings);
 include('partials/html.php');
 ?>
 <head>

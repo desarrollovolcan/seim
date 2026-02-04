@@ -26,7 +26,6 @@ class UsersController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $roles = $this->roles->all();
         $companies = (new CompaniesModel($this->db))->active();
         $this->render('users/create', [
@@ -40,7 +39,6 @@ class UsersController extends Controller
     public function store(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $name = trim($_POST['name'] ?? '');
         $email = trim($_POST['email'] ?? '');
@@ -102,7 +100,6 @@ class UsersController extends Controller
     public function edit(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $id = (int)($_GET['id'] ?? 0);
         $user = $this->db->fetch(
             'SELECT * FROM users WHERE id = :id AND deleted_at IS NULL',
@@ -123,7 +120,6 @@ class UsersController extends Controller
     public function update(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $name = trim($_POST['name'] ?? '');
@@ -185,7 +181,6 @@ class UsersController extends Controller
     public function delete(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $id = (int)($_POST['id'] ?? 0);
         $user = $this->db->fetch('SELECT id FROM users WHERE id = :id AND deleted_at IS NULL', ['id' => $id]);
@@ -208,7 +203,6 @@ class UsersController extends Controller
     public function assignCompany(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         $companies = (new CompaniesModel($this->db))->active();
         $users = $this->db->fetchAll(
             'SELECT users.*, roles.name as role, companies.name as company_name
@@ -233,7 +227,6 @@ class UsersController extends Controller
     public function updateCompany(): void
     {
         $this->requireLogin();
-        $this->requireRole('admin');
         verify_csrf();
         $userId = (int)($_POST['user_id'] ?? 0);
         $companyIds = array_values(array_filter(array_map('intval', $_POST['company_ids'] ?? [])));
