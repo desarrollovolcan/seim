@@ -23,6 +23,10 @@
                         <label class="form-label">Nombre</label>
                         <input type="text" name="name" class="form-control" value="<?php echo e($subfamily['name'] ?? ''); ?>" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Código</label>
+                        <input type="text" class="form-control" value="<?php echo e($subfamily['code'] ?? ''); ?>" readonly>
+                    </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Actualizar</button>
                         <a href="index.php?route=maintainers/product-subfamilies" class="btn btn-light">Cancelar</a>

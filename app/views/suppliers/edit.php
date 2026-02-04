@@ -15,6 +15,10 @@
                             <input type="text" name="name" class="form-control" required value="<?php echo e($supplier['name'] ?? ''); ?>">
                         </div>
                         <div class="col-md-6 col-xl-4">
+                            <label class="form-label">Código</label>
+                            <input type="text" name="code" class="form-control" required value="<?php echo e($supplier['code'] ?? ''); ?>">
+                        </div>
+                        <div class="col-md-6 col-xl-4">
                             <label class="form-label">Persona de contacto</label>
                             <input type="text" name="contact_name" class="form-control" value="<?php echo e($supplier['contact_name'] ?? ''); ?>">
                         </div>
