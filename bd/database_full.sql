@@ -85,6 +85,7 @@ CREATE TABLE suppliers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(50) NOT NULL,
     contact_name VARCHAR(150) NULL,
     tax_id VARCHAR(50) NULL,
     email VARCHAR(150) NULL,
@@ -100,10 +101,24 @@ CREATE TABLE suppliers (
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
+CREATE TABLE competitor_companies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    rut VARCHAR(50) NULL,
+    email VARCHAR(150) NULL,
+    address VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
 CREATE TABLE product_families (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id)
@@ -114,6 +129,7 @@ CREATE TABLE product_subfamilies (
     company_id INT NOT NULL,
     family_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
@@ -774,6 +790,7 @@ CREATE UNIQUE INDEX idx_settings_key_company ON settings(company_id, `key`);
 CREATE UNIQUE INDEX idx_user_companies_unique ON user_companies(user_id, company_id);
 CREATE INDEX idx_product_families_company ON product_families(company_id);
 CREATE INDEX idx_product_subfamilies_company ON product_subfamilies(company_id);
+CREATE INDEX idx_competitor_companies_company ON competitor_companies(company_id);
 CREATE INDEX idx_products_company ON products(company_id);
 CREATE INDEX idx_products_supplier ON products(supplier_id);
 CREATE INDEX idx_purchases_company ON purchases(company_id);
@@ -1534,6 +1551,7 @@ CREATE TABLE IF NOT EXISTS suppliers (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(50) NOT NULL,
     contact_name VARCHAR(150) NULL,
     tax_id VARCHAR(50) NULL,
     email VARCHAR(150) NULL,
@@ -1548,6 +1566,70 @@ CREATE TABLE IF NOT EXISTS suppliers (
     deleted_at DATETIME NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
+
+CREATE TABLE IF NOT EXISTS competitor_companies (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(150) NOT NULL,
+    code VARCHAR(50) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
+SET @competitor_companies_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@competitor_companies_code = 0, 'ALTER TABLE competitor_companies ADD COLUMN code VARCHAR(50) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_rut := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'rut'
+);
+SET @sql := IF(@competitor_companies_rut = 0, 'ALTER TABLE competitor_companies ADD COLUMN rut VARCHAR(50) NULL AFTER code;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_email := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'email'
+);
+SET @sql := IF(@competitor_companies_email = 0, 'ALTER TABLE competitor_companies ADD COLUMN email VARCHAR(150) NULL AFTER rut;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_address := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'address'
+);
+SET @sql := IF(@competitor_companies_address = 0, 'ALTER TABLE competitor_companies ADD COLUMN address VARCHAR(255) NULL AFTER email;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_name := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'name'
+);
+SET @sql := IF(@competitor_companies_name = 0, 'ALTER TABLE competitor_companies ADD COLUMN name VARCHAR(150) NOT NULL AFTER company_id;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @suppliers_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'suppliers' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@suppliers_code = 0, 'ALTER TABLE suppliers ADD COLUMN code VARCHAR(50) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SET @suppliers_contact_name := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
@@ -1601,6 +1683,7 @@ CREATE TABLE IF NOT EXISTS product_families (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id)
@@ -1611,11 +1694,30 @@ CREATE TABLE IF NOT EXISTS product_subfamilies (
     company_id INT NOT NULL,
     family_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
     FOREIGN KEY (family_id) REFERENCES product_families(id)
 );
+
+SET @product_families_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_families' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@product_families_code = 0, 'ALTER TABLE product_families ADD COLUMN code VARCHAR(3) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @product_subfamilies_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subfamilies' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@product_subfamilies_code = 0, 'ALTER TABLE product_subfamilies ADD COLUMN code VARCHAR(3) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS products (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -1802,6 +1904,15 @@ SET @idx_product_subfamilies_company := (
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subfamilies' AND INDEX_NAME = 'idx_product_subfamilies_company'
 );
 SET @sql := IF(@idx_product_subfamilies_company = 0, 'CREATE INDEX idx_product_subfamilies_company ON product_subfamilies(company_id);', 'SELECT 1;');
+PREPARE stmt FROM @sql;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @idx_competitor_companies_company := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND INDEX_NAME = 'idx_competitor_companies_company'
+);
+SET @sql := IF(@idx_competitor_companies_company = 0, 'CREATE INDEX idx_competitor_companies_company ON competitor_companies(company_id);', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -3109,6 +3220,7 @@ CREATE TABLE IF NOT EXISTS product_families (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id)
@@ -3119,11 +3231,26 @@ CREATE TABLE IF NOT EXISTS product_subfamilies (
     company_id INT NOT NULL,
     family_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
+    code VARCHAR(3) NOT NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
     FOREIGN KEY (family_id) REFERENCES product_families(id)
 );
+
+SET @product_families_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_families' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@product_families_code = 0, 'ALTER TABLE product_families ADD COLUMN code VARCHAR(3) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @product_subfamilies_code := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subfamilies' AND COLUMN_NAME = 'code'
+);
+SET @sql := IF(@product_subfamilies_code = 0, 'ALTER TABLE product_subfamilies ADD COLUMN code VARCHAR(3) NOT NULL DEFAULT '' AFTER name;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- Productos con vínculos a familias/subfamilias
 SET @family_id_exists := (
@@ -3194,6 +3321,13 @@ SET @idx_psf := (
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'product_subfamilies' AND INDEX_NAME = 'idx_product_subfamilies_company'
 );
 SET @sql := IF(@idx_psf = 0, 'CREATE INDEX idx_product_subfamilies_company ON product_subfamilies(company_id);', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @idx_cc := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND INDEX_NAME = 'idx_competitor_companies_company'
+);
+SET @sql := IF(@idx_cc = 0, 'CREATE INDEX idx_competitor_companies_company ON competitor_companies(company_id);', 'SELECT 1;');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @idx_pos := (
