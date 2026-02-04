@@ -51,6 +51,39 @@ class SalesController extends Controller
         ]);
     }
 
+    public function profitAnalysis(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $products = $this->products->active($companyId);
+        $analysis = [];
+
+        foreach ($products as $product) {
+            $salePrice = (float)($product['price'] ?? 0);
+            $supplierPrice = (float)($product['supplier_price'] ?? 0);
+            $competitionPrice = (float)($product['competition_price'] ?? 0);
+            $profitSupplier = $salePrice - $supplierPrice;
+            $profitCompetition = $salePrice - $competitionPrice;
+
+            $analysis[] = [
+                'product' => $product,
+                'sale_price' => $salePrice,
+                'supplier_price' => $supplierPrice,
+                'competition_price' => $competitionPrice,
+                'profit_supplier' => $profitSupplier,
+                'profit_competition' => $profitCompetition,
+                'profit_supplier_pct' => $supplierPrice > 0 ? ($profitSupplier / $supplierPrice) * 100 : null,
+                'profit_competition_pct' => $competitionPrice > 0 ? ($profitCompetition / $competitionPrice) * 100 : null,
+            ];
+        }
+
+        $this->render('sales/profit-analysis', [
+            'title' => 'Análisis de ganancias',
+            'pageTitle' => 'Análisis de ganancias',
+            'analysis' => $analysis,
+        ]);
+    }
+
     public function create(): void
     {
         $this->renderForm(false);

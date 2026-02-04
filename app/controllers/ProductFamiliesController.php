@@ -52,9 +52,11 @@ class ProductFamiliesController extends Controller
             flash('error', 'El nombre es obligatorio.');
             $this->redirect('index.php?route=maintainers/product-families/create');
         }
+        $code = generate_three_letter_code($name);
         $this->families->create([
             'company_id' => $companyId,
             'name' => $name,
+            'code' => $code,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -94,8 +96,10 @@ class ProductFamiliesController extends Controller
             flash('error', 'El nombre es obligatorio.');
             $this->redirect('index.php?route=maintainers/product-families/edit&id=' . $id);
         }
+        $code = generate_three_letter_code($name);
         $this->families->update($id, [
             'name' => $name,
+            'code' => $code,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         audit($this->db, Auth::user()['id'], 'update', 'product_families', $id);

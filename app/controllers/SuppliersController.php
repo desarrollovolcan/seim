@@ -51,10 +51,15 @@ class SuppliersController extends Controller
         verify_csrf();
         $companyId = $this->requireCompany();
         $name = trim($_POST['name'] ?? '');
+        $code = trim($_POST['code'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $website = trim($_POST['website'] ?? '');
         if (!Validator::required($name)) {
             flash('error', 'El nombre del proveedor es obligatorio.');
+            $this->redirect('index.php?route=suppliers/create');
+        }
+        if (!Validator::required($code)) {
+            flash('error', 'El código del proveedor es obligatorio.');
             $this->redirect('index.php?route=suppliers/create');
         }
         if (!Validator::optionalEmail($email)) {
@@ -69,6 +74,7 @@ class SuppliersController extends Controller
         $this->suppliers->create([
             'company_id' => $companyId,
             'name' => $name,
+            'code' => $code,
             'contact_name' => trim($_POST['contact_name'] ?? ''),
             'tax_id' => trim($_POST['tax_id'] ?? ''),
             'email' => $email,
@@ -116,10 +122,15 @@ class SuppliersController extends Controller
             $this->redirect('index.php?route=suppliers');
         }
         $name = trim($_POST['name'] ?? '');
+        $code = trim($_POST['code'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $website = trim($_POST['website'] ?? '');
         if (!Validator::required($name)) {
             flash('error', 'El nombre del proveedor es obligatorio.');
+            $this->redirect('index.php?route=suppliers/edit&id=' . $id);
+        }
+        if (!Validator::required($code)) {
+            flash('error', 'El código del proveedor es obligatorio.');
             $this->redirect('index.php?route=suppliers/edit&id=' . $id);
         }
         if (!Validator::optionalEmail($email)) {
@@ -133,6 +144,7 @@ class SuppliersController extends Controller
 
         $this->suppliers->update($id, [
             'name' => $name,
+            'code' => $code,
             'contact_name' => trim($_POST['contact_name'] ?? ''),
             'tax_id' => trim($_POST['tax_id'] ?? ''),
             'email' => $email,
