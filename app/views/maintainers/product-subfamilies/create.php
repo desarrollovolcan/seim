@@ -19,6 +19,7 @@
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
                         <input type="text" name="name" class="form-control" required>
+                        <small class="text-muted">El código de 3 letras se genera automáticamente.</small>
                     </div>
                     <div class="d-flex gap-2">
                         <button type="submit" class="btn btn-primary">Guardar</button>

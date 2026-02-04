@@ -6,6 +6,7 @@ class ProductsController extends Controller
     private SuppliersModel $suppliers;
     private ProductFamiliesModel $families;
     private ProductSubfamiliesModel $subfamilies;
+    private CompetitorCompaniesModel $competitors;
 
     public function __construct(array $config, Database $db)
     {
@@ -14,6 +15,7 @@ class ProductsController extends Controller
         $this->suppliers = new SuppliersModel($db);
         $this->families = new ProductFamiliesModel($db);
         $this->subfamilies = new ProductSubfamiliesModel($db);
+        $this->competitors = new CompetitorCompaniesModel($db);
     }
 
     private function requireCompany(): int
@@ -46,6 +48,7 @@ class ProductsController extends Controller
         $suppliers = $this->suppliers->active($companyId);
         $families = $this->families->active($companyId);
         $subfamilies = $this->subfamilies->active($companyId);
+        $competitors = $this->competitors->active($companyId);
 
         $this->render('products/create', [
             'title' => 'Nuevo producto',
@@ -53,6 +56,7 @@ class ProductsController extends Controller
             'suppliers' => $suppliers,
             'families' => $families,
             'subfamilies' => $subfamilies,
+            'competitors' => $competitors,
         ]);
     }
 
@@ -76,6 +80,7 @@ class ProductsController extends Controller
         }
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
+        $competitorCompanyId = !empty($_POST['competitor_company_id']) ? (int)$_POST['competitor_company_id'] : null;
         if ($familyId) {
             $family = $this->families->findForCompany($familyId, $companyId);
             if (!$family) {
@@ -97,12 +102,26 @@ class ProductsController extends Controller
                 $familyId = (int)$subfamily['family_id'];
             }
         }
+        if (!$competitorCompanyId || !$familyId || !$subfamilyId) {
+            flash('error', 'Selecciona empresa competencia, familia y subfamilia para generar el código.');
+            $this->redirect('index.php?route=products/create');
+        }
+        $competitorCompany = $this->competitors->findForCompany($competitorCompanyId, $companyId);
+        if (!$competitorCompany) {
+            flash('error', 'Empresa competencia no válida.');
+            $this->redirect('index.php?route=products/create');
+        }
+        $family = $this->families->findForCompany($familyId, $companyId);
+        $subfamily = $this->subfamilies->findForCompany($subfamilyId, $companyId);
+        $competitionCode = $this->buildCompetitionCode($companyId, $competitorCompany, $family, $subfamily);
 
         $this->products->create([
             'company_id' => $companyId,
             'supplier_id' => $supplierId,
+            'competitor_company_id' => $competitorCompanyId,
             'family_id' => $familyId,
             'subfamily_id' => $subfamilyId,
+            'competition_code' => $competitionCode,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
@@ -132,6 +151,7 @@ class ProductsController extends Controller
         $suppliers = $this->suppliers->active($companyId);
         $families = $this->families->active($companyId);
         $subfamilies = $this->subfamilies->active($companyId);
+        $competitors = $this->competitors->active($companyId);
 
         $this->render('products/edit', [
             'title' => 'Editar producto',
@@ -140,6 +160,7 @@ class ProductsController extends Controller
             'suppliers' => $suppliers,
             'families' => $families,
             'subfamilies' => $subfamilies,
+            'competitors' => $competitors,
         ]);
     }
 
@@ -169,6 +190,7 @@ class ProductsController extends Controller
         }
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
+        $competitorCompanyId = !empty($_POST['competitor_company_id']) ? (int)$_POST['competitor_company_id'] : null;
         if ($familyId) {
             $family = $this->families->findForCompany($familyId, $companyId);
             if (!$family) {
@@ -190,11 +212,32 @@ class ProductsController extends Controller
                 $familyId = (int)$subfamily['family_id'];
             }
         }
+        if (!$competitorCompanyId || !$familyId || !$subfamilyId) {
+            flash('error', 'Selecciona empresa competencia, familia y subfamilia para generar el código.');
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
+        $competitorCompany = $this->competitors->findForCompany($competitorCompanyId, $companyId);
+        if (!$competitorCompany) {
+            flash('error', 'Empresa competencia no válida.');
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
+        $family = $this->families->findForCompany($familyId, $companyId);
+        $subfamily = $this->subfamilies->findForCompany($subfamilyId, $companyId);
+        $competitionCode = $this->buildCompetitionCode(
+            $companyId,
+            $competitorCompany,
+            $family,
+            $subfamily,
+            $product['competition_code'] ?? null,
+            (int)$product['id']
+        );
 
         $this->products->update($id, [
             'supplier_id' => $supplierId,
+            'competitor_company_id' => $competitorCompanyId,
             'family_id' => $familyId,
             'subfamily_id' => $subfamilyId,
+            'competition_code' => $competitionCode,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
@@ -226,5 +269,36 @@ class ProductsController extends Controller
         audit($this->db, Auth::user()['id'], 'delete', 'products', $id);
         flash('success', 'Producto eliminado correctamente.');
         $this->redirect('index.php?route=products');
+    }
+
+    private function buildCompetitionCode(
+        int $companyId,
+        array $competitorCompany,
+        array $family,
+        array $subfamily,
+        ?string $currentCode = null,
+        ?int $excludeProductId = null
+    ): string {
+        $competitorCode = strtoupper(trim($competitorCompany['code'] ?? ''));
+        $familyCode = strtoupper(trim($family['code'] ?? ''));
+        $subfamilyCode = strtoupper(trim($subfamily['code'] ?? ''));
+        $prefix = "{$competitorCode}-{$familyCode}-{$subfamilyCode}-";
+
+        if ($currentCode && str_starts_with($currentCode, $prefix)) {
+            return $currentCode;
+        }
+
+        $lastCode = $this->products->latestCompetitionCode($companyId, $prefix, $excludeProductId);
+        $sequence = 1;
+        if ($lastCode) {
+            $parts = explode('-', $lastCode);
+            $lastSequence = (int)array_pop($parts);
+            if ($lastSequence > 0) {
+                $sequence = $lastSequence + 1;
+            }
+        }
+
+        $sequenceFormatted = str_pad((string)$sequence, 4, '0', STR_PAD_LEFT);
+        return $prefix . $sequenceFormatted;
     }
 }
