@@ -2,7 +2,7 @@
 require __DIR__ . '/app/bootstrap.php';
 
 $size = (int)($_GET['size'] ?? 192);
-$size = in_array($size, [192, 512], true) ? $size : 192;
+$size = in_array($size, [180, 192, 512], true) ? $size : 192;
 
 try {
     $companySettings = login_company_settings($db);

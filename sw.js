@@ -1,18 +1,21 @@
-const CACHE_VERSION = "seim-pwa-v1";
-const OFFLINE_URL = "/offline.html";
+const CACHE_VERSION = "seim-pwa-v2";
+const buildUrl = (path) => new URL(path, self.registration.scope).toString();
+const OFFLINE_URL = buildUrl("offline.html");
 
 const PRECACHE_URLS = [
   OFFLINE_URL,
-  "/manifest.php",
-  "/pwa-icon.php?size=192",
-  "/pwa-icon.php?size=512&maskable=1",
-  "/assets/images/logo.png",
-  "/assets/images/favicon.ico"
+  buildUrl("manifest.php"),
+  buildUrl("pwa-icon.php?size=192"),
+  buildUrl("pwa-icon.php?size=512&maskable=1"),
+  buildUrl("assets/images/logo.png"),
+  buildUrl("assets/images/favicon.ico")
 ];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_VERSION).then((cache) =>
+      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });
