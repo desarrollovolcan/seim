@@ -4,7 +4,7 @@
 Implementar una experiencia instalable y confiable para SEIM utilizando un manifiesto web, un service worker y una pantalla offline.
 
 ## Componentes
-- **manifest.webmanifest**: define nombre, colores, iconos y modo de visualización.
+- **manifest.php**: define nombre, colores, iconos y modo de visualización a partir de la configuración de empresa.
 - **sw.js**: gestiona cacheo de recursos y respuesta offline.
 - **offline.html**: página de respaldo cuando no hay conectividad.
 - **Registro del Service Worker**: se ejecuta desde `partials/footer-scripts.php`.
@@ -16,7 +16,7 @@ Implementar una experiencia instalable y confiable para SEIM utilizando un manif
 
 ## Checklist de despliegue
 1. Servir el sitio en HTTPS.
-2. Verificar que `manifest.webmanifest` se entregue con `Content-Type: application/manifest+json`.
+2. Verificar que `manifest.php` se entregue con `Content-Type: application/manifest+json`.
 3. Confirmar que `sw.js` se entregue sin cacheo agresivo desde el servidor.
 4. Ejecutar auditoría en Lighthouse para validar la instalación.
 
