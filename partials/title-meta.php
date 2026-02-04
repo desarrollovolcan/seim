@@ -2,6 +2,7 @@
 $themeColor = '#6658dd';
 $appName = 'SEIM';
 $appIcon = 'pwa-icon.php?size=192';
+$appleTouchIcon = 'pwa-icon.php?size=180';
 $baseUrl = '';
 
 if (function_exists('get_municipalidad')) {
@@ -33,5 +34,6 @@ if (function_exists('base_url')) {
 
 <!-- App favicon -->
 <link rel="shortcut icon" href="<?php echo htmlspecialchars($appIcon, ENT_QUOTES); ?>">
-<link rel="apple-touch-icon" href="<?php echo htmlspecialchars($appIcon, ENT_QUOTES); ?>">
+<link rel="icon" sizes="192x192" href="<?php echo htmlspecialchars($appIcon, ENT_QUOTES); ?>">
+<link rel="apple-touch-icon" sizes="180x180" href="<?php echo htmlspecialchars($appleTouchIcon, ENT_QUOTES); ?>">
 <link rel="manifest" href="<?php echo $baseUrl; ?>/manifest.php">
