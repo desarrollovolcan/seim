@@ -3,9 +3,9 @@ const OFFLINE_URL = "/offline.html";
 
 const PRECACHE_URLS = [
   OFFLINE_URL,
-  "/manifest.webmanifest",
-  "/assets/images/pwa-icon.svg",
-  "/assets/images/pwa-icon-maskable.svg",
+  "/manifest.php",
+  "/pwa-icon.php?size=192",
+  "/pwa-icon.php?size=512&maskable=1",
   "/assets/images/logo.png",
   "/assets/images/favicon.ico"
 ];
