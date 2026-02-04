@@ -259,7 +259,8 @@
                                         <tr>
                                             <th style="width: 45%;">Item</th>
                                             <th style="width: 15%;">Cantidad</th>
-                                            <th style="width: 20%;">Precio</th>
+                                            <th style="width: 17%;">Precio</th>
+                                            <th style="width: 13%;">Descuento</th>
                                             <th class="text-end" style="width: 15%;">Subtotal</th>
                                             <th style="width: 5%;"></th>
                                         </tr>
@@ -277,6 +278,7 @@
                                 <td class="item-name fw-semibold text-wrap"></td>
                                 <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="1"></td>
                                 <td><input type="number" name="unit_price[]" class="form-control form-control-sm price-input" step="0.01" min="0" value="0"></td>
+                                <td><input type="number" name="discount[]" class="form-control form-control-sm discount-input" step="0.01" min="0" value="0"></td>
                                 <td class="text-end item-subtotal fw-semibold">0</td>
                                 <td><button type="button" class="btn btn-link text-danger p-0 remove-row" aria-label="Eliminar">✕</button></td>
                             </tr>
@@ -290,6 +292,10 @@
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Subtotal</span>
                                     <strong id="sale-subtotal"><?php echo format_currency(0); ?></strong>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center summary-row">
+                                    <span class="text-muted">Descuento</span>
+                                    <input type="number" name="discount_total" id="sale-discount-total" class="form-control form-control-sm w-auto text-end" style="width: 140px;" step="0.01" min="0" value="0">
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Impuestos</span>
@@ -525,6 +531,7 @@
         const taxInput = document.getElementById('sale-tax');
         const applyTaxSelect = document.getElementById('apply-tax');
         const taxRateInput = document.getElementById('tax-rate');
+        const discountTotalInput = document.getElementById('sale-discount-total');
         const statusSelect = document.querySelector('select[name=\"status\"]');
         const holdButton = document.getElementById('mark-hold');
         const productSelectors = document.querySelectorAll('.add-product');
@@ -603,18 +610,21 @@
             tableBody.querySelectorAll('.item-row').forEach((row) => {
                 const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
                 const price = parseFloat(row.querySelector('.price-input').value) || 0;
-                const total = qty * price;
+                const discount = parseFloat(row.querySelector('.discount-input')?.value) || 0;
+                const total = Math.max(0, (qty * price) - discount);
                 subtotal += total;
                 row.querySelector('.item-subtotal').innerText = formatCurrency(total);
             });
             subtotalDisplay.innerText = formatCurrency(subtotal);
             const rate = parseFloat(taxRateInput?.value) || 0;
             const shouldApplyTax = applyTaxSelect?.value === '1';
-            const tax = shouldApplyTax ? Math.round(subtotal * rate) / 100 : 0;
+            const discountTotal = Math.max(0, parseFloat(discountTotalInput?.value) || 0);
+            const taxableBase = Math.max(0, subtotal - discountTotal);
+            const tax = shouldApplyTax ? Math.round(taxableBase * rate) / 100 : 0;
             if (taxInput) {
                 taxInput.value = tax.toFixed(2);
             }
-            totalDisplay.innerText = formatCurrency(subtotal + tax);
+            totalDisplay.innerText = formatCurrency(taxableBase + tax);
         }
 
         function addRow({ type, productId = '', serviceId = '', price = 0, name = '' }) {
@@ -638,7 +648,7 @@
         }
 
         tableBody.addEventListener('input', (event) => {
-            if (event.target.classList.contains('quantity-input') || event.target.classList.contains('price-input')) {
+            if (event.target.classList.contains('quantity-input') || event.target.classList.contains('price-input') || event.target.classList.contains('discount-input')) {
                 recalc();
             }
         });
@@ -651,6 +661,7 @@
         });
 
         applyTaxSelect?.addEventListener('change', recalc);
+        discountTotalInput?.addEventListener('input', recalc);
         clientSelect?.addEventListener('change', () => {
             applyClientSii(Number(clientSelect?.value || 0));
         });

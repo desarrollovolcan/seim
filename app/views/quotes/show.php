@@ -19,6 +19,7 @@
             </div>
             <div class="col-md-6">
                 <p><strong>Subtotal:</strong> <?php echo e(format_currency((float)($quote['subtotal'] ?? 0))); ?></p>
+                <p><strong>Descuento:</strong> <?php echo e(format_currency((float)($quote['discount_total'] ?? 0))); ?></p>
                 <p><strong>Impuestos:</strong> <?php echo e(format_currency((float)($quote['impuestos'] ?? 0))); ?></p>
                 <p><strong>Total:</strong> <?php echo e(format_currency((float)($quote['total'] ?? 0))); ?></p>
             </div>
@@ -67,6 +68,7 @@
                         <th>Descripción</th>
                         <th>Cantidad</th>
                         <th>Precio</th>
+                        <th>Descuento</th>
                         <th>Total</th>
                     </tr>
                 </thead>
@@ -76,6 +78,7 @@
                             <td><?php echo e($item['descripcion']); ?></td>
                             <td><?php echo e($item['cantidad']); ?></td>
                             <td><?php echo e(format_currency((float)($item['precio_unitario'] ?? 0))); ?></td>
+                            <td><?php echo e(format_currency((float)($item['descuento'] ?? 0))); ?></td>
                             <td><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
                         </tr>
                     <?php endforeach; ?>
