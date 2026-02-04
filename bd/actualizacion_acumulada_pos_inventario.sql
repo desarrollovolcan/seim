@@ -86,6 +86,20 @@ SET @subfamily_id_exists := (
 SET @sql := IF(@subfamily_id_exists = 0, 'ALTER TABLE products ADD COLUMN subfamily_id INT NULL AFTER family_id;', 'SELECT 1;');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+SET @competitor_company_id_exists := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'competitor_company_id'
+);
+SET @sql := IF(@competitor_company_id_exists = 0, 'ALTER TABLE products ADD COLUMN competitor_company_id INT NULL AFTER supplier_id;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @competition_code_exists := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'competition_code'
+);
+SET @sql := IF(@competition_code_exists = 0, 'ALTER TABLE products ADD COLUMN competition_code VARCHAR(30) NULL AFTER subfamily_id;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- POS: sesiones, pagos y referencia en ventas
 CREATE TABLE IF NOT EXISTS pos_sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,

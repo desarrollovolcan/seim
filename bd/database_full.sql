@@ -140,8 +140,10 @@ CREATE TABLE products (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
     supplier_id INT NULL,
+    competitor_company_id INT NULL,
     family_id INT NULL,
     subfamily_id INT NULL,
+    competition_code VARCHAR(30) NULL,
     name VARCHAR(150) NOT NULL,
     sku VARCHAR(100) NULL,
     description TEXT NULL,
@@ -155,6 +157,7 @@ CREATE TABLE products (
     deleted_at DATETIME NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
     FOREIGN KEY (supplier_id) REFERENCES suppliers(id),
+    FOREIGN KEY (competitor_company_id) REFERENCES competitor_companies(id),
     FOREIGN KEY (family_id) REFERENCES product_families(id),
     FOREIGN KEY (subfamily_id) REFERENCES product_subfamilies(id)
 );
