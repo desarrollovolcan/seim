@@ -224,6 +224,10 @@ $totalUnits = array_sum(array_map(static fn(array $item) => (int)($item['quantit
                 <td><?php echo e($saleDiscountLabel); ?></td>
             </tr>
             <tr>
+                <td>Descuento</td>
+                <td><?php echo e(format_currency((float)($sale['discount_total'] ?? 0))); ?></td>
+            </tr>
+            <tr>
                 <td>Impuestos</td>
                 <td><?php echo e(format_currency((float)($sale['tax'] ?? 0))); ?></td>
             </tr>

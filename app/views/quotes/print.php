@@ -409,6 +409,10 @@ $validUntil = $quote['valid_until'] ?? '';
             <td class="right"><?php echo e($quoteDiscountLabel); ?></td>
         </tr>
         <tr>
+            <td class="label">Descuento</td>
+            <td class="right"><?php echo e(format_currency((float)($quote['discount_total'] ?? 0))); ?></td>
+        </tr>
+        <tr>
             <td class="label">IVA</td>
             <td class="right"><?php echo e(format_currency((float)($quote['impuestos'] ?? 0))); ?></td>
         </tr>
