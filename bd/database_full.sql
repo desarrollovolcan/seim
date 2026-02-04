@@ -2577,16 +2577,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @invoices_sii_receiver_address := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoices' AND COLUMN_NAME = 'sii_receiver_address'
 );
+SET @sql := IF(@invoices_sii_receiver_address = 0, 'ALTER TABLE invoices ADD COLUMN sii_receiver_address VARCHAR(255) NULL AFTER sii_receiver_giro;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2600,16 +2595,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @invoices_sii_tax_rate := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'invoices' AND COLUMN_NAME = 'sii_tax_rate'
 );
+SET @sql := IF(@invoices_sii_tax_rate = 0, 'ALTER TABLE invoices ADD COLUMN sii_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19 AFTER sii_receiver_commune;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2668,16 +2658,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @quotes_sii_receiver_address := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quotes' AND COLUMN_NAME = 'sii_receiver_address'
 );
+SET @sql := IF(@quotes_sii_receiver_address = 0, 'ALTER TABLE quotes ADD COLUMN sii_receiver_address VARCHAR(255) NULL AFTER sii_receiver_giro;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2691,16 +2676,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @quotes_sii_tax_rate := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'quotes' AND COLUMN_NAME = 'sii_tax_rate'
 );
+SET @sql := IF(@quotes_sii_tax_rate = 0, 'ALTER TABLE quotes ADD COLUMN sii_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19 AFTER sii_receiver_commune;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2759,16 +2739,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @purchases_sii_receiver_address := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'purchases' AND COLUMN_NAME = 'sii_receiver_address'
 );
+SET @sql := IF(@purchases_sii_receiver_address = 0, 'ALTER TABLE purchases ADD COLUMN sii_receiver_address VARCHAR(255) NULL AFTER sii_receiver_giro;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2782,16 +2757,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @purchases_sii_tax_rate := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'purchases' AND COLUMN_NAME = 'sii_tax_rate'
 );
+SET @sql := IF(@purchases_sii_tax_rate = 0, 'ALTER TABLE purchases ADD COLUMN sii_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19 AFTER sii_receiver_commune;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2850,16 +2820,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @sales_sii_receiver_address := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = 'sii_receiver_address'
 );
+SET @sql := IF(@sales_sii_receiver_address = 0, 'ALTER TABLE sales ADD COLUMN sii_receiver_address VARCHAR(255) NULL AFTER sii_receiver_giro;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2873,16 +2838,11 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-);
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
 SET @sales_sii_tax_rate := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sales' AND COLUMN_NAME = 'sii_tax_rate'
 );
+SET @sql := IF(@sales_sii_tax_rate = 0, 'ALTER TABLE sales ADD COLUMN sii_tax_rate DECIMAL(5,2) NOT NULL DEFAULT 19 AFTER sii_receiver_commune;', 'SELECT 1;');
 PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
@@ -2897,15 +2857,6 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 COMMIT;
-
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
-
-
-
-
-
 
 
 START TRANSACTION;
