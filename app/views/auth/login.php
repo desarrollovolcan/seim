@@ -1,6 +1,7 @@
 <?php
 $loginLogoSrc = login_logo_src($companySettings ?? []);
 $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
+$companyLogos = $companyLogos ?? [];
 ?>
 
 <div class="auth-box p-0 w-100">
@@ -36,7 +37,7 @@ $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
                 <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
                     <div class="auth-brand mb-0 text-center">
                         <a href="index.php" class="logo-login">
-                            <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="28">
+                            <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="28" data-login-logo>
                         </a>
                     </div>
 
@@ -57,10 +58,16 @@ $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
                                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                                 <fieldset <?php echo $hasCompanies ? '' : 'disabled'; ?>>
                                     <div class="app-search w-100 input-group rounded-pill mb-3">
-                                        <select name="company_id" class="form-select py-2" required>
+                                        <select name="company_id" class="form-select py-2" required data-company-select>
                                             <option value="">Selecciona empresa</option>
                                             <?php foreach (($companies ?? []) as $company): ?>
-                                                <option value="<?php echo e((string)$company['id']); ?>"><?php echo e($company['name']); ?></option>
+                                                <?php $companyId = (int)$company['id']; ?>
+                                                <option
+                                                    value="<?php echo e((string)$companyId); ?>"
+                                                    data-logo="<?php echo e($companyLogos[$companyId] ?? $loginLogoSrc); ?>"
+                                                >
+                                                    <?php echo e($company['name']); ?>
+                                                </option>
                                             <?php endforeach; ?>
                                         </select>
                                     </div>
@@ -102,6 +109,24 @@ $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
 </div>
 
 <script>
+    const companySelect = document.querySelector('[data-company-select]');
+    const loginLogo = document.querySelector('[data-login-logo]');
+    const updateLoginLogo = () => {
+        if (!companySelect || !loginLogo) {
+            return;
+        }
+        const selectedOption = companySelect.options[companySelect.selectedIndex];
+        if (!selectedOption) {
+            return;
+        }
+        const nextLogo = selectedOption.dataset.logo;
+        if (nextLogo) {
+            loginLogo.src = nextLogo;
+        }
+    };
+    companySelect?.addEventListener('change', updateLoginLogo);
+    updateLoginLogo();
+
     document.querySelector('[data-toggle-password]')?.addEventListener('click', (event) => {
         const button = event.currentTarget;
         const passwordInput = document.querySelector('[data-password-field]');
