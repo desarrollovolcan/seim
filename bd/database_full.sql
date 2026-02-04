@@ -2,8 +2,8 @@
 -- Orden: database.sql, actualizaciones 20250301, 20250320, 20251231, 20260415,
 -- 20260420, 20260425, 20260428 (OC), 20260428 (detalle OV), acumulada POS/Inventario.
 
-CREATE DATABASE IF NOT EXISTS gocreative_ges CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
-USE gocreative_ges;
+CREATE DATABASE IF NOT EXISTS gocreative_seim CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE gocreative_seim;
 
 CREATE TABLE roles (
     id INT AUTO_INCREMENT PRIMARY KEY,
