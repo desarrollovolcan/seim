@@ -335,7 +335,7 @@ foreach (($lowStockProducts ?? []) as $item) {
         if (productCostCtx) {
             const productCostGradient = buildGradient(productCostCtx.getContext('2d'), 'rgba(90, 77, 225, 0.6)', 'rgba(90, 77, 225, 0.1)');
             new Chart(productCostCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: productCostLabels,
                     datasets: [
@@ -434,7 +434,7 @@ foreach (($lowStockProducts ?? []) as $item) {
             const profitBar = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
             const costBar = buildGradient(profitCtx.getContext('2d'), 'rgba(148, 163, 184, 0.5)', 'rgba(148, 163, 184, 0.15)');
             new Chart(profitCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: profitLabels,
                     datasets: [
