@@ -94,14 +94,16 @@ $defaultIssueDate = date('Y-m-d');
                 </div>
                 <div class="card-body">
                     <div class="row g-2 mb-2 fw-semibold text-muted small">
-                        <div class="col-md-4">Descripción</div>
+                        <div class="col-md-3">Descripción</div>
                         <div class="col-md-2">Cantidad</div>
                         <div class="col-md-2">Precio unitario</div>
-                        <div class="col-md-3">Total</div>
+                        <div class="col-md-2">Descuento</div>
+                        <div class="col-md-1">Tipo</div>
+                        <div class="col-md-2">Total</div>
                         <div class="col-md-1 text-center">Quitar</div>
                     </div>
                     <div class="row g-2 mb-2" data-item-row>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <input type="text" name="items[0][descripcion]" class="form-control" data-item-description>
                         </div>
                         <div class="col-md-2">
@@ -110,7 +112,16 @@ $defaultIssueDate = date('Y-m-d');
                         <div class="col-md-2">
                             <input type="number" name="items[0][precio_unitario]" class="form-control" value="0" step="0.01" data-item-price>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <input type="number" name="items[0][descuento]" class="form-control" value="0" step="0.01" min="0" data-item-discount>
+                        </div>
+                        <div class="col-md-1">
+                            <select name="items[0][discount_type]" class="form-select" data-item-discount-type>
+                                <option value="amount" selected>$</option>
+                                <option value="percent">%</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <input type="number" name="items[0][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
                         </div>
                         <div class="col-md-1 d-flex align-items-center justify-content-center">
@@ -132,6 +143,17 @@ $defaultIssueDate = date('Y-m-d');
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Subtotal</label>
                     <input type="number" name="subtotal" class="form-control" value="0" step="0.01" readonly data-subtotal>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Descuento</label>
+                    <input type="number" name="discount_total" class="form-control" value="0" step="0.01" min="0" data-discount-total>
+                </div>
+                <div class="col-md-1 mb-3">
+                    <label class="form-label">Tipo</label>
+                    <select name="discount_total_type" class="form-select" data-discount-total-type>
+                        <option value="amount" selected>$</option>
+                        <option value="percent">%</option>
+                    </select>
                 </div>
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Impuestos</label>
@@ -164,6 +186,8 @@ $defaultIssueDate = date('Y-m-d');
 <script>
     const clientSelect = document.querySelector('[data-client-select]');
     const subtotalInput = document.querySelector('[data-subtotal]');
+    const discountTotalInput = document.querySelector('[data-discount-total]');
+    const discountTotalTypeSelect = document.querySelector('[data-discount-total-type]');
     const impuestosInput = document.querySelector('[data-impuestos]');
     const totalSummaryInput = document.querySelector('[data-total]');
     const taxRateInput = document.querySelector('[data-tax-rate]');
@@ -235,8 +259,14 @@ $defaultIssueDate = date('Y-m-d');
     const updateItemTotal = (row) => {
         const qty = Number(row.querySelector('[data-item-qty]')?.value || 0);
         const price = Number(row.querySelector('[data-item-price]')?.value || 0);
+        const discount = Number(row.querySelector('[data-item-discount]')?.value || 0);
+        const discountType = row.querySelector('[data-item-discount-type]')?.value || 'amount';
         const totalField = row.querySelector('[data-item-total]');
-        const rowSubtotal = formatNumber(qty * price);
+        const lineBase = qty * price;
+        const discountAmount = discountType === 'percent'
+            ? (lineBase * discount / 100)
+            : discount;
+        const rowSubtotal = formatNumber(Math.max(0, lineBase - Math.min(lineBase, discountAmount)));
         if (totalField) {
             totalField.value = rowSubtotal.toFixed(2);
         }
@@ -257,20 +287,28 @@ $defaultIssueDate = date('Y-m-d');
             updateItemTotal(row);
             subtotal += Number(row.querySelector('[data-item-total]')?.value || 0);
         });
+        const discountTotal = Math.max(0, Number(discountTotalInput?.value || 0));
+        const discountTotalType = discountTotalTypeSelect?.value || 'amount';
+        const discountTotalAmount = discountTotalType === 'percent'
+            ? (subtotal * discountTotal / 100)
+            : discountTotal;
+        const taxableBase = Math.max(0, subtotal - Math.min(subtotal, discountTotalAmount));
         const taxRate = Number(taxRateInput?.value || 0);
         const applyTax = (applyTaxSelect?.value || '1') === '1';
-        const taxes = applyTax ? formatNumber(subtotal * (taxRate / 100)) : 0;
+        const taxes = applyTax ? formatNumber(taxableBase * (taxRate / 100)) : 0;
         if (subtotalInput) {
             subtotalInput.value = formatNumber(subtotal).toFixed(2);
         }
         if (impuestosInput) {
             impuestosInput.value = formatNumber(taxes).toFixed(2);
         }
-        updateTotals();
+        if (totalSummaryInput) {
+            totalSummaryInput.value = formatNumber(taxableBase + taxes).toFixed(2);
+        }
     };
 
     document.addEventListener('input', (event) => {
-        if (event.target?.matches('[data-item-qty], [data-item-price]')) {
+        if (event.target?.matches('[data-item-qty], [data-item-price], [data-item-discount], [data-item-discount-type], [data-discount-total], [data-discount-total-type]')) {
             updateFromItems();
         }
     });
@@ -282,7 +320,7 @@ $defaultIssueDate = date('Y-m-d');
         row.className = 'row g-2 mb-2';
         row.setAttribute('data-item-row', 'true');
         row.innerHTML = `
-            <div class="col-md-4">
+            <div class="col-md-3">
                 <input type="text" name="items[${index}][descripcion]" class="form-control" data-item-description value="${description}">
             </div>
             <div class="col-md-2">
@@ -291,7 +329,16 @@ $defaultIssueDate = date('Y-m-d');
             <div class="col-md-2">
                 <input type="number" name="items[${index}][precio_unitario]" class="form-control" value="${formatNumber(price).toFixed(2)}" step="0.01" data-item-price>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <input type="number" name="items[${index}][descuento]" class="form-control" value="0" step="0.01" min="0" data-item-discount>
+            </div>
+            <div class="col-md-1">
+                <select name="items[${index}][discount_type]" class="form-select" data-item-discount-type>
+                    <option value="amount" selected>$</option>
+                    <option value="percent">%</option>
+                </select>
+            </div>
+            <div class="col-md-2">
                 <input type="number" name="items[${index}][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
             </div>
             <div class="col-md-1 d-flex align-items-center justify-content-center">
@@ -386,8 +433,10 @@ $defaultIssueDate = date('Y-m-d');
             row.querySelectorAll('input').forEach((input) => {
                 if (input.matches('[data-item-qty]')) {
                     input.value = '1';
-                } else if (input.matches('[data-item-price], [data-item-total]')) {
+                } else if (input.matches('[data-item-price], [data-item-total], [data-item-discount]')) {
                     input.value = '0';
+                } else if (input.matches('[data-item-discount-type]')) {
+                    input.value = 'amount';
                 } else {
                     input.value = '';
                 }
