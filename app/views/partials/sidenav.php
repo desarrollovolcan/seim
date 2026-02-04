@@ -86,13 +86,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
-                            <?php if ($hasPermission('produced_products_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=produced-products" class="side-nav-link">
-                                        <span class="menu-text">Productos fabricados</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
                             <?php if ($hasPermission('production_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=production/inputs" class="side-nav-link">
