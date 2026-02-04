@@ -12,23 +12,13 @@ try {
 
 $appName = $companySettings['name'] ?? 'SEIM Inventario';
 $shortName = $companySettings['name'] ?? 'SEIM';
-$appIcon = $companySettings['logo_color'] ?? 'assets/images/pwa-icon.svg';
-$maskableIcon = $companySettings['logo_color'] ?? 'assets/images/pwa-icon-maskable.svg';
+$appIcon = 'pwa-icon.php?size=192';
+$maskableIcon = 'pwa-icon.php?size=512&maskable=1';
 $themeColor = '#6658dd';
 
 $baseUrl = function_exists('base_url') ? rtrim(base_url(), '/') : '';
 $startUrl = ($baseUrl !== '' ? $baseUrl : '') . '/index.php';
 $scope = ($baseUrl !== '' ? $baseUrl : '') . '/';
-
-$iconMimeType = function (string $path): string {
-    $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-    return match ($extension) {
-        'svg' => 'image/svg+xml',
-        'jpg', 'jpeg' => 'image/jpeg',
-        'webp' => 'image/webp',
-        default => 'image/png',
-    };
-};
 
 $manifest = [
     'name' => $appName,
@@ -44,13 +34,13 @@ $manifest = [
     'icons' => [
         [
             'src' => $appIcon,
-            'sizes' => 'any',
-            'type' => $iconMimeType($appIcon),
+            'sizes' => '192x192',
+            'type' => 'image/png',
         ],
         [
             'src' => $maskableIcon,
-            'sizes' => 'any',
-            'type' => $iconMimeType($maskableIcon),
+            'sizes' => '512x512',
+            'type' => 'image/png',
             'purpose' => 'maskable',
         ],
     ],

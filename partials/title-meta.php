@@ -1,7 +1,7 @@
 <?php
 $themeColor = '#6658dd';
 $appName = 'SEIM';
-$appIcon = 'assets/images/logo.png';
+$appIcon = 'pwa-icon.php?size=192';
 $baseUrl = '';
 
 if (function_exists('get_municipalidad')) {
@@ -12,7 +12,6 @@ if (function_exists('get_municipalidad')) {
 
 if (isset($companySettings) && is_array($companySettings)) {
     $appName = $companySettings['name'] ?? $appName;
-    $appIcon = $companySettings['logo_color'] ?? $appIcon;
 }
 
 if (function_exists('base_url')) {

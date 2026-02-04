@@ -5,6 +5,7 @@ Implementar una experiencia instalable y confiable para SEIM utilizando un manif
 
 ## Componentes
 - **manifest.php**: define nombre, colores, iconos y modo de visualización a partir de la configuración de empresa.
+- **pwa-icon.php**: genera íconos PNG (192/512) desde el logo configurado para cumplir requisitos de instalación.
 - **sw.js**: gestiona cacheo de recursos y respuesta offline.
 - **offline.html**: página de respaldo cuando no hay conectividad.
 - **Registro del Service Worker**: se ejecuta desde `partials/footer-scripts.php`.
