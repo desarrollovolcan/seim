@@ -100,6 +100,13 @@ SET @competition_code_exists := (
 SET @sql := IF(@competition_code_exists = 0, 'ALTER TABLE products ADD COLUMN competition_code VARCHAR(30) NULL AFTER subfamily_id;', 'SELECT 1;');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+SET @supplier_code_exists := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'supplier_code'
+);
+SET @sql := IF(@supplier_code_exists = 0, 'ALTER TABLE products ADD COLUMN supplier_code VARCHAR(30) NULL AFTER competition_code;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- POS: sesiones, pagos y referencia en ventas
 CREATE TABLE IF NOT EXISTS pos_sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,

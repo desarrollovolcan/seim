@@ -144,6 +144,7 @@ CREATE TABLE products (
     family_id INT NULL,
     subfamily_id INT NULL,
     competition_code VARCHAR(30) NULL,
+    supplier_code VARCHAR(30) NULL,
     name VARCHAR(150) NOT NULL,
     sku VARCHAR(100) NULL,
     description TEXT NULL,

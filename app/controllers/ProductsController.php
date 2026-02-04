@@ -77,6 +77,9 @@ class ProductsController extends Controller
                 flash('error', 'Proveedor no válido para esta empresa.');
                 $this->redirect('index.php?route=products/create');
             }
+        } else {
+            flash('error', 'Selecciona un proveedor para generar el código.');
+            $this->redirect('index.php?route=products/create');
         }
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
@@ -114,6 +117,7 @@ class ProductsController extends Controller
         $family = $this->families->findForCompany($familyId, $companyId);
         $subfamily = $this->subfamilies->findForCompany($subfamilyId, $companyId);
         $competitionCode = $this->buildCompetitionCode($companyId, $competitorCompany, $family, $subfamily);
+        $supplierCode = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
 
         $this->products->create([
             'company_id' => $companyId,
@@ -122,6 +126,7 @@ class ProductsController extends Controller
             'family_id' => $familyId,
             'subfamily_id' => $subfamilyId,
             'competition_code' => $competitionCode,
+            'supplier_code' => $supplierCode,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
@@ -187,6 +192,9 @@ class ProductsController extends Controller
                 flash('error', 'Proveedor no válido para esta empresa.');
                 $this->redirect('index.php?route=products/edit&id=' . $id);
             }
+        } else {
+            flash('error', 'Selecciona un proveedor para generar el código.');
+            $this->redirect('index.php?route=products/edit&id=' . $id);
         }
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
@@ -231,6 +239,14 @@ class ProductsController extends Controller
             $product['competition_code'] ?? null,
             (int)$product['id']
         );
+        $supplierCode = $this->buildSupplierCode(
+            $companyId,
+            $supplier,
+            $family,
+            $subfamily,
+            $product['supplier_code'] ?? null,
+            (int)$product['id']
+        );
 
         $this->products->update($id, [
             'supplier_id' => $supplierId,
@@ -238,6 +254,7 @@ class ProductsController extends Controller
             'family_id' => $familyId,
             'subfamily_id' => $subfamilyId,
             'competition_code' => $competitionCode,
+            'supplier_code' => $supplierCode,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
@@ -289,6 +306,37 @@ class ProductsController extends Controller
         }
 
         $lastCode = $this->products->latestCompetitionCode($companyId, $prefix, $excludeProductId);
+        $sequence = 1;
+        if ($lastCode) {
+            $parts = explode('-', $lastCode);
+            $lastSequence = (int)array_pop($parts);
+            if ($lastSequence > 0) {
+                $sequence = $lastSequence + 1;
+            }
+        }
+
+        $sequenceFormatted = str_pad((string)$sequence, 4, '0', STR_PAD_LEFT);
+        return $prefix . $sequenceFormatted;
+    }
+
+    private function buildSupplierCode(
+        int $companyId,
+        array $supplier,
+        array $family,
+        array $subfamily,
+        ?string $currentCode = null,
+        ?int $excludeProductId = null
+    ): string {
+        $supplierCode = strtoupper(trim($supplier['code'] ?? ''));
+        $familyCode = strtoupper(trim($family['code'] ?? ''));
+        $subfamilyCode = strtoupper(trim($subfamily['code'] ?? ''));
+        $prefix = "{$supplierCode}-{$familyCode}-{$subfamilyCode}-";
+
+        if ($currentCode && str_starts_with($currentCode, $prefix)) {
+            return $currentCode;
+        }
+
+        $lastCode = $this->products->latestSupplierCode($companyId, $prefix, $excludeProductId);
         $sequence = 1;
         if ($lastCode) {
             $parts = explode('-', $lastCode);
