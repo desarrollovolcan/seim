@@ -217,10 +217,12 @@ class SalesController extends Controller
         $prefix = $isPos ? 'POS-' : 'VEN-';
         $numero = $this->sales->nextNumber($prefix, $companyId);
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
+        $discountTotal = max(0.0, (float)($_POST['discount_total'] ?? 0));
         $applyTax = !empty($_POST['apply_tax']);
         $taxRate = (float)($_POST['tax_rate'] ?? 0);
-        $tax = $applyTax ? max(0, round($subtotal * $taxRate / 100, 2)) : 0.0;
-        $total = $subtotal + $tax;
+        $taxableBase = max(0.0, $subtotal - $discountTotal);
+        $tax = $applyTax ? max(0, round($taxableBase * $taxRate / 100, 2)) : 0.0;
+        $total = $taxableBase + $tax;
         $status = $_POST['status'] ?? ($isPos ? 'pagado' : 'pendiente');
         $allowedStatus = ['pagado', 'pendiente', 'borrador', 'en_espera'];
         if (!in_array($status, $allowedStatus, true)) {
@@ -240,6 +242,7 @@ class SalesController extends Controller
                 'sale_date' => trim($_POST['sale_date'] ?? date('Y-m-d')),
                 'status' => $status,
                 'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
                 'tax' => $tax,
                 'total' => $total,
                 'notes' => trim($_POST['notes'] ?? ''),
@@ -255,6 +258,7 @@ class SalesController extends Controller
                     'service_id' => $item['service']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_price' => $item['unit_price'],
+                    'discount' => $item['discount'],
                     'subtotal' => $item['subtotal'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
@@ -376,6 +380,7 @@ class SalesController extends Controller
         $serviceIds = $_POST['service_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitPrices = $_POST['unit_price'] ?? [];
+        $discounts = $_POST['discount'] ?? [];
         $types = $_POST['item_type'] ?? [];
         $items = [];
 
@@ -387,6 +392,7 @@ class SalesController extends Controller
             $serviceId = (int)($serviceIds[$index] ?? 0);
             $quantity = max(0, (int)($quantities[$index] ?? 0));
             $unitPrice = max(0.0, (float)($unitPrices[$index] ?? 0));
+            $discount = max(0.0, (float)($discounts[$index] ?? 0));
             if ($quantity <= 0) {
                 continue;
             }
@@ -402,7 +408,8 @@ class SalesController extends Controller
                     'service' => $service,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'subtotal' => $quantity * $price,
+                    'discount' => $discount,
+                    'subtotal' => max(0.0, ($quantity * $price) - $discount),
                 ];
                 continue;
             }
@@ -422,7 +429,8 @@ class SalesController extends Controller
                     'service' => null,
                     'quantity' => $quantity,
                     'unit_price' => $price,
-                    'subtotal' => $quantity * $price,
+                    'discount' => $discount,
+                    'subtotal' => max(0.0, ($quantity * $price) - $discount),
                 ];
                 continue;
             }
@@ -441,7 +449,8 @@ class SalesController extends Controller
                     'service' => null,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0),
-                    'subtotal' => $quantity * ($unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0)),
+                    'discount' => $discount,
+                    'subtotal' => max(0.0, ($quantity * ($unitPrice > 0 ? $unitPrice : (float)($product['price'] ?? 0))) - $discount),
                 ];
             }
         }

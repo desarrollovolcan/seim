@@ -361,6 +361,7 @@ $validUntil = $quote['valid_until'] ?? '';
                     <th>Descripción</th>
                     <th width="60">Cant.</th>
                     <th width="90">Precio</th>
+                    <th width="90">Descuento</th>
                     <th width="100">Subtotal</th>
                 </tr>
             </thead>
@@ -371,6 +372,7 @@ $validUntil = $quote['valid_until'] ?? '';
                         <td><?php echo e($item['descripcion']); ?></td>
                         <td class="right"><?php echo e($item['cantidad']); ?></td>
                         <td class="right"><?php echo e(format_currency((float)($item['precio_unitario'] ?? 0))); ?></td>
+                        <td class="right"><?php echo e(format_currency((float)($item['descuento'] ?? 0))); ?></td>
                         <td class="right"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
                     </tr>
                 <?php endforeach; ?>
@@ -382,6 +384,10 @@ $validUntil = $quote['valid_until'] ?? '';
         <tr>
             <td class="label">Neto</td>
             <td class="right"><?php echo e(format_currency((float)($quote['subtotal'] ?? 0))); ?></td>
+        </tr>
+        <tr>
+            <td class="label">Descuento</td>
+            <td class="right"><?php echo e(format_currency((float)($quote['discount_total'] ?? 0))); ?></td>
         </tr>
         <tr>
             <td class="label">IVA</td>

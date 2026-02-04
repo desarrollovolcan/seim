@@ -29,6 +29,7 @@
                     </div>
                     <div class="col-md-6 text-md-end">
                         <p class="mb-1"><strong>Subtotal:</strong> <?php echo e(format_currency((float)($sale['subtotal'] ?? 0))); ?></p>
+                        <p class="mb-1"><strong>Descuento:</strong> <?php echo e(format_currency((float)($sale['discount_total'] ?? 0))); ?></p>
                         <p class="mb-1"><strong>Impuestos:</strong> <?php echo e(format_currency((float)($sale['tax'] ?? 0))); ?></p>
                         <p class="mb-1"><strong>Total:</strong> <?php echo e(format_currency((float)($sale['total'] ?? 0))); ?></p>
                     </div>
@@ -66,6 +67,7 @@
                                 <th>Producto</th>
                                 <th>Cantidad</th>
                                 <th class="text-end">Precio unitario</th>
+                                <th class="text-end">Descuento</th>
                                 <th class="text-end">Subtotal</th>
                             </tr>
                         </thead>
@@ -75,6 +77,7 @@
                                     <td><?php echo e($item['product_name'] ?? 'Producto eliminado'); ?></td>
                                     <td><?php echo (int)($item['quantity'] ?? 0); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['unit_price'] ?? 0))); ?></td>
+                                    <td class="text-end"><?php echo e(format_currency((float)($item['discount'] ?? 0))); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>
                                 </tr>
                             <?php endforeach; ?>
