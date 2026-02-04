@@ -1,4 +1,4 @@
-const CACHE_VERSION = "seim-pwa-v1";
+const CACHE_VERSION = "seim-pwa-v2";
 const buildUrl = (path) => new URL(path, self.registration.scope).toString();
 const OFFLINE_URL = buildUrl("offline.html");
 
@@ -13,7 +13,9 @@ const PRECACHE_URLS = [
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => cache.addAll(PRECACHE_URLS))
+    caches.open(CACHE_VERSION).then((cache) =>
+      Promise.allSettled(PRECACHE_URLS.map((url) => cache.add(url)))
+    )
   );
   self.skipWaiting();
 });

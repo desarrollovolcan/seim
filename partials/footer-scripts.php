@@ -4,11 +4,14 @@
 <!-- App js -->
 <script src="assets/js/app.js"></script>
 
+<?php $baseUrl = function_exists('base_url') ? rtrim(base_url(), '/') : ''; ?>
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      const swUrl = "<?php echo rtrim(base_url(), '/'); ?>/sw.js";
-      navigator.serviceWorker.register(swUrl).catch((error) => {
+      const baseUrl = "<?php echo $baseUrl; ?>";
+      const swUrl = baseUrl ? `${baseUrl}/sw.js` : "/sw.js";
+      const scope = baseUrl ? `${baseUrl}/` : "/";
+      navigator.serviceWorker.register(swUrl, { scope }).catch((error) => {
         console.warn("Service worker registration failed:", error);
       });
     });
