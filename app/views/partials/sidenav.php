@@ -66,6 +66,40 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                 </li>
             <?php endif; ?>
+            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit'])): ?>
+                <li class="side-nav-title">Ventas</li>
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarSales" aria-expanded="false" aria-controls="sidebarSales" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
+                        <span class="menu-label">
+                            <span class="menu-text">Ventas</span>
+                            <span class="menu-caption">Registros y análisis</span>
+                        </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarSales">
+                        <ul class="sub-menu">
+                            <?php if ($hasPermission('sales_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=sales" class="side-nav-link">
+                                        <span class="menu-text">Listado ventas</span>
+                                    </a>
+                                </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=sales/create" class="side-nav-link">
+                                        <span class="menu-text">Registrar venta</span>
+                                    </a>
+                                </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=sales/profit-analysis" class="side-nav-link">
+                                        <span class="menu-text">Análisis ganancias</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
+            <?php endif; ?>
             <?php if ($hasCompany && $canAccessAny(['products_view', 'products_edit', 'produced_products_view', 'produced_products_edit', 'product_families_view', 'product_subfamilies_view', 'production_view', 'production_edit'])): ?>
                 <li class="side-nav-title">Productos</li>
                 <li class="side-nav-item">

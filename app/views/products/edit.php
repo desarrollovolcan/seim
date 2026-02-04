@@ -96,6 +96,14 @@
                             </section>
                         </div>
                         <div class="col-md-3">
+                            <label class="form-label">Precio proveedor</label>
+                            <input type="number" name="supplier_price" class="form-control" step="0.01" min="0" value="<?php echo e((float)($product['supplier_price'] ?? 0)); ?>">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Precio competencia</label>
+                            <input type="number" name="competition_price" class="form-control" step="0.01" min="0" value="<?php echo e((float)($product['competition_price'] ?? 0)); ?>">
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">Precio venta</label>
                             <input type="number" name="price" class="form-control" step="0.01" min="0" value="<?php echo e((float)($product['price'] ?? 0)); ?>">
                         </div>

@@ -84,6 +84,8 @@ class ProductsController extends Controller
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
         $competitorCompanyId = !empty($_POST['competitor_company_id']) ? (int)$_POST['competitor_company_id'] : null;
+        $supplierPrice = (float)($_POST['supplier_price'] ?? 0);
+        $competitionPrice = (float)($_POST['competition_price'] ?? 0);
         if ($familyId) {
             $family = $this->families->findForCompany($familyId, $companyId);
             if (!$family) {
@@ -127,6 +129,8 @@ class ProductsController extends Controller
             'subfamily_id' => $subfamilyId,
             'competition_code' => $competitionCode,
             'supplier_code' => $supplierCode,
+            'supplier_price' => $supplierPrice,
+            'competition_price' => $competitionPrice,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),
@@ -199,6 +203,8 @@ class ProductsController extends Controller
         $familyId = !empty($_POST['family_id']) ? (int)$_POST['family_id'] : null;
         $subfamilyId = !empty($_POST['subfamily_id']) ? (int)$_POST['subfamily_id'] : null;
         $competitorCompanyId = !empty($_POST['competitor_company_id']) ? (int)$_POST['competitor_company_id'] : null;
+        $supplierPrice = (float)($_POST['supplier_price'] ?? 0);
+        $competitionPrice = (float)($_POST['competition_price'] ?? 0);
         if ($familyId) {
             $family = $this->families->findForCompany($familyId, $companyId);
             if (!$family) {
@@ -255,6 +261,8 @@ class ProductsController extends Controller
             'subfamily_id' => $subfamilyId,
             'competition_code' => $competitionCode,
             'supplier_code' => $supplierCode,
+            'supplier_price' => $supplierPrice,
+            'competition_price' => $competitionPrice,
             'name' => $name,
             'sku' => trim($_POST['sku'] ?? ''),
             'description' => trim($_POST['description'] ?? ''),

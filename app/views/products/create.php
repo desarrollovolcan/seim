@@ -95,6 +95,14 @@
                             </section>
                         </div>
                         <div class="col-md-3">
+                            <label class="form-label">Precio proveedor</label>
+                            <input type="number" name="supplier_price" class="form-control" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Precio competencia</label>
+                            <input type="number" name="competition_price" class="form-control" step="0.01" min="0" value="0">
+                        </div>
+                        <div class="col-md-3">
                             <label class="form-label">Precio venta</label>
                             <input type="number" name="price" class="form-control" step="0.01" min="0" value="0">
                         </div>

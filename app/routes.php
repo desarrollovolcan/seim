@@ -95,6 +95,7 @@ return [
     'sales/show' => ['SalesController', 'show'],
     'sales/receipt' => ['SalesController', 'receipt'],
     'sales/delete' => ['SalesController', 'delete'],
+    'sales/profit-analysis' => ['SalesController', 'profitAnalysis'],
     'pos' => ['SalesController', 'pos'],
     'pos/open' => ['SalesController', 'openSession'],
     'pos/close' => ['SalesController', 'closeSession'],

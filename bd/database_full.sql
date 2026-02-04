@@ -145,6 +145,8 @@ CREATE TABLE products (
     subfamily_id INT NULL,
     competition_code VARCHAR(30) NULL,
     supplier_code VARCHAR(30) NULL,
+    supplier_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    competition_price DECIMAL(12,2) NOT NULL DEFAULT 0,
     name VARCHAR(150) NOT NULL,
     sku VARCHAR(100) NULL,
     description TEXT NULL,
