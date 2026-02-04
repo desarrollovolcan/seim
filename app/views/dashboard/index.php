@@ -383,7 +383,7 @@ foreach (($lowStockProducts ?? []) as $item) {
             const salesArea = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.45)', 'rgba(74, 163, 255, 0.08)');
             const profitArea = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.4)', 'rgba(34, 181, 154, 0.05)');
             new Chart(salesCtx, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
                     labels: salesLabels,
                     datasets: [
@@ -428,15 +428,14 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const profitCtx = document.getElementById('profitByProductChart');
         if (profitCtx) {
-            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
+            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.45)', 'rgba(243, 162, 87, 0.05)');
             new Chart(profitCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: profitLabels,
                     datasets: [{
                         label: 'Ganancia',
                         data: profitTotals,
-                        backgroundColor: profitGradient,
                         borderColor: '#f3a257',
                         borderWidth: 1,
                         borderRadius: 8,
