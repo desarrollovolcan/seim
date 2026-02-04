@@ -415,6 +415,33 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     font-weight: 700;
 }
 
+.dashboard-metrics {
+    margin-bottom: 0.5rem;
+}
+
+.dashboard-metric-card {
+    background: linear-gradient(140deg, rgba(90, 77, 225, 0.08), rgba(90, 77, 225, 0.02));
+    border: 1px solid rgba(90, 77, 225, 0.12);
+}
+
+.dashboard-metric-title {
+    font-size: 0.78rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+.dashboard-metric-value {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0.35rem 0 0.2rem;
+}
+
+.dashboard-metric-subtitle {
+    font-size: 0.75rem;
+}
+
 .dashboard-chart {
     min-height: 240px;
 }
@@ -428,6 +455,14 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
 }
 
 @media (max-width: 767.98px) {
+    .dashboard-metric-card {
+        border-radius: 14px;
+    }
+
+    .dashboard-metric-value {
+        font-size: 1.15rem;
+    }
+
     .dashboard-chart {
         min-height: 200px;
     }

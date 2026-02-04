@@ -1,4 +1,64 @@
+<?php
+$totalProduced = 0;
+$totalSales = 0.0;
+$totalProfit = 0.0;
+$lowStockCount = 0;
+
+foreach (($producedProducts ?? []) as $item) {
+    $totalProduced += (int)($item['produced_quantity'] ?? 0);
+}
+foreach (($salesByProduct ?? []) as $item) {
+    $totalSales += (float)($item['total'] ?? 0);
+}
+foreach (($profitByProduct ?? []) as $item) {
+    $totalProfit += (float)($item['profit'] ?? 0);
+}
+foreach (($lowStockProducts ?? []) as $item) {
+    if ((int)($item['stock'] ?? 0) <= (int)($item['stock_min'] ?? 0)) {
+        $lowStockCount++;
+    }
+}
+?>
+
 <div class="dashboard-compact">
+    <div class="row g-2 mt-2 dashboard-metrics">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Unidades producidas</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$totalProduced; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Total acumulado</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ventas totales</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalSales)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Ingresos por producto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Ganancia estimada</div>
+                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalProfit)); ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Margen neto</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 dashboard-metric-card">
+                <div class="card-body">
+                    <div class="dashboard-metric-title">Stock en riesgo</div>
+                    <div class="dashboard-metric-value"><?php echo (int)$lowStockCount; ?></div>
+                    <div class="dashboard-metric-subtitle text-muted">Productos bajo mínimo</div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row g-2 mt-2">
         <div class="col-xl-6">
             <div class="card h-100">
@@ -253,21 +313,49 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const salesCtx = document.getElementById('salesByProductChart');
         if (salesCtx) {
-            const salesGradient = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.35)', 'rgba(34, 181, 154, 0.05)');
+            const salesPalette = ['#22b59a', '#5a4de1', '#f3a257', '#4aa3ff', '#f06c6c', '#7c8bff'];
             new Chart(salesCtx, {
-                type: 'line',
+                type: 'doughnut',
                 data: {
                     labels: salesLabels,
                     datasets: [{
                         label: 'Ventas',
                         data: salesTotals,
-                        borderColor: '#22b59a',
-                        backgroundColor: salesGradient,
+                        backgroundColor: salesPalette,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: isMobile ? '60%' : '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont }
+                        }
+                    }
+                }
+            });
+        }
+
+        const profitCtx = document.getElementById('profitByProductChart');
+        if (profitCtx) {
+            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.45)', 'rgba(243, 162, 87, 0.05)');
+            new Chart(profitCtx, {
+                type: 'line',
+                data: {
+                    labels: profitLabels,
+                    datasets: [{
+                        label: 'Ganancia',
+                        data: profitTotals,
+                        borderColor: '#f3a257',
+                        backgroundColor: profitGradient,
                         fill: true,
                         tension: 0.35,
                         pointRadius: isMobile ? 2 : 3,
                         pointHoverRadius: isMobile ? 3 : 4,
-                        pointBackgroundColor: '#22b59a'
+                        pointBackgroundColor: '#f3a257'
                     }]
                 },
                 options: {
@@ -276,36 +364,6 @@ foreach (($lowStockProducts ?? []) as $item) {
                     plugins: { legend: { display: false } },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
-                    }
-                }
-            });
-        }
-
-        const profitCtx = document.getElementById('profitByProductChart');
-        if (profitCtx) {
-            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
-            new Chart(profitCtx, {
-                type: 'bar',
-                data: {
-                    labels: profitLabels,
-                    datasets: [{
-                        label: 'Ganancia',
-                        data: profitTotals,
-                        backgroundColor: profitGradient,
-                        borderColor: '#f3a257',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        maxBarThickness: isMobile ? 18 : 36
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    indexAxis: isMobile ? 'y' : 'x',
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont } },
                         y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont } }
                     }
                 }
