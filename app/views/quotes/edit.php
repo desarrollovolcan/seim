@@ -5,6 +5,7 @@ $itemsData = $items ?: [[
     'cantidad' => 1,
     'precio_unitario' => 0,
     'descuento' => 0,
+    'discount_type' => 'amount',
     'total' => 0,
 ]];
 $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
@@ -145,6 +146,7 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
                         <div class="col-md-2">Cantidad</div>
                         <div class="col-md-2">Precio unitario</div>
                         <div class="col-md-2">Descuento</div>
+                        <div class="col-md-1">Tipo</div>
                         <div class="col-md-2">Total</div>
                         <div class="col-md-1 text-center">Quitar</div>
                     </div>
@@ -161,6 +163,12 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
                             </div>
                             <div class="col-md-2">
                                 <input type="number" name="items[<?php echo $index; ?>][descuento]" class="form-control" value="<?php echo e($item['descuento'] ?? 0); ?>" step="0.01" min="0" data-item-discount>
+                            </div>
+                            <div class="col-md-1">
+                                <select name="items[<?php echo $index; ?>][discount_type]" class="form-select" data-item-discount-type>
+                                    <option value="amount" <?php echo ($item['discount_type'] ?? 'amount') === 'amount' ? 'selected' : ''; ?>>$</option>
+                                    <option value="percent" <?php echo ($item['discount_type'] ?? '') === 'percent' ? 'selected' : ''; ?>>%</option>
+                                </select>
                             </div>
                             <div class="col-md-2">
                                 <input type="number" name="items[<?php echo $index; ?>][total]" class="form-control" value="<?php echo e($item['total']); ?>" step="0.01" readonly data-item-total>
@@ -190,6 +198,13 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
                     <div class="mb-3">
                         <label class="form-label">Descuento</label>
                         <input type="number" name="discount_total" class="form-control" value="<?php echo e($quote['discount_total'] ?? 0); ?>" step="0.01" min="0" data-discount-total>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo descuento</label>
+                        <select name="discount_total_type" class="form-select" data-discount-total-type>
+                            <option value="amount" <?php echo ($quote['discount_total_type'] ?? 'amount') === 'amount' ? 'selected' : ''; ?>>$</option>
+                            <option value="percent" <?php echo ($quote['discount_total_type'] ?? '') === 'percent' ? 'selected' : ''; ?>>%</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Impuestos</label>
@@ -225,6 +240,7 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
     const projectSelect = document.querySelector('[data-project-select]');
     const subtotalInput = document.querySelector('[data-subtotal]');
     const discountTotalInput = document.querySelector('[data-discount-total]');
+    const discountTotalTypeSelect = document.querySelector('[data-discount-total-type]');
     const impuestosInput = document.querySelector('[data-impuestos]');
     const totalSummaryInput = document.querySelector('[data-total]');
     const taxRateInput = document.querySelector('[data-tax-rate]');
@@ -298,8 +314,13 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
         const qty = Number(row.querySelector('[data-item-qty]')?.value || 0);
         const price = Number(row.querySelector('[data-item-price]')?.value || 0);
         const discount = Number(row.querySelector('[data-item-discount]')?.value || 0);
+        const discountType = row.querySelector('[data-item-discount-type]')?.value || 'amount';
         const totalField = row.querySelector('[data-item-total]');
-        const rowSubtotal = formatNumber(Math.max(0, (qty * price) - discount));
+        const lineBase = qty * price;
+        const discountAmount = discountType === 'percent'
+            ? (lineBase * discount / 100)
+            : discount;
+        const rowSubtotal = formatNumber(Math.max(0, lineBase - Math.min(lineBase, discountAmount)));
         if (totalField) {
             totalField.value = rowSubtotal.toFixed(2);
         }
@@ -313,7 +334,11 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
             subtotal += Number(row.querySelector('[data-item-total]')?.value || 0);
         });
         const discountTotal = Math.max(0, Number(discountTotalInput?.value || 0));
-        const taxableBase = Math.max(0, subtotal - discountTotal);
+        const discountTotalType = discountTotalTypeSelect?.value || 'amount';
+        const discountTotalAmount = discountTotalType === 'percent'
+            ? (subtotal * discountTotal / 100)
+            : discountTotal;
+        const taxableBase = Math.max(0, subtotal - Math.min(subtotal, discountTotalAmount));
         const taxRate = Number(taxRateInput?.value || 0);
         const applyTax = (applyTaxSelect?.value || '1') === '1';
         const taxes = applyTax ? formatNumber(taxableBase * (taxRate / 100)) : 0;
@@ -329,7 +354,7 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
     };
 
     document.addEventListener('input', (event) => {
-        if (event.target?.matches('[data-item-qty], [data-item-price], [data-item-discount], [data-discount-total]')) {
+        if (event.target?.matches('[data-item-qty], [data-item-price], [data-item-discount], [data-item-discount-type], [data-discount-total], [data-discount-total-type]')) {
             updateTotals();
         }
     });
@@ -352,6 +377,12 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
             </div>
             <div class="col-md-2">
                 <input type="number" name="items[${index}][descuento]" class="form-control" value="0" step="0.01" min="0" data-item-discount>
+            </div>
+            <div class="col-md-1">
+                <select name="items[${index}][discount_type]" class="form-select" data-item-discount-type>
+                    <option value="amount" selected>$</option>
+                    <option value="percent">%</option>
+                </select>
             </div>
             <div class="col-md-2">
                 <input type="number" name="items[${index}][total]" class="form-control" value="0" step="0.01" readonly data-item-total>
@@ -461,6 +492,8 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
                     input.value = '1';
                 } else if (input.matches('[data-item-price], [data-item-total], [data-item-discount]')) {
                     input.value = '0';
+                } else if (input.matches('[data-item-discount-type]')) {
+                    input.value = 'amount';
                 } else {
                     input.value = '';
                 }

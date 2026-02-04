@@ -75,6 +75,7 @@ class QuotesController extends Controller
         $projectId = trim($_POST['project_id'] ?? '');
         $issueDate = trim($_POST['fecha_emision'] ?? '');
         $discountTotal = (float)($_POST['discount_total'] ?? 0);
+        $discountTotalType = $_POST['discount_total_type'] ?? 'amount';
         $numero = trim($_POST['numero'] ?? '');
         if ($numero === '') {
             $numero = $this->quotes->nextNumber('COT-', $companyId);
@@ -114,14 +115,21 @@ class QuotesController extends Controller
             }
             $qty = max(1, (int)($item['cantidad'] ?? 1));
             $price = max(0.0, (float)($item['precio_unitario'] ?? 0));
-            $discount = max(0.0, (float)($item['descuento'] ?? 0));
-            $lineTotal = max(0.0, ($qty * $price) - $discount);
+            $discountValue = max(0.0, (float)($item['descuento'] ?? 0));
+            $discountType = $item['discount_type'] ?? 'amount';
+            $lineBase = $qty * $price;
+            $discountAmount = $discountType === 'percent'
+                ? ($lineBase * $discountValue / 100)
+                : $discountValue;
+            $discountAmount = min($lineBase, max(0.0, $discountAmount));
+            $lineTotal = max(0.0, $lineBase - $discountAmount);
             $subtotal += $lineTotal;
             $normalizedItems[] = [
                 'descripcion' => $item['descripcion'],
                 'cantidad' => $qty,
                 'precio_unitario' => $price,
-                'descuento' => $discount,
+                'descuento' => $discountValue,
+                'discount_type' => $discountType,
                 'total' => $lineTotal,
             ];
         }
@@ -133,7 +141,12 @@ class QuotesController extends Controller
         $applyTax = ($_POST['apply_tax_display'] ?? '1') === '1';
         $taxRate = (float)($_POST['tax_rate'] ?? 0);
         $discountTotal = max(0.0, $discountTotal);
-        $taxableBase = max(0.0, $subtotal - $discountTotal);
+        $discountTotalType = $discountTotalType === 'percent' ? 'percent' : 'amount';
+        $discountTotalAmount = $discountTotalType === 'percent'
+            ? ($subtotal * $discountTotal / 100)
+            : $discountTotal;
+        $discountTotalAmount = min($subtotal, max(0.0, $discountTotalAmount));
+        $taxableBase = max(0.0, $subtotal - $discountTotalAmount);
         $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
         $total = $taxableBase + $impuestos;
 
@@ -147,6 +160,7 @@ class QuotesController extends Controller
             'estado' => $_POST['estado'] ?? 'pendiente',
             'subtotal' => $subtotal,
             'discount_total' => $discountTotal,
+            'discount_total_type' => $discountTotalType,
             'impuestos' => $impuestos,
             'total' => $total,
             'notas' => trim($_POST['notas'] ?? ''),
@@ -162,6 +176,7 @@ class QuotesController extends Controller
                 'cantidad' => $item['cantidad'],
                 'precio_unitario' => $item['precio_unitario'],
                 'descuento' => $item['descuento'],
+                'discount_type' => $item['discount_type'],
                 'total' => $item['total'],
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
@@ -310,14 +325,21 @@ class QuotesController extends Controller
             }
             $qty = max(1, (int)($item['cantidad'] ?? 1));
             $price = max(0.0, (float)($item['precio_unitario'] ?? 0));
-            $discount = max(0.0, (float)($item['descuento'] ?? 0));
-            $lineTotal = max(0.0, ($qty * $price) - $discount);
+            $discountValue = max(0.0, (float)($item['descuento'] ?? 0));
+            $discountType = $item['discount_type'] ?? 'amount';
+            $lineBase = $qty * $price;
+            $discountAmount = $discountType === 'percent'
+                ? ($lineBase * $discountValue / 100)
+                : $discountValue;
+            $discountAmount = min($lineBase, max(0.0, $discountAmount));
+            $lineTotal = max(0.0, $lineBase - $discountAmount);
             $subtotal += $lineTotal;
             $normalizedItems[] = [
                 'descripcion' => $item['descripcion'],
                 'cantidad' => $qty,
                 'precio_unitario' => $price,
-                'descuento' => $discount,
+                'descuento' => $discountValue,
+                'discount_type' => $discountType,
                 'total' => $lineTotal,
             ];
         }
@@ -329,7 +351,12 @@ class QuotesController extends Controller
         $applyTax = ($_POST['apply_tax_display'] ?? '1') === '1';
         $taxRate = (float)($_POST['tax_rate'] ?? 0);
         $discountTotal = max(0.0, $discountTotal);
-        $taxableBase = max(0.0, $subtotal - $discountTotal);
+        $discountTotalType = $discountTotalType === 'percent' ? 'percent' : 'amount';
+        $discountTotalAmount = $discountTotalType === 'percent'
+            ? ($subtotal * $discountTotal / 100)
+            : $discountTotal;
+        $discountTotalAmount = min($subtotal, max(0.0, $discountTotalAmount));
+        $taxableBase = max(0.0, $subtotal - $discountTotalAmount);
         $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
         $total = $taxableBase + $impuestos;
 
@@ -342,6 +369,7 @@ class QuotesController extends Controller
             'estado' => $_POST['estado'] ?? 'pendiente',
             'subtotal' => $subtotal,
             'discount_total' => $discountTotal,
+            'discount_total_type' => $discountTotalType,
             'impuestos' => $impuestos,
             'total' => $total,
             'notas' => trim($_POST['notas'] ?? ''),
@@ -357,6 +385,7 @@ class QuotesController extends Controller
                 'cantidad' => $item['cantidad'],
                 'precio_unitario' => $item['precio_unitario'],
                 'descuento' => $item['descuento'],
+                'discount_type' => $item['discount_type'],
                 'total' => $item['total'],
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),

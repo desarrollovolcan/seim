@@ -29,7 +29,14 @@
                     </div>
                     <div class="col-md-6 text-md-end">
                         <p class="mb-1"><strong>Subtotal:</strong> <?php echo e(format_currency((float)($sale['subtotal'] ?? 0))); ?></p>
-                        <p class="mb-1"><strong>Descuento:</strong> <?php echo e(format_currency((float)($sale['discount_total'] ?? 0))); ?></p>
+                        <?php
+                        $saleDiscountType = $sale['discount_total_type'] ?? 'amount';
+                        $saleDiscountValue = (float)($sale['discount_total'] ?? 0);
+                        $saleDiscountLabel = $saleDiscountType === 'percent'
+                            ? sprintf('%s%%', rtrim(rtrim(number_format($saleDiscountValue, 2), '0'), '.'))
+                            : format_currency($saleDiscountValue);
+                        ?>
+                        <p class="mb-1"><strong>Descuento:</strong> <?php echo e($saleDiscountLabel); ?></p>
                         <p class="mb-1"><strong>Impuestos:</strong> <?php echo e(format_currency((float)($sale['tax'] ?? 0))); ?></p>
                         <p class="mb-1"><strong>Total:</strong> <?php echo e(format_currency((float)($sale['total'] ?? 0))); ?></p>
                     </div>
@@ -73,11 +80,23 @@
                         </thead>
                         <tbody>
                             <?php foreach ($items as $item): ?>
+                                <?php
+                                $itemDiscountType = $item['discount_type'] ?? 'amount';
+                                $itemDiscountValue = (float)($item['discount'] ?? 0);
+                                $itemBase = ((int)($item['quantity'] ?? 0)) * ((float)($item['unit_price'] ?? 0));
+                                $itemDiscountAmount = $itemDiscountType === 'percent'
+                                    ? ($itemBase * $itemDiscountValue / 100)
+                                    : $itemDiscountValue;
+                                $itemDiscountAmount = min($itemBase, max(0.0, $itemDiscountAmount));
+                                $itemDiscountLabel = $itemDiscountType === 'percent'
+                                    ? sprintf('%s%% (%s)', rtrim(rtrim(number_format($itemDiscountValue, 2), '0'), '.'), format_currency($itemDiscountAmount))
+                                    : format_currency($itemDiscountAmount);
+                                ?>
                                 <tr>
                                     <td><?php echo e($item['product_name'] ?? 'Producto eliminado'); ?></td>
                                     <td><?php echo (int)($item['quantity'] ?? 0); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['unit_price'] ?? 0))); ?></td>
-                                    <td class="text-end"><?php echo e(format_currency((float)($item['discount'] ?? 0))); ?></td>
+                                    <td class="text-end"><?php echo e($itemDiscountLabel); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>
                                 </tr>
                             <?php endforeach; ?>

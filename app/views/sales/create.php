@@ -260,7 +260,8 @@
                                             <th style="width: 45%;">Item</th>
                                             <th style="width: 15%;">Cantidad</th>
                                             <th style="width: 17%;">Precio</th>
-                                            <th style="width: 13%;">Descuento</th>
+                                            <th style="width: 10%;">Descuento</th>
+                                            <th style="width: 8%;">Tipo</th>
                                             <th class="text-end" style="width: 15%;">Subtotal</th>
                                             <th style="width: 5%;"></th>
                                         </tr>
@@ -279,6 +280,12 @@
                                 <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="1"></td>
                                 <td><input type="number" name="unit_price[]" class="form-control form-control-sm price-input" step="0.01" min="0" value="0"></td>
                                 <td><input type="number" name="discount[]" class="form-control form-control-sm discount-input" step="0.01" min="0" value="0"></td>
+                                <td>
+                                    <select name="discount_type[]" class="form-select form-select-sm discount-type-select">
+                                        <option value="amount" selected>$</option>
+                                        <option value="percent">%</option>
+                                    </select>
+                                </td>
                                 <td class="text-end item-subtotal fw-semibold">0</td>
                                 <td><button type="button" class="btn btn-link text-danger p-0 remove-row" aria-label="Eliminar">✕</button></td>
                             </tr>
@@ -295,7 +302,13 @@
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Descuento</span>
-                                    <input type="number" name="discount_total" id="sale-discount-total" class="form-control form-control-sm w-auto text-end" style="width: 140px;" step="0.01" min="0" value="0">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <input type="number" name="discount_total" id="sale-discount-total" class="form-control form-control-sm w-auto text-end" style="width: 120px;" step="0.01" min="0" value="0">
+                                        <select name="discount_total_type" id="sale-discount-total-type" class="form-select form-select-sm w-auto">
+                                            <option value="amount" selected>$</option>
+                                            <option value="percent">%</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div class="d-flex justify-content-between align-items-center summary-row">
                                     <span class="text-muted">Impuestos</span>
@@ -532,6 +545,7 @@
         const applyTaxSelect = document.getElementById('apply-tax');
         const taxRateInput = document.getElementById('tax-rate');
         const discountTotalInput = document.getElementById('sale-discount-total');
+        const discountTotalTypeSelect = document.getElementById('sale-discount-total-type');
         const statusSelect = document.querySelector('select[name=\"status\"]');
         const holdButton = document.getElementById('mark-hold');
         const productSelectors = document.querySelectorAll('.add-product');
@@ -611,7 +625,12 @@
                 const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
                 const price = parseFloat(row.querySelector('.price-input').value) || 0;
                 const discount = parseFloat(row.querySelector('.discount-input')?.value) || 0;
-                const total = Math.max(0, (qty * price) - discount);
+                const discountType = row.querySelector('.discount-type-select')?.value || 'amount';
+                const lineBase = qty * price;
+                const discountAmount = discountType === 'percent'
+                    ? (lineBase * discount / 100)
+                    : discount;
+                const total = Math.max(0, lineBase - Math.min(lineBase, discountAmount));
                 subtotal += total;
                 row.querySelector('.item-subtotal').innerText = formatCurrency(total);
             });
@@ -619,7 +638,11 @@
             const rate = parseFloat(taxRateInput?.value) || 0;
             const shouldApplyTax = applyTaxSelect?.value === '1';
             const discountTotal = Math.max(0, parseFloat(discountTotalInput?.value) || 0);
-            const taxableBase = Math.max(0, subtotal - discountTotal);
+            const discountTotalType = discountTotalTypeSelect?.value || 'amount';
+            const discountTotalAmount = discountTotalType === 'percent'
+                ? (subtotal * discountTotal / 100)
+                : discountTotal;
+            const taxableBase = Math.max(0, subtotal - Math.min(subtotal, discountTotalAmount));
             const tax = shouldApplyTax ? Math.round(taxableBase * rate) / 100 : 0;
             if (taxInput) {
                 taxInput.value = tax.toFixed(2);
@@ -648,7 +671,7 @@
         }
 
         tableBody.addEventListener('input', (event) => {
-            if (event.target.classList.contains('quantity-input') || event.target.classList.contains('price-input') || event.target.classList.contains('discount-input')) {
+            if (event.target.classList.contains('quantity-input') || event.target.classList.contains('price-input') || event.target.classList.contains('discount-input') || event.target.classList.contains('discount-type-select')) {
                 recalc();
             }
         });
@@ -662,6 +685,7 @@
 
         applyTaxSelect?.addEventListener('change', recalc);
         discountTotalInput?.addEventListener('input', recalc);
+        discountTotalTypeSelect?.addEventListener('change', recalc);
         clientSelect?.addEventListener('change', () => {
             applyClientSii(Number(clientSelect?.value || 0));
         });
