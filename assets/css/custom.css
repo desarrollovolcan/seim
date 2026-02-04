@@ -452,6 +452,24 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     font-size: 0.75rem;
 }
 
+.dashboard-metric-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.dashboard-metric-link {
+    font-weight: 600;
+    color: #5a4de1;
+    text-decoration: none;
+}
+
+.dashboard-metric-link:hover {
+    text-decoration: underline;
+}
+
 .dashboard-chart {
     min-height: 280px;
 }

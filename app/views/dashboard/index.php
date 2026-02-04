@@ -83,7 +83,10 @@ foreach (($lowStockProducts ?? []) as $item) {
                 <div class="card-body">
                     <div class="dashboard-metric-title">Unidades producidas</div>
                     <div class="dashboard-metric-value"><?php echo (int)$totalProduced; ?></div>
-                    <div class="dashboard-metric-subtitle text-muted">Total acumulado</div>
+                    <div class="dashboard-metric-meta">
+                        <span class="text-muted">Productos: <?php echo (int)$totalProducts; ?></span>
+                        <a href="index.php?route=production/stock" class="dashboard-metric-link">Detalle</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -92,7 +95,10 @@ foreach (($lowStockProducts ?? []) as $item) {
                 <div class="card-body">
                     <div class="dashboard-metric-title">Ventas totales</div>
                     <div class="dashboard-metric-value"><?php echo e(format_currency($totalSales)); ?></div>
-                    <div class="dashboard-metric-subtitle text-muted">Ingresos por producto</div>
+                    <div class="dashboard-metric-meta">
+                        <span class="text-muted">Promedio: <?php echo e(format_currency($totalSales / $totalProducts)); ?></span>
+                        <a href="index.php?route=sales" class="dashboard-metric-link">Detalle</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -101,7 +107,10 @@ foreach (($lowStockProducts ?? []) as $item) {
                 <div class="card-body">
                     <div class="dashboard-metric-title">Ganancia estimada</div>
                     <div class="dashboard-metric-value"><?php echo e(format_currency($totalProfit)); ?></div>
-                    <div class="dashboard-metric-subtitle text-muted">Margen neto</div>
+                    <div class="dashboard-metric-meta">
+                        <span class="text-muted">Rentabilidad</span>
+                        <a href="index.php?route=accounting/financial-statements" class="dashboard-metric-link">Detalle</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -110,7 +119,10 @@ foreach (($lowStockProducts ?? []) as $item) {
                 <div class="card-body">
                     <div class="dashboard-metric-title">Stock en riesgo</div>
                     <div class="dashboard-metric-value"><?php echo (int)$lowStockCount; ?></div>
-                    <div class="dashboard-metric-subtitle text-muted">Productos bajo mínimo</div>
+                    <div class="dashboard-metric-meta">
+                        <span class="text-muted">Bajo mínimo</span>
+                        <a href="index.php?route=inventory/movements" class="dashboard-metric-link">Detalle</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -307,9 +319,11 @@ foreach (($producedProducts ?? []) as $item) {
 }
 $salesLabels = [];
 $salesTotals = [];
+$salesUnits = [];
 foreach (($salesByProduct ?? []) as $item) {
     $salesLabels[] = $item['name'] ?? '';
     $salesTotals[] = (float)($item['total'] ?? 0);
+    $salesUnits[] = (int)($item['quantity'] ?? 0);
 }
 $profitLabels = [];
 $profitTotals = [];
@@ -335,6 +349,7 @@ foreach (($lowStockProducts ?? []) as $item) {
     const productCostStocks = <?php echo json_encode($productCostStocks, JSON_UNESCAPED_UNICODE); ?>;
     const salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
     const salesTotals = <?php echo json_encode($salesTotals, JSON_UNESCAPED_UNICODE); ?>;
+    const salesUnits = <?php echo json_encode($salesUnits, JSON_UNESCAPED_UNICODE); ?>;
     const profitLabels = <?php echo json_encode($profitLabels, JSON_UNESCAPED_UNICODE); ?>;
     const profitTotals = <?php echo json_encode($profitTotals, JSON_UNESCAPED_UNICODE); ?>;
     const lowStockLabels = <?php echo json_encode($lowStockLabels, JSON_UNESCAPED_UNICODE); ?>;
@@ -373,6 +388,7 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const productCostCtx = document.getElementById('productCostChart');
         if (productCostCtx) {
+            const productCostGradient = buildGradient(productCostCtx.getContext('2d'), 'rgba(90, 77, 225, 0.6)', 'rgba(90, 77, 225, 0.1)');
             new Chart(productCostCtx, {
                 type: 'line',
                 data: {
@@ -381,32 +397,24 @@ foreach (($lowStockProducts ?? []) as $item) {
                         {
                             label: 'Costo unitario',
                             data: productCostTotals,
+                            backgroundColor: productCostGradient,
                             borderColor: '#5a4de1',
-                            backgroundColor: 'rgba(90, 77, 225, 0.15)',
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: isMobile ? 2 : 3,
-                            pointHoverRadius: isMobile ? 3 : 4
-                        },
-                        {
-                            label: 'Unidades producidas',
-                            data: productCostUnits,
-                            borderColor: '#22b59a',
-                            backgroundColor: 'rgba(34, 181, 154, 0.12)',
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: isMobile ? 2 : 3,
-                            pointHoverRadius: isMobile ? 3 : 4
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
                         },
                         {
                             label: 'Stock actual',
                             data: productCostStocks,
-                            borderColor: '#f3a257',
-                            backgroundColor: 'rgba(243, 162, 87, 0.12)',
-                            fill: false,
-                            tension: 0.35,
-                            pointRadius: isMobile ? 2 : 3,
-                            pointHoverRadius: isMobile ? 3 : 4
+                            backgroundColor: 'rgba(34, 181, 154, 0.35)',
+                            borderColor: '#22b59a',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
                         }
                     ]
                 },
@@ -420,14 +428,8 @@ foreach (($lowStockProducts ?? []) as $item) {
                         }
                     },
                     scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel }
-                        },
-                        y: {
-                            grid: baseGrid,
-                            ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined }
-                        }
+                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
+                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
                     }
                 }
             });
@@ -435,32 +437,33 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const salesCtx = document.getElementById('salesByProductChart');
         if (salesCtx) {
-            const salesArea = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.45)', 'rgba(74, 163, 255, 0.08)');
-            const profitArea = buildGradient(salesCtx.getContext('2d'), 'rgba(34, 181, 154, 0.4)', 'rgba(34, 181, 154, 0.05)');
+            const salesBar = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.6)', 'rgba(74, 163, 255, 0.15)');
             new Chart(salesCtx, {
-                type: 'doughnut',
+                type: 'bar',
                 data: {
                     labels: salesLabels,
                     datasets: [
                         {
                             label: 'Ventas',
                             data: salesTotals,
+                            backgroundColor: salesBar,
                             borderColor: '#4aa3ff',
-                            backgroundColor: salesArea,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: isMobile ? 2 : 3,
-                            pointHoverRadius: isMobile ? 3 : 4
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
                         },
                         {
-                            label: 'Ganancia',
-                            data: profitTotals,
+                            label: 'Unidades',
+                            data: salesUnits,
+                            backgroundColor: 'rgba(34, 181, 154, 0.35)',
                             borderColor: '#22b59a',
-                            backgroundColor: profitArea,
-                            fill: true,
-                            tension: 0.4,
-                            pointRadius: isMobile ? 2 : 3,
-                            pointHoverRadius: isMobile ? 3 : 4
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
                         }
                     ]
                 },
@@ -483,26 +486,46 @@ foreach (($lowStockProducts ?? []) as $item) {
 
         const profitCtx = document.getElementById('profitByProductChart');
         if (profitCtx) {
-            const profitGradient = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.45)', 'rgba(243, 162, 87, 0.05)');
+            const profitBar = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
+            const costBar = buildGradient(profitCtx.getContext('2d'), 'rgba(148, 163, 184, 0.5)', 'rgba(148, 163, 184, 0.15)');
             new Chart(profitCtx, {
                 type: 'line',
                 data: {
                     labels: profitLabels,
-                    datasets: [{
-                        label: 'Ganancia',
-                        data: profitTotals,
-                        borderColor: '#f3a257',
-                        borderWidth: 1,
-                        borderRadius: 8,
-                        maxBarThickness: isMobile ? 14 : 32,
-                        barPercentage: isMobile ? 0.7 : 0.85,
-                        categoryPercentage: isMobile ? 0.7 : 0.8
-                    }]
+                    datasets: [
+                        {
+                            label: 'Ganancia',
+                            data: profitTotals,
+                            backgroundColor: profitBar,
+                            borderColor: '#f3a257',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
+                        },
+                        {
+                            label: 'Costo total',
+                            data: productCostTotals,
+                            backgroundColor: costBar,
+                            borderColor: '#94a3b8',
+                            borderWidth: 1,
+                            borderRadius: 8,
+                            maxBarThickness: isMobile ? 14 : 30,
+                            barPercentage: isMobile ? 0.65 : 0.85,
+                            categoryPercentage: isMobile ? 0.7 : 0.8
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
+                        }
+                    },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
                         y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
@@ -547,7 +570,7 @@ foreach (($lowStockProducts ?? []) as $item) {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: isMobile ? '65%' : '72%',
+                    cutout: isMobile ? '62%' : '70%',
                     plugins: {
                         legend: {
                             position: 'bottom',
