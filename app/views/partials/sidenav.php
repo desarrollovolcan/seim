@@ -152,7 +152,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'competitor_companies_view'])): ?>
                 <li class="side-nav-title">Compras</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarPurchases" aria-expanded="false" aria-controls="sidebarPurchases" class="side-nav-link">
@@ -183,6 +183,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 <li class="side-nav-item">
                                     <a href="index.php?route=suppliers" class="side-nav-link">
                                         <span class="menu-text">Proveedores</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('competitor_companies_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=maintainers/competitor-companies/create" class="side-nav-link">
+                                        <span class="menu-text">Empresas competencia</span>
                                     </a>
                                 </li>
                             <?php endif; ?>

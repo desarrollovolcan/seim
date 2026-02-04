@@ -28,10 +28,34 @@ CREATE TABLE IF NOT EXISTS competitor_companies (
     company_id INT NOT NULL,
     name VARCHAR(150) NOT NULL,
     code VARCHAR(50) NOT NULL,
+    rut VARCHAR(50) NULL,
+    email VARCHAR(150) NULL,
+    address VARCHAR(255) NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
+
+SET @competitor_companies_rut := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'rut'
+);
+SET @sql := IF(@competitor_companies_rut = 0, 'ALTER TABLE competitor_companies ADD COLUMN rut VARCHAR(50) NULL AFTER code;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_email := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'email'
+);
+SET @sql := IF(@competitor_companies_email = 0, 'ALTER TABLE competitor_companies ADD COLUMN email VARCHAR(150) NULL AFTER rut;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @competitor_companies_address := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'competitor_companies' AND COLUMN_NAME = 'address'
+);
+SET @sql := IF(@competitor_companies_address = 0, 'ALTER TABLE competitor_companies ADD COLUMN address VARCHAR(255) NULL AFTER email;', 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 SET @product_families_code := (
     SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS

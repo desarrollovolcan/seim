@@ -51,6 +51,9 @@ class CompetitorCompaniesController extends Controller
 
         $name = trim($_POST['name'] ?? '');
         $code = strtoupper(trim($_POST['code'] ?? ''));
+        $rut = trim($_POST['rut'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $address = trim($_POST['address'] ?? '');
 
         if ($name === '') {
             flash('error', 'El nombre es obligatorio.');
@@ -62,10 +65,18 @@ class CompetitorCompaniesController extends Controller
             $this->redirect('index.php?route=maintainers/competitor-companies/create');
         }
 
+        if (!Validator::optionalEmail($email)) {
+            flash('error', 'El correo no es válido.');
+            $this->redirect('index.php?route=maintainers/competitor-companies/create');
+        }
+
         $this->competitors->create([
             'company_id' => $companyId,
             'name' => $name,
             'code' => $code,
+            'rut' => $rut,
+            'email' => $email,
+            'address' => $address,
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -105,6 +116,9 @@ class CompetitorCompaniesController extends Controller
 
         $name = trim($_POST['name'] ?? '');
         $code = strtoupper(trim($_POST['code'] ?? ''));
+        $rut = trim($_POST['rut'] ?? '');
+        $email = trim($_POST['email'] ?? '');
+        $address = trim($_POST['address'] ?? '');
 
         if ($name === '') {
             flash('error', 'El nombre es obligatorio.');
@@ -116,9 +130,17 @@ class CompetitorCompaniesController extends Controller
             $this->redirect('index.php?route=maintainers/competitor-companies/edit&id=' . $id);
         }
 
+        if (!Validator::optionalEmail($email)) {
+            flash('error', 'El correo no es válido.');
+            $this->redirect('index.php?route=maintainers/competitor-companies/edit&id=' . $id);
+        }
+
         $this->competitors->update($id, [
             'name' => $name,
             'code' => $code,
+            'rut' => $rut,
+            'email' => $email,
+            'address' => $address,
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
