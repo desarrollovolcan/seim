@@ -8,9 +8,12 @@
 <script>
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      const baseUrl = "<?php echo $baseUrl; ?>";
-      const swUrl = baseUrl ? `${baseUrl}/sw.js` : "/sw.js";
-      const scope = baseUrl ? `${baseUrl}/` : "/";
+      const baseUrl = <?php echo json_encode($baseUrl); ?>;
+      const basePath = baseUrl
+        ? new URL(baseUrl, window.location.origin).pathname.replace(/\/$/, "")
+        : window.location.pathname.replace(/\/[^/]*$/, "");
+      const scope = `${basePath || ""}/`;
+      const swUrl = new URL(`${scope}sw.js`, window.location.origin).toString();
       navigator.serviceWorker.register(swUrl, { scope }).catch((error) => {
         console.warn("Service worker registration failed:", error);
       });
