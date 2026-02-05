@@ -34,11 +34,22 @@ CREATE TABLE users (
     role_id INT NOT NULL,
     avatar_path VARCHAR(255) NULL,
     signature TEXT NULL,
+    signature_image_path VARCHAR(255) NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME NULL,
     FOREIGN KEY (company_id) REFERENCES companies(id),
     FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE role_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
+    permission_key VARCHAR(120) NOT NULL,
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY idx_role_permission_unique (role_id, permission_key),
+    INDEX idx_role_permissions_role (role_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
 CREATE TABLE user_companies (

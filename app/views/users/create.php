@@ -46,8 +46,17 @@
                     </select>
                 </div>
                 <div class="col-md-12 mb-3">
-                    <label class="form-label">Firma</label>
-                    <textarea name="signature" class="form-control" rows="3"></textarea>
+                    <label class="form-label">Nombre para cotización</label>
+                    <input type="text" name="signature" class="form-control" placeholder="Nombre Apellido">
+                    <div class="form-text">Este nombre se mostrará sobre la firma en la cotización.</div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Firma para cotización (PNG)</label>
+                    <input type="file" name="signature_image" class="form-control" accept="image/png" id="signatureImageCreateInput">
+                    <div class="form-text">Formato permitido: PNG (máx 2MB).</div>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" data-bs-toggle="modal" data-bs-target="#quoteSignaturePreviewCreateModal" id="quoteSignaturePreviewCreateButton">
+                        Probar cómo se verá la cotización
+                    </button>
                 </div>
                 <div class="col-md-12 mb-3">
                     <label class="form-label">Foto de perfil</label>
@@ -68,3 +77,67 @@
 </form>
     </div>
 </div>
+
+
+<div class="modal fade" id="quoteSignaturePreviewCreateModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Vista previa de firma en cotización</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="border rounded p-3 bg-light">
+                    <div class="text-center fw-semibold mb-2" id="quoteSignaturePreviewCreateName">Nombre Apellido</div>
+                    <div class="text-center mb-2" style="min-height:70px;">
+                        <img id="quoteSignaturePreviewCreateImage" alt="Firma" style="max-height:70px; width:auto; display:none; margin:0 auto;">
+                        <div id="quoteSignaturePreviewCreateEmpty" class="text-muted small">Sube una firma PNG para previsualizarla.</div>
+                    </div>
+                    <div class="text-center text-muted small border-top pt-1">Firma responsable</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+(function () {
+    const nameInput = document.querySelector('input[name="signature"]');
+    const imageInput = document.getElementById('signatureImageCreateInput');
+    const modal = document.getElementById('quoteSignaturePreviewCreateModal');
+    if (!nameInput || !imageInput || !modal) {
+        return;
+    }
+
+    const previewName = document.getElementById('quoteSignaturePreviewCreateName');
+    const previewImage = document.getElementById('quoteSignaturePreviewCreateImage');
+    const previewEmpty = document.getElementById('quoteSignaturePreviewCreateEmpty');
+    let objectUrl = null;
+
+    const refreshPreview = function () {
+        const name = (nameInput.value || '').trim();
+        previewName.textContent = name !== '' ? name : 'Nombre Apellido';
+
+        const file = imageInput.files && imageInput.files[0] ? imageInput.files[0] : null;
+        if (objectUrl) {
+            URL.revokeObjectURL(objectUrl);
+            objectUrl = null;
+        }
+
+        if (file) {
+            objectUrl = URL.createObjectURL(file);
+            previewImage.src = objectUrl;
+            previewImage.style.display = 'block';
+            previewEmpty.style.display = 'none';
+        } else {
+            previewImage.removeAttribute('src');
+            previewImage.style.display = 'none';
+            previewEmpty.style.display = 'block';
+        }
+    };
+
+    modal.addEventListener('show.bs.modal', refreshPreview);
+    imageInput.addEventListener('change', refreshPreview);
+    nameInput.addEventListener('input', refreshPreview);
+})();
+</script>
