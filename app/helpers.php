@@ -304,6 +304,40 @@ function upload_avatar(?array $file, string $prefix): array
     return ['path' => 'storage/uploads/avatars/' . $filename, 'error' => null];
 }
 
+function upload_user_signature(?array $file, string $prefix): array
+{
+    if ($file === null || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['path' => null, 'error' => null];
+    }
+
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        return ['path' => null, 'error' => 'No pudimos cargar la firma, intenta nuevamente.'];
+    }
+
+    if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+        return ['path' => null, 'error' => 'La firma supera el tamaño máximo de 2MB.'];
+    }
+
+    $info = getimagesize($file['tmp_name'] ?? '');
+    if ($info === false || ($info['mime'] ?? '') !== 'image/png') {
+        return ['path' => null, 'error' => 'La firma debe estar en formato PNG.'];
+    }
+
+    $directory = __DIR__ . '/../storage/uploads/signatures';
+    $directoryError = ensure_upload_directory($directory);
+    if ($directoryError !== null) {
+        return ['path' => null, 'error' => $directoryError];
+    }
+
+    $filename = sprintf('%s-%s.png', $prefix, bin2hex(random_bytes(8)));
+    $destination = $directory . '/' . $filename;
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        return ['path' => null, 'error' => 'No pudimos guardar la firma en el servidor.'];
+    }
+
+    return ['path' => 'storage/uploads/signatures/' . $filename, 'error' => null];
+}
+
 function normalize_rut(?string $rut): string
 {
     $rut = strtoupper((string)$rut);

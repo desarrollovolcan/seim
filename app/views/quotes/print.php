@@ -212,6 +212,35 @@
                 display: none;
             }
         }
+
+        .signature-block {
+            margin-top: 24px;
+            width: 280px;
+            text-align: center;
+        }
+        .signature-name {
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        .signature-image-wrap {
+            min-height: 56px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            margin-bottom: 6px;
+        }
+        .signature-image {
+            max-height: 70px;
+            width: auto;
+            display: block;
+        }
+        .signature-line {
+            border-top: 1px solid #1f2937;
+            padding-top: 4px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+
     </style>
 </head>
 
@@ -427,6 +456,24 @@ $validUntil = $quote['valid_until'] ?? '';
             <li>Vigencia de la cotización: 15 días.</li>
         </ul>
     </div>
+
+    <?php
+    $sellerName = trim((string)($sellerUser['signature'] ?? $sellerUser['name'] ?? ''));
+    $sellerSignatureImage = trim((string)($sellerUser['signature_image_path'] ?? ''));
+    ?>
+    <?php if ($sellerName !== '' || $sellerSignatureImage !== ''): ?>
+        <div class="signature-block">
+            <?php if ($sellerName !== ''): ?>
+                <div class="signature-name"><?php echo e($sellerName); ?></div>
+            <?php endif; ?>
+            <?php if ($sellerSignatureImage !== ''): ?>
+                <div class="signature-image-wrap">
+                    <img src="<?php echo e($sellerSignatureImage); ?>" alt="Firma" class="signature-image">
+                </div>
+            <?php endif; ?>
+            <div class="signature-line">Firma responsable</div>
+        </div>
+    <?php endif; ?>
 </div>
 
 <div class="footer">

@@ -46,8 +46,14 @@
                     </select>
                 </div>
                 <div class="col-md-12 mb-3">
-                    <label class="form-label">Firma</label>
-                    <textarea name="signature" class="form-control" rows="3"></textarea>
+                    <label class="form-label">Nombre para cotización</label>
+                    <input type="text" name="signature" class="form-control" placeholder="Nombre Apellido">
+                    <div class="form-text">Este nombre se mostrará sobre la firma en la cotización.</div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Firma para cotización (PNG)</label>
+                    <input type="file" name="signature_image" class="form-control" accept="image/png">
+                    <div class="form-text">Formato permitido: PNG (máx 2MB).</div>
                 </div>
                 <div class="col-md-12 mb-3">
                     <label class="form-label">Foto de perfil</label>
