@@ -66,7 +66,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit'])): ?>
                 <li class="side-nav-title">Ventas</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarSales" aria-expanded="false" aria-controls="sidebarSales" class="side-nav-link">
@@ -100,6 +100,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                         <span class="menu-text">Cotizaciones</span>
                                     </a>
                                 </li>
+                                <?php if ($hasPermission('clients_view')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=clients" class="side-nav-link">
+                                            <span class="menu-text">Clientes</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=sales/profit-analysis" class="side-nav-link">
                                         <span class="menu-text">Análisis ganancias</span>
