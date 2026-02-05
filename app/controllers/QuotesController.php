@@ -492,6 +492,14 @@ class QuotesController extends Controller
             ['id' => $quote['client_id'], 'company_id' => current_company_id()]
         );
         $company = (new SettingsModel($this->db))->get('company', []);
+        $currentUser = Auth::user();
+        $sellerUser = null;
+        if (!empty($currentUser['id'])) {
+            $sellerUser = $this->db->fetch(
+                'SELECT id, name, signature, signature_image_path FROM users WHERE id = :id AND deleted_at IS NULL',
+                ['id' => (int)$currentUser['id']]
+            );
+        }
         $viewPath = __DIR__ . '/../views/quotes/print.php';
         if (file_exists($viewPath)) {
             include $viewPath;
