@@ -38,6 +38,7 @@ CREATE TABLE users (
     role_id INT NOT NULL,
     avatar_path VARCHAR(255) NULL,
     signature TEXT NULL,
+    signature_image_path VARCHAR(255) NULL,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME NULL,

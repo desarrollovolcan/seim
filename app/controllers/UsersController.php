@@ -69,6 +69,11 @@ class UsersController extends Controller
             flash('error', $avatarResult['error']);
             $this->redirect('index.php?route=users/create');
         }
+        $signatureImageResult = upload_user_signature($_FILES['signature_image'] ?? null, 'signature');
+        if (!empty($signatureImageResult['error'])) {
+            flash('error', $signatureImageResult['error']);
+            $this->redirect('index.php?route=users/create');
+        }
 
         $primaryCompanyId = $companyIds[0];
         $userId = $this->users->create([
@@ -79,6 +84,7 @@ class UsersController extends Controller
             'role_id' => (int)($_POST['role_id'] ?? 2),
             'avatar_path' => $avatarResult['path'],
             'signature' => trim($_POST['signature'] ?? ''),
+            'signature_image_path' => $signatureImageResult['path'],
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
@@ -162,6 +168,14 @@ class UsersController extends Controller
         }
         if (!empty($avatarResult['path'])) {
             $data['avatar_path'] = $avatarResult['path'];
+        }
+        $signatureImageResult = upload_user_signature($_FILES['signature_image'] ?? null, 'signature');
+        if (!empty($signatureImageResult['error'])) {
+            flash('error', $signatureImageResult['error']);
+            $this->redirect('index.php?route=users/edit&id=' . $id);
+        }
+        if (!empty($signatureImageResult['path'])) {
+            $data['signature_image_path'] = $signatureImageResult['path'];
         }
         if (!empty($_POST['password'])) {
             $data['password'] = password_hash($_POST['password'], PASSWORD_DEFAULT);

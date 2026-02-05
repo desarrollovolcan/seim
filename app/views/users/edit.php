@@ -53,8 +53,19 @@
                     </select>
                 </div>
                 <div class="col-md-12 mb-3">
-                    <label class="form-label">Firma</label>
-                    <textarea name="signature" class="form-control" rows="3"><?php echo e($user['signature']); ?></textarea>
+                    <label class="form-label">Nombre para cotización</label>
+                    <input type="text" name="signature" class="form-control" value="<?php echo e($user['signature']); ?>" placeholder="Nombre Apellido">
+                    <div class="form-text">Este nombre se mostrará sobre la firma en la cotización.</div>
+                </div>
+                <div class="col-md-12 mb-3">
+                    <label class="form-label">Firma para cotización (PNG)</label>
+                    <input type="file" name="signature_image" class="form-control" accept="image/png">
+                    <div class="form-text">Formato permitido: PNG (máx 2MB).</div>
+                    <?php if (!empty($user['signature_image_path'])): ?>
+                        <div class="mt-2">
+                            <img src="<?php echo e($user['signature_image_path']); ?>" alt="Firma de usuario" style="max-height: 80px; width: auto;">
+                        </div>
+                    <?php endif; ?>
                 </div>
                 <div class="col-md-12 mb-3">
                     <label class="form-label">Foto de perfil</label>
