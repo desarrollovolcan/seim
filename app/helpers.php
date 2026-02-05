@@ -1041,11 +1041,32 @@ function permission_edit_key_for_view(string $viewKey): ?string
     return null;
 }
 
+
+function table_exists(Database $db, string $table): bool
+{
+    static $cache = [];
+    if (array_key_exists($table, $cache)) {
+        return $cache[$table];
+    }
+
+    $row = $db->fetch(
+        'SELECT COUNT(*) AS total FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table',
+        ['table' => $table]
+    );
+    $exists = (int)($row['total'] ?? 0) > 0;
+    $cache[$table] = $exists;
+    return $exists;
+}
+
 function role_permissions(Database $db, int $roleId): array
 {
     static $cache = [];
     if (isset($cache[$roleId])) {
         return $cache[$roleId];
+    }
+    if (!table_exists($db, 'role_permissions')) {
+        $cache[$roleId] = [];
+        return [];
     }
     $rows = $db->fetchAll('SELECT permission_key FROM role_permissions WHERE role_id = :role_id', [
         'role_id' => $roleId,

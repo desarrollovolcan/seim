@@ -46,6 +46,16 @@ CREATE TABLE users (
     FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
+CREATE TABLE role_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
+    permission_key VARCHAR(120) NOT NULL,
+    created_at DATETIME NOT NULL,
+    UNIQUE KEY idx_role_permission_unique (role_id, permission_key),
+    INDEX idx_role_permissions_role (role_id),
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
+);
+
 CREATE TABLE user_companies (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,

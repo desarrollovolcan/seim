@@ -41,9 +41,14 @@ class PermissionsController extends Controller
         $permissions = $_POST['permissions'] ?? [];
         $permissions = array_values(array_filter($permissions, 'is_string'));
         if ($roleId) {
-            $this->permissions->replaceForRole($roleId, $permissions);
-            audit($this->db, Auth::user()['id'], 'update', 'role_permissions', $roleId);
-            flash('success', 'Permisos actualizados correctamente.');
+            try {
+                $this->permissions->replaceForRole($roleId, $permissions);
+                audit($this->db, Auth::user()['id'], 'update', 'role_permissions', $roleId);
+                flash('success', 'Permisos actualizados correctamente.');
+            } catch (Throwable $e) {
+                error_log('Error al actualizar permisos: ' . $e->getMessage());
+                flash('error', 'No se pudieron guardar los permisos. Revisa la configuración de base de datos e intenta nuevamente.');
+            }
         }
         $this->redirect('index.php?route=users/permissions&role_id=' . $roleId);
     }
