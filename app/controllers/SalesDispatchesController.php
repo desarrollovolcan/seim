@@ -26,10 +26,20 @@ class SalesDispatchesController extends Controller
         return (int)$companyId;
     }
 
+
+    private function moduleReady(): bool
+    {
+        return table_exists($this->db, 'sales_dispatches') && table_exists($this->db, 'sales_dispatch_items');
+    }
+
     public function index(): void
     {
         $this->requireLogin();
         $companyId = $this->requireCompany();
+        if (!$this->moduleReady()) {
+            flash('error', 'Faltan tablas del módulo Control Camiones. Ejecuta la migración bd/actualizacion_20260205_despacho_camiones.sql');
+            $this->redirect('index.php?route=dashboard');
+        }
 
         $this->render('sales/dispatches/index', [
             'title' => 'Despachos de camiones',
@@ -43,6 +53,10 @@ class SalesDispatchesController extends Controller
     {
         $this->requireLogin();
         $companyId = $this->requireCompany();
+        if (!$this->moduleReady()) {
+            flash('error', 'Faltan tablas del módulo Control Camiones. Ejecuta la migración bd/actualizacion_20260205_despacho_camiones.sql');
+            $this->redirect('index.php?route=dashboard');
+        }
 
         $dispatches = $this->dispatches->listWithRelations($companyId);
         $openDispatches = array_values(array_filter($dispatches, static fn(array $row): bool => ($row['status'] ?? '') === 'abierto'));
@@ -60,12 +74,18 @@ class SalesDispatchesController extends Controller
     {
         $this->requireLogin();
         $companyId = $this->requireCompany();
+        if (!$this->moduleReady()) {
+            flash('error', 'Faltan tablas del módulo Control Camiones. Ejecuta la migración bd/actualizacion_20260205_despacho_camiones.sql');
+            $this->redirect('index.php?route=dashboard');
+        }
+
+        $sessions = table_exists($this->db, 'pos_sessions') ? $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]) : [];
 
         $this->render('sales/dispatches/create', [
             'title' => 'Nuevo despacho',
             'pageTitle' => 'Nuevo despacho de camión',
             'producedProducts' => $this->producedProducts->active($companyId),
-            'sessions' => $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]),
+            'sessions' => $sessions,
             'today' => date('Y-m-d'),
         ]);
     }
@@ -75,6 +95,10 @@ class SalesDispatchesController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
+        if (!$this->moduleReady()) {
+            flash('error', 'No se puede guardar el despacho: faltan tablas del módulo Control Camiones.');
+            $this->redirect('index.php?route=sales/dispatches/create');
+        }
 
         $truckCode = trim($_POST['truck_code'] ?? '');
         $sellerName = trim($_POST['seller_name'] ?? '');
@@ -142,13 +166,13 @@ class SalesDispatchesController extends Controller
 
             $pdo->commit();
             flash('success', 'Despacho creado. Registra retorno y dinero cuando vuelva el camión.');
-            $this->redirect('index.php?route=sales/dispatches/show&id=' . $dispatchId);
+            $this->redirect('index.php?route=sales/dispatches/create');
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
             log_message('error', 'No se pudo crear despacho: ' . $e->getMessage());
-            flash('error', 'No se pudo crear el despacho.');
+            flash('error', 'No se pudo crear el despacho: ' . $e->getMessage());
             $this->redirect('index.php?route=sales/dispatches/create');
         }
     }
@@ -158,6 +182,10 @@ class SalesDispatchesController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $id = (int)($_GET['id'] ?? 0);
+        if (!$this->moduleReady()) {
+            flash('error', 'Faltan tablas del módulo Control Camiones.');
+            $this->redirect('index.php?route=dashboard');
+        }
 
         $dispatch = $this->dispatches->findWithRelations($id, $companyId);
         if (!$dispatch) {
@@ -179,6 +207,10 @@ class SalesDispatchesController extends Controller
         verify_csrf();
         $companyId = $this->requireCompany();
         $id = (int)($_POST['id'] ?? 0);
+        if (!$this->moduleReady()) {
+            flash('error', 'Faltan tablas del módulo Control Camiones.');
+            $this->redirect('index.php?route=dashboard');
+        }
 
         $dispatch = $this->dispatches->findWithRelations($id, $companyId);
         if (!$dispatch) {
