@@ -11,9 +11,8 @@ class SalesDispatchesModel extends Model
                     COALESCE((SELECT SUM(quantity_dispatched) FROM sales_dispatch_items WHERE dispatch_id = sd.id), 0) AS total_dispatched,
                     COALESCE((SELECT SUM(empty_returned_total) FROM sales_dispatch_items WHERE dispatch_id = sd.id), 0) AS total_empty_returned,
                     COALESCE((SELECT SUM(empty_merma) FROM sales_dispatch_items WHERE dispatch_id = sd.id), 0) AS total_merma,
-                    COALESCE((SELECT SUM(si.quantity * si.unit_price)
+                    COALESCE((SELECT SUM(s.total)
                               FROM sales s
-                              JOIN sale_items si ON si.sale_id = s.id
                               WHERE s.pos_session_id = sd.pos_session_id), 0) AS pos_sales_total
              FROM sales_dispatches sd
              LEFT JOIN pos_sessions ps ON ps.id = sd.pos_session_id
@@ -27,9 +26,8 @@ class SalesDispatchesModel extends Model
     {
         return $this->db->fetch(
             'SELECT sd.*, ps.session_code,
-                    COALESCE((SELECT SUM(si.quantity * si.unit_price)
+                    COALESCE((SELECT SUM(s.total)
                               FROM sales s
-                              JOIN sale_items si ON si.sale_id = s.id
                               WHERE s.pos_session_id = sd.pos_session_id), 0) AS pos_sales_total
              FROM sales_dispatches sd
              LEFT JOIN pos_sessions ps ON ps.id = sd.pos_session_id
