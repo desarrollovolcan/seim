@@ -81,12 +81,15 @@ class SalesDispatchesController extends Controller
 
         $sessions = table_exists($this->db, 'pos_sessions') ? $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]) : [];
 
+        $dispatches = $this->dispatches->listWithRelations($companyId);
+
         $this->render('sales/dispatches/create', [
             'title' => 'Nuevo despacho',
             'pageTitle' => 'Nuevo despacho de camión',
             'producedProducts' => $this->producedProducts->active($companyId),
             'sessions' => $sessions,
             'today' => date('Y-m-d'),
+            'recentDispatches' => array_slice($dispatches, 0, 20),
         ]);
     }
 
@@ -102,13 +105,27 @@ class SalesDispatchesController extends Controller
 
         $truckCode = trim($_POST['truck_code'] ?? '');
         $sellerName = trim($_POST['seller_name'] ?? '');
-        $dispatchDate = trim($_POST['dispatch_date'] ?? date('Y-m-d'));
+        $dispatchDate = trim($_POST['dispatch_date'] ?? '');
+        if ($dispatchDate === '') {
+            $dispatchDate = date('Y-m-d');
+        }
         $posSessionId = (int)($_POST['pos_session_id'] ?? 0);
         $notes = trim($_POST['notes'] ?? '');
 
         if ($truckCode === '' || $sellerName === '') {
             flash('error', 'Debes ingresar camión y vendedor.');
             $this->redirect('index.php?route=sales/dispatches/create');
+        }
+
+        if ($posSessionId > 0) {
+            $sessionExists = $this->db->fetch(
+                'SELECT id FROM pos_sessions WHERE id = :id AND company_id = :company_id',
+                ['id' => $posSessionId, 'company_id' => $companyId]
+            );
+            if (!$sessionExists) {
+                flash('error', 'La sesión POS seleccionada no es válida para la empresa.');
+                $this->redirect('index.php?route=sales/dispatches/create');
+            }
         }
 
         $productIds = $_POST['produced_product_id'] ?? [];
@@ -165,7 +182,14 @@ class SalesDispatchesController extends Controller
             }
 
             $pdo->commit();
-            flash('success', 'Despacho creado. Registra retorno y dinero cuando vuelva el camión.');
+
+            $savedDispatch = $this->dispatches->findWithRelations((int)$dispatchId, $companyId);
+            $savedItems = $this->items->byDispatch((int)$dispatchId);
+            if (!$savedDispatch || empty($savedItems)) {
+                throw new RuntimeException('No fue posible verificar el guardado del despacho en la base de datos.');
+            }
+
+            flash('success', 'Despacho guardado correctamente. ID #' . (int)$dispatchId);
             $this->redirect('index.php?route=sales/dispatches/create');
         } catch (Throwable $e) {
             if ($pdo->inTransaction()) {
