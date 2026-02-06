@@ -498,12 +498,13 @@ class SalesController extends Controller
             $this->redirect('index.php?route=pos');
         }
         $amount = max(0, (float)($_POST['opening_amount'] ?? 0));
+        $saleContext = $_POST['sale_context'] ?? 'local';
         $current = $this->posSessions->activeForUser($companyId, $userId);
         if ($current) {
             flash('error', 'Ya tienes una sesión abierta.');
             $this->redirect('index.php?route=pos');
         }
-        $this->posSessions->openSession($companyId, $userId, $amount);
+        $this->posSessions->openSession($companyId, $userId, $amount, $saleContext);
         flash('success', 'Caja abierta correctamente.');
         $this->redirect('index.php?route=pos');
     }

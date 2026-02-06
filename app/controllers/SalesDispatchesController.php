@@ -28,10 +28,76 @@ class SalesDispatchesController extends Controller
         return (int)$companyId;
     }
 
-
     private function moduleReady(): bool
     {
         return table_exists($this->db, 'sales_dispatches') && table_exists($this->db, 'sales_dispatch_items');
+    }
+
+    private function hasSellerUserIdColumn(): bool
+    {
+        $row = $this->db->fetch(
+            'SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
+            ['table' => 'sales_dispatches', 'column' => 'seller_user_id']
+        );
+        return (int)($row['total'] ?? 0) > 0;
+    }
+
+    private function hasPosSaleContextColumn(): bool
+    {
+        $row = $this->db->fetch(
+            'SELECT COUNT(*) AS total FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table AND COLUMN_NAME = :column',
+            ['table' => 'pos_sessions', 'column' => 'sale_context']
+        );
+        return (int)($row['total'] ?? 0) > 0;
+    }
+
+    private function posBalanceForDispatch(array $dispatch, int $companyId): array
+    {
+        $sellerUserId = (int)($dispatch['seller_user_id'] ?? 0);
+        if (!$sellerUserId || !table_exists($this->db, 'pos_sessions')) {
+            return ['sessions' => [], 'totals' => ['opening' => 0.0, 'sales' => 0.0, 'withdrawals' => 0.0, 'closing' => 0.0]];
+        }
+
+        $date = (string)($dispatch['dispatch_date'] ?? date('Y-m-d'));
+        $contextFilter = $this->hasPosSaleContextColumn() ? 'AND ps.sale_context = "camion"' : '';
+
+        $sessions = $this->db->fetchAll(
+            "SELECT ps.*, 
+                    COALESCE(sales.total, 0) AS sales_total,
+                    COALESCE(withdrawals.total, 0) AS withdrawals_total
+             FROM pos_sessions ps
+             LEFT JOIN (
+                SELECT s.pos_session_id, SUM(sp.amount) AS total
+                FROM sales s
+                INNER JOIN sale_payments sp ON sp.sale_id = s.id
+                GROUP BY s.pos_session_id
+             ) sales ON sales.pos_session_id = ps.id
+             LEFT JOIN (
+                SELECT pos_session_id, SUM(amount) AS total
+                FROM pos_session_withdrawals
+                GROUP BY pos_session_id
+             ) withdrawals ON withdrawals.pos_session_id = ps.id
+             WHERE ps.company_id = :company_id
+               AND ps.user_id = :user_id
+               AND DATE(ps.opened_at) = :dispatch_date
+               {$contextFilter}
+             ORDER BY ps.opened_at ASC",
+            [
+                'company_id' => $companyId,
+                'user_id' => $sellerUserId,
+                'dispatch_date' => $date,
+            ]
+        );
+
+        $totals = ['opening' => 0.0, 'sales' => 0.0, 'withdrawals' => 0.0, 'closing' => 0.0];
+        foreach ($sessions as $session) {
+            $totals['opening'] += (float)($session['opening_amount'] ?? 0);
+            $totals['sales'] += (float)($session['sales_total'] ?? 0);
+            $totals['withdrawals'] += (float)($session['withdrawals_total'] ?? 0);
+            $totals['closing'] += (float)($session['closing_amount'] ?? 0);
+        }
+
+        return ['sessions' => $sessions, 'totals' => $totals];
     }
 
     public function index(): void
@@ -49,7 +115,6 @@ class SalesDispatchesController extends Controller
             'dispatches' => $this->dispatches->listWithRelations($companyId),
         ]);
     }
-
 
     public function reception(): void
     {
@@ -83,7 +148,6 @@ class SalesDispatchesController extends Controller
 
         $sessions = table_exists($this->db, 'pos_sessions') ? $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]) : [];
         $sellerUsers = $this->users->allActive($companyId);
-
         $dispatches = $this->dispatches->listWithRelations($companyId);
 
         $this->render('sales/dispatches/create', [
@@ -109,10 +173,7 @@ class SalesDispatchesController extends Controller
 
         $truckCode = trim($_POST['truck_code'] ?? '');
         $sellerUserId = (int)($_POST['seller_user_id'] ?? 0);
-        $dispatchDate = trim($_POST['dispatch_date'] ?? '');
-        if ($dispatchDate === '') {
-            $dispatchDate = date('Y-m-d');
-        }
+        $dispatchDate = trim($_POST['dispatch_date'] ?? '') ?: date('Y-m-d');
         $posSessionId = (int)($_POST['pos_session_id'] ?? 0);
         $notes = trim($_POST['notes'] ?? '');
 
@@ -170,7 +231,7 @@ class SalesDispatchesController extends Controller
         $pdo = $this->db->pdo();
         try {
             $pdo->beginTransaction();
-            $dispatchId = $this->dispatches->create([
+            $data = [
                 'company_id' => $companyId,
                 'truck_code' => $truckCode,
                 'seller_name' => $sellerName,
@@ -181,7 +242,12 @@ class SalesDispatchesController extends Controller
                 'cash_delivered' => 0,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+            ];
+            if ($this->hasSellerUserIdColumn()) {
+                $data['seller_user_id'] = $sellerUserId;
+            }
+
+            $dispatchId = $this->dispatches->create($data);
 
             foreach ($items as $item) {
                 $this->items->create([
@@ -241,11 +307,29 @@ class SalesDispatchesController extends Controller
             $this->redirect('index.php?route=sales/dispatches');
         }
 
+        $items = $this->items->byDispatch($id);
+        $totals = ['dispatched' => 0, 'returned' => 0, 'sold' => 0, 'merma' => 0];
+        foreach ($items as &$item) {
+            $dispatched = (int)($item['quantity_dispatched'] ?? 0);
+            $returned = (int)($item['empty_returned_total'] ?? 0);
+            $sold = max(0, $dispatched - $returned);
+            $item['sold_quantity'] = $sold;
+            $totals['dispatched'] += $dispatched;
+            $totals['returned'] += $returned;
+            $totals['sold'] += $sold;
+            $totals['merma'] += (int)($item['empty_merma'] ?? 0);
+        }
+        unset($item);
+
+        $posBalance = $this->posBalanceForDispatch($dispatch, $companyId);
+
         $this->render('sales/dispatches/show', [
             'title' => 'Detalle despacho',
             'pageTitle' => 'Detalle despacho ' . $dispatch['truck_code'],
             'dispatch' => $dispatch,
-            'items' => $this->items->byDispatch($id),
+            'items' => $items,
+            'itemTotals' => $totals,
+            'posBalance' => $posBalance,
         ]);
     }
 
@@ -276,6 +360,15 @@ class SalesDispatchesController extends Controller
 
         foreach ($itemIds as $i => $itemIdRaw) {
             $itemId = (int)$itemIdRaw;
+            $itemRow = $this->db->fetch(
+                'SELECT id, quantity_dispatched FROM sales_dispatch_items WHERE id = :id AND dispatch_id = :dispatch_id',
+                ['id' => $itemId, 'dispatch_id' => $id]
+            );
+            if (!$itemRow) {
+                continue;
+            }
+            $dispatched = (int)($itemRow['quantity_dispatched'] ?? 0);
+
             $ret = max(0, (int)($retTotals[$i] ?? 0));
             $mb = max(0, (int)($muyBueno[$i] ?? 0));
             $b = max(0, (int)($bueno[$i] ?? 0));
@@ -284,8 +377,22 @@ class SalesDispatchesController extends Controller
             $me = max(0, (int)($merma[$i] ?? 0));
 
             $sumStates = $mb + $b + $a + $m + $me;
-            if ($sumStates !== $ret) {
-                flash('error', 'La suma por estado debe coincidir con envases retornados en cada producto.');
+            if ($ret <= 0 && $sumStates > 0) {
+                $ret = $sumStates;
+            } elseif ($ret > 0 && $sumStates === 0) {
+                $a = $ret;
+                $sumStates = $ret;
+            } elseif ($sumStates < $ret) {
+                $a += ($ret - $sumStates);
+                $sumStates = $ret;
+            }
+
+            if ($sumStates > $ret) {
+                flash('error', 'La suma por estado no puede superar el total retornado en cada producto.');
+                $this->redirect('index.php?route=sales/dispatches/show&id=' . $id);
+            }
+            if ($ret > $dispatched) {
+                flash('error', 'El total retornado no puede superar la cantidad despachada.');
                 $this->redirect('index.php?route=sales/dispatches/show&id=' . $id);
             }
 
@@ -308,7 +415,7 @@ class SalesDispatchesController extends Controller
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
 
-        flash('success', 'Cierre de despacho registrado correctamente.');
+        flash('success', 'Cierre de despacho registrado correctamente. Se calculó balance de productos y dinero.');
         $this->redirect('index.php?route=sales/dispatches/show&id=' . $id);
     }
 }
