@@ -6,6 +6,7 @@ class SalesDispatchesController extends Controller
     private SalesDispatchItemsModel $items;
     private ProducedProductsModel $producedProducts;
     private PosSessionsModel $posSessions;
+    private UsersModel $users;
 
     public function __construct(array $config, Database $db)
     {
@@ -14,6 +15,7 @@ class SalesDispatchesController extends Controller
         $this->items = new SalesDispatchItemsModel($db);
         $this->producedProducts = new ProducedProductsModel($db);
         $this->posSessions = new PosSessionsModel($db);
+        $this->users = new UsersModel($db);
     }
 
     private function requireCompany(): int
@@ -80,6 +82,7 @@ class SalesDispatchesController extends Controller
         }
 
         $sessions = table_exists($this->db, 'pos_sessions') ? $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]) : [];
+        $sellerUsers = $this->users->allActive($companyId);
 
         $dispatches = $this->dispatches->listWithRelations($companyId);
 
@@ -88,6 +91,7 @@ class SalesDispatchesController extends Controller
             'pageTitle' => 'Nuevo despacho de camión',
             'producedProducts' => $this->producedProducts->active($companyId),
             'sessions' => $sessions,
+            'sellerUsers' => $sellerUsers,
             'today' => date('Y-m-d'),
             'recentDispatches' => array_slice($dispatches, 0, 20),
         ]);
@@ -104,7 +108,7 @@ class SalesDispatchesController extends Controller
         }
 
         $truckCode = trim($_POST['truck_code'] ?? '');
-        $sellerName = trim($_POST['seller_name'] ?? '');
+        $sellerUserId = (int)($_POST['seller_user_id'] ?? 0);
         $dispatchDate = trim($_POST['dispatch_date'] ?? '');
         if ($dispatchDate === '') {
             $dispatchDate = date('Y-m-d');
@@ -112,18 +116,32 @@ class SalesDispatchesController extends Controller
         $posSessionId = (int)($_POST['pos_session_id'] ?? 0);
         $notes = trim($_POST['notes'] ?? '');
 
-        if ($truckCode === '' || $sellerName === '') {
-            flash('error', 'Debes ingresar camión y vendedor.');
+        if ($truckCode === '' || $sellerUserId <= 0) {
+            flash('error', 'Debes ingresar camión y seleccionar vendedor usuario.');
+            $this->redirect('index.php?route=sales/dispatches/create');
+        }
+
+        $sellerUser = $this->db->fetch(
+            'SELECT id, name FROM users WHERE id = :id AND company_id = :company_id AND deleted_at IS NULL',
+            ['id' => $sellerUserId, 'company_id' => $companyId]
+        );
+        if (!$sellerUser) {
+            flash('error', 'El vendedor seleccionado no es válido para la empresa.');
+            $this->redirect('index.php?route=sales/dispatches/create');
+        }
+        $sellerName = trim((string)($sellerUser['name'] ?? ''));
+        if ($sellerName === '') {
+            flash('error', 'El vendedor seleccionado no tiene nombre válido.');
             $this->redirect('index.php?route=sales/dispatches/create');
         }
 
         if ($posSessionId > 0) {
             $sessionExists = $this->db->fetch(
-                'SELECT id FROM pos_sessions WHERE id = :id AND company_id = :company_id',
-                ['id' => $posSessionId, 'company_id' => $companyId]
+                'SELECT id FROM pos_sessions WHERE id = :id AND company_id = :company_id AND user_id = :user_id',
+                ['id' => $posSessionId, 'company_id' => $companyId, 'user_id' => $sellerUserId]
             );
             if (!$sessionExists) {
-                flash('error', 'La sesión POS seleccionada no es válida para la empresa.');
+                flash('error', 'La sesión POS seleccionada no corresponde al vendedor usuario.');
                 $this->redirect('index.php?route=sales/dispatches/create');
             }
         }
