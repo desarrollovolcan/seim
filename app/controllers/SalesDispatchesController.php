@@ -183,10 +183,16 @@ class SalesDispatchesController extends Controller
 
             $pdo->commit();
 
-            $savedDispatch = $this->dispatches->findWithRelations((int)$dispatchId, $companyId);
-            $savedItems = $this->items->byDispatch((int)$dispatchId);
-            if (!$savedDispatch || empty($savedItems)) {
-                throw new RuntimeException('No fue posible verificar el guardado del despacho en la base de datos.');
+            $savedDispatch = $this->db->fetch(
+                'SELECT id FROM sales_dispatches WHERE id = :id AND company_id = :company_id',
+                ['id' => (int)$dispatchId, 'company_id' => $companyId]
+            );
+            $savedItemsCount = $this->db->fetch(
+                'SELECT COUNT(*) AS total FROM sales_dispatch_items WHERE dispatch_id = :dispatch_id',
+                ['dispatch_id' => (int)$dispatchId]
+            );
+            if (!$savedDispatch || (int)($savedItemsCount['total'] ?? 0) <= 0) {
+                throw new RuntimeException('No se confirmó la persistencia completa del despacho en la base de datos.');
             }
 
             flash('success', 'Despacho guardado correctamente. ID #' . (int)$dispatchId);
