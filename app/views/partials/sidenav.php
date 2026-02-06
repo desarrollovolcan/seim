@@ -66,6 +66,37 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                 </li>
             <?php endif; ?>
+            <?php if ($hasCompany && $canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+                <li class="side-nav-title">Control Camiones</li>
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarTruckControl" aria-expanded="false" aria-controls="sidebarTruckControl" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="truck"></i></span>
+                        <span class="menu-label">
+                            <span class="menu-text">Control Camiones</span>
+                            <span class="menu-caption">Despacho y recepción</span>
+                        </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarTruckControl">
+                        <ul class="sub-menu">
+                            <?php if ($hasPermission('sales_dispatches_edit')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=sales/dispatches/create" class="side-nav-link">
+                                        <span class="menu-text">Despachar camión vendedor</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('sales_dispatches_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=sales/dispatches/reception" class="side-nav-link">
+                                        <span class="menu-text">Recepcionar camión vendedor</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
+            <?php endif; ?>
             <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit'])): ?>
                 <li class="side-nav-title">Ventas</li>
                 <li class="side-nav-item">
