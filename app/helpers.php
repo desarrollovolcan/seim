@@ -720,6 +720,13 @@ function permission_catalog(): array
             'view_key' => 'sales_view',
             'edit_key' => 'sales_edit',
         ],
+        'sales_dispatches' => [
+            'label' => 'Despachos de camiones',
+            'routes' => ['sales/dispatches'],
+            'legacy_key' => 'sales',
+            'view_key' => 'sales_dispatches_view',
+            'edit_key' => 'sales_dispatches_edit',
+        ],
         'product_families' => [
             'label' => 'Familias de producto',
             'routes' => ['maintainers/product-families'],
