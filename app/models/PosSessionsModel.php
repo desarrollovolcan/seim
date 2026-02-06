@@ -4,9 +4,13 @@ class PosSessionsModel extends Model
 {
     protected string $table = 'pos_sessions';
 
-    public function openSession(int $companyId, int $userId, float $openingAmount): int
+    public function openSession(int $companyId, int $userId, float $openingAmount, string $saleContext = 'local'): int
     {
-        return $this->create([
+        if (!in_array($saleContext, ['local', 'camion'], true)) {
+            $saleContext = 'local';
+        }
+
+        $data = [
             'company_id' => $companyId,
             'user_id' => $userId,
             'opening_amount' => $openingAmount,
@@ -14,7 +18,12 @@ class PosSessionsModel extends Model
             'opened_at' => date('Y-m-d H:i:s'),
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
-        ]);
+        ];
+        if ($this->hasColumn('sale_context')) {
+            $data['sale_context'] = $saleContext;
+        }
+
+        return $this->create($data);
     }
 
     public function activeForUser(int $companyId, int $userId): ?array

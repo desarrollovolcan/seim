@@ -80,43 +80,44 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
                             <?php if ($hasPermission('sales_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=sales" class="side-nav-link">
-                                        <span class="menu-text">Listado ventas</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=sales/create" class="side-nav-link">
-                                        <span class="menu-text">Registrar venta</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=pos" class="side-nav-link">
-                                        <span class="menu-text">Punto de venta</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=quotes" class="side-nav-link">
-                                        <span class="menu-text">Cotizaciones</span>
-                                    </a>
-                                </li>
+                                <li class="side-nav-item"><a href="index.php?route=sales" class="side-nav-link"><span class="menu-text">Listado ventas</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=sales/create" class="side-nav-link"><span class="menu-text">Registrar venta</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=pos" class="side-nav-link"><span class="menu-text">Punto de venta</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
                                 <?php if ($hasPermission('clients_view')): ?>
-                                    <li class="side-nav-item">
-                                        <a href="index.php?route=clients" class="side-nav-link">
-                                            <span class="menu-text">Clientes</span>
-                                        </a>
-                                    </li>
+                                    <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
                                 <?php endif; ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=sales/profit-analysis" class="side-nav-link">
-                                        <span class="menu-text">Análisis ganancias</span>
-                                    </a>
-                                </li>
+                                <li class="side-nav-item"><a href="index.php?route=sales/profit-analysis" class="side-nav-link"><span class="menu-text">Análisis ganancias</span></a></li>
                             <?php endif; ?>
                         </ul>
                     </div>
                 </li>
             <?php endif; ?>
+
+            <?php if ($hasCompany && $canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+                <li class="side-nav-title">Control Camiones</li>
+                <li class="side-nav-item">
+                    <a data-bs-toggle="collapse" href="#sidebarTruckControl" aria-expanded="false" aria-controls="sidebarTruckControl" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="truck"></i></span>
+                        <span class="menu-label">
+                            <span class="menu-text">Control Camiones</span>
+                            <span class="menu-caption">Despacho y recepción</span>
+                        </span>
+                        <span class="menu-arrow"></span>
+                    </a>
+                    <div class="collapse" id="sidebarTruckControl">
+                        <ul class="sub-menu">
+                            <?php if ($hasPermission('sales_dispatches_edit')): ?>
+                                <li class="side-nav-item"><a href="index.php?route=sales/dispatches/create" class="side-nav-link"><span class="menu-text">Despachar camión vendedor</span></a></li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('sales_dispatches_view')): ?>
+                                <li class="side-nav-item"><a href="index.php?route=sales/dispatches/reception" class="side-nav-link"><span class="menu-text">Recepcionar camión vendedor</span></a></li>
+                            <?php endif; ?>
+                        </ul>
+                    </div>
+                </li>
+            <?php endif; ?>
+
             <?php if ($hasCompany && $canAccessAny(['products_view', 'products_edit', 'produced_products_view', 'produced_products_edit', 'product_families_view', 'product_subfamilies_view', 'production_view', 'production_edit'])): ?>
                 <li class="side-nav-title">Productos</li>
                 <li class="side-nav-item">
