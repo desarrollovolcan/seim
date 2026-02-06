@@ -23,16 +23,7 @@
                         <?php endforeach; ?>
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label class="form-label">Sesión POS (opcional)</label>
-                    <select name="pos_session_id" class="form-select">
-                        <option value="">Sin vincular</option>
-                        <?php foreach ($sessions as $session): ?>
-                            <option value="<?php echo (int)$session['id']; ?>" data-user-id="<?php echo (int)($session['user_id'] ?? 0); ?>"><?php echo e(($session['session_code'] ?? 'Caja') . ' · ' . ($session['opened_at'] ?? '')); ?></option>
-                        <?php endforeach; ?>
-                    </select>
                 </div>
-            </div>
 
             <div class="table-responsive mb-3">
                 <table class="table table-sm align-middle">
@@ -72,44 +63,6 @@
     </div>
 </div>
 
-<script>
-(function () {
-    const sellerSelect = document.getElementById('seller_user_id');
-    const sessionSelect = document.querySelector('select[name="pos_session_id"]');
-    if (!sellerSelect || !sessionSelect) return;
-
-    const allOptions = Array.from(sessionSelect.querySelectorAll('option')).map((opt) => ({
-        value: opt.value,
-        text: opt.textContent,
-        userId: opt.dataset.userId || '',
-    }));
-
-    const renderSessions = () => {
-        const sellerId = sellerSelect.value;
-        const previous = sessionSelect.value;
-        sessionSelect.innerHTML = '';
-
-        const defaultOpt = document.createElement('option');
-        defaultOpt.value = '';
-        defaultOpt.textContent = sellerId ? 'Sin vincular' : 'Selecciona vendedor primero';
-        sessionSelect.appendChild(defaultOpt);
-
-        allOptions.forEach((opt) => {
-            if (!opt.value) return;
-            if (!sellerId || String(opt.userId) !== String(sellerId)) return;
-            const o = document.createElement('option');
-            o.value = opt.value;
-            o.textContent = opt.text;
-            o.dataset.userId = opt.userId;
-            if (opt.value === previous) o.selected = true;
-            sessionSelect.appendChild(o);
-        });
-    };
-
-    sellerSelect.addEventListener('change', renderSessions);
-    renderSessions();
-})();
-</script>
 
 <div class="card mt-3">
     <div class="card-header">

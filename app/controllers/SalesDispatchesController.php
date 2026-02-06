@@ -146,7 +146,6 @@ class SalesDispatchesController extends Controller
             $this->redirect('index.php?route=dashboard');
         }
 
-        $sessions = table_exists($this->db, 'pos_sessions') ? $this->posSessions->all('company_id = :company_id', ['company_id' => $companyId]) : [];
         $sellerUsers = $this->users->allActive($companyId);
         $dispatches = $this->dispatches->listWithRelations($companyId);
 
@@ -154,7 +153,6 @@ class SalesDispatchesController extends Controller
             'title' => 'Nuevo despacho',
             'pageTitle' => 'Nuevo despacho de camión',
             'producedProducts' => $this->producedProducts->active($companyId),
-            'sessions' => $sessions,
             'sellerUsers' => $sellerUsers,
             'today' => date('Y-m-d'),
             'recentDispatches' => array_slice($dispatches, 0, 20),
@@ -174,7 +172,6 @@ class SalesDispatchesController extends Controller
         $truckCode = trim($_POST['truck_code'] ?? '');
         $sellerUserId = (int)($_POST['seller_user_id'] ?? 0);
         $dispatchDate = trim($_POST['dispatch_date'] ?? '') ?: date('Y-m-d');
-        $posSessionId = (int)($_POST['pos_session_id'] ?? 0);
         $notes = trim($_POST['notes'] ?? '');
 
         if ($truckCode === '' || $sellerUserId <= 0) {
@@ -195,18 +192,6 @@ class SalesDispatchesController extends Controller
             flash('error', 'El vendedor seleccionado no tiene nombre válido.');
             $this->redirect('index.php?route=sales/dispatches/create');
         }
-
-        if ($posSessionId > 0) {
-            $sessionExists = $this->db->fetch(
-                'SELECT id FROM pos_sessions WHERE id = :id AND company_id = :company_id AND user_id = :user_id',
-                ['id' => $posSessionId, 'company_id' => $companyId, 'user_id' => $sellerUserId]
-            );
-            if (!$sessionExists) {
-                flash('error', 'La sesión POS seleccionada no corresponde al vendedor usuario.');
-                $this->redirect('index.php?route=sales/dispatches/create');
-            }
-        }
-
         $productIds = $_POST['produced_product_id'] ?? [];
         $quantities = $_POST['quantity_dispatched'] ?? [];
         $items = [];
@@ -236,7 +221,7 @@ class SalesDispatchesController extends Controller
                 'truck_code' => $truckCode,
                 'seller_name' => $sellerName,
                 'dispatch_date' => $dispatchDate,
-                'pos_session_id' => $posSessionId > 0 ? $posSessionId : null,
+                'pos_session_id' => null,
                 'status' => 'abierto',
                 'notes' => $notes,
                 'cash_delivered' => 0,
@@ -322,6 +307,15 @@ class SalesDispatchesController extends Controller
         unset($item);
 
         $posBalance = $this->posBalanceForDispatch($dispatch, $companyId);
+        $expectedCash = (float)($posBalance['totals']['closing'] ?? 0);
+        $deliveredCash = (float)($dispatch['cash_delivered'] ?? 0);
+        $cashDiff = $deliveredCash - $expectedCash;
+        $cashStatus = 'cuadrado';
+        if ($cashDiff < -0.009) {
+            $cashStatus = 'falta';
+        } elseif ($cashDiff > 0.009) {
+            $cashStatus = 'sobra';
+        }
 
         $this->render('sales/dispatches/show', [
             'title' => 'Detalle despacho',
@@ -330,6 +324,9 @@ class SalesDispatchesController extends Controller
             'items' => $items,
             'itemTotals' => $totals,
             'posBalance' => $posBalance,
+            'cashExpected' => $expectedCash,
+            'cashDiff' => $cashDiff,
+            'cashStatus' => $cashStatus,
         ]);
     }
 

@@ -55,6 +55,26 @@
                 <div class="col-md-3"><strong>Total cierre POS:</strong> $<?php echo number_format((float)($posBalance['totals']['closing'] ?? 0), 0, ',', '.'); ?></div>
                 <div class="col-md-3"><strong>Dinero entregado:</strong> $<?php echo number_format((float)($dispatch['cash_delivered'] ?? 0), 0, ',', '.'); ?></div>
             </div>
+            <div class="mt-3 pt-3 border-top">
+                <h6 class="mb-2">Balance dinero entregado vs cierre POS</h6>
+                <div class="d-flex flex-wrap gap-4">
+                    <div><strong>Esperado según cierre POS:</strong> $<?php echo number_format((float)$cashExpected, 0, ',', '.'); ?></div>
+                    <div><strong>Entregado por vendedor:</strong> $<?php echo number_format((float)($dispatch['cash_delivered'] ?? 0), 0, ',', '.'); ?></div>
+                    <div>
+                        <strong>Diferencia:</strong>
+                        <span class="fw-bold <?php echo $cashStatus === 'falta' ? 'text-danger' : ($cashStatus === 'sobra' ? 'text-primary' : 'text-success'); ?>">
+                            <?php if ($cashStatus === 'falta'): ?>
+                                Falta $<?php echo number_format(abs((float)$cashDiff), 0, ',', '.'); ?>
+                            <?php elseif ($cashStatus === 'sobra'): ?>
+                                Sobra $<?php echo number_format((float)$cashDiff, 0, ',', '.'); ?>
+                            <?php else: ?>
+                                Cuadrado
+                            <?php endif; ?>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
         <?php endif; ?>
     </div>
 </div>
