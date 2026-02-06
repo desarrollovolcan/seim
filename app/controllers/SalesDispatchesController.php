@@ -38,6 +38,24 @@ class SalesDispatchesController extends Controller
         ]);
     }
 
+
+    public function reception(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+
+        $dispatches = $this->dispatches->listWithRelations($companyId);
+        $openDispatches = array_values(array_filter($dispatches, static fn(array $row): bool => ($row['status'] ?? '') === 'abierto'));
+        $closedDispatches = array_values(array_filter($dispatches, static fn(array $row): bool => ($row['status'] ?? '') === 'cerrado'));
+
+        $this->render('sales/dispatches/reception', [
+            'title' => 'Recepción camiones vendedores',
+            'pageTitle' => 'Recepción de camiones vendedores',
+            'openDispatches' => $openDispatches,
+            'closedDispatches' => $closedDispatches,
+        ]);
+    }
+
     public function create(): void
     {
         $this->requireLogin();

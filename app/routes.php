@@ -92,6 +92,7 @@ return [
     'sales' => ['SalesController', 'index'],
     'sales/create' => ['SalesController', 'create'],
     'sales/dispatches' => ['SalesDispatchesController', 'index'],
+    'sales/dispatches/reception' => ['SalesDispatchesController', 'reception'],
     'sales/dispatches/create' => ['SalesDispatchesController', 'create'],
     'sales/dispatches/store' => ['SalesDispatchesController', 'store'],
     'sales/dispatches/show' => ['SalesDispatchesController', 'show'],
