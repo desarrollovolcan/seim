@@ -143,6 +143,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                         <span class="menu-text">Análisis ganancias</span>
                                     </a>
                                 </li>
+                                <?php if ($hasPermission('sales_dispatches_view')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=sales/dispatches" class="side-nav-link">
+                                            <span class="menu-text">Despacho camiones</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </ul>
                     </div>
