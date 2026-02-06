@@ -164,6 +164,10 @@
                             <?php else: ?>
                                 <form method="post" action="index.php?route=pos/open" class="d-flex align-items-center gap-1 flex-nowrap">
                                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                    <select name="sale_context" class="form-select form-select-sm text-nowrap" style="width: 130px;">
+                                        <option value="local">Venta local</option>
+                                        <option value="camion">Venta camión</option>
+                                    </select>
                                     <input type="number" name="opening_amount" step="0.01" min="0" class="form-control form-control-sm text-nowrap" placeholder="Monto inicial" required style="width: 100px;">
                                     <button class="btn btn-primary btn-sm text-nowrap px-2">Abrir caja</button>
                                 </form>
@@ -479,6 +483,7 @@
                                     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                                         <div>
                                             <div class="fw-semibold">Caja #<?php echo e($summary['id']); ?> · <?php echo e($summary['user_name'] ?? ''); ?></div>
+                                            <?php if (!empty($summary['sale_context'])): ?><small class="text-muted d-block">Contexto: <?php echo e($summary['sale_context'] === 'camion' ? 'Camión' : 'Local'); ?></small><?php endif; ?>
                                             <small class="text-muted">
                                                 <?php echo e(date('d/m/Y H:i', strtotime((string)$summary['opened_at']))); ?>
                                                 <?php if (!empty($summary['closed_at'])): ?>
