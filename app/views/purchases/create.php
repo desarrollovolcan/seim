@@ -46,29 +46,40 @@
                             ?>
                         </div>
                         <div class="col-12">
-                            <label class="form-label">Productos</label>
+                            <label class="form-label">Detalle de compra (productos o servicios)</label>
                             <div class="table-responsive">
                                 <table class="table table-sm align-middle" id="purchase-items-table">
                                     <thead>
                                         <tr>
-                                            <th style="width: 40%;">Producto</th>
-                                            <th style="width: 15%;">Cantidad</th>
-                                            <th style="width: 20%;">Costo unitario</th>
-                                            <th class="text-end" style="width: 20%;">Subtotal</th>
+                                            <th style="width: 14%;">Tipo</th>
+                                            <th style="width: 18%;">Producto</th>
+                                            <th style="width: 27%;">Descripción</th>
+                                            <th style="width: 10%;">Cantidad</th>
+                                            <th style="width: 14%;">Costo unitario</th>
+                                            <th class="text-end" style="width: 12%;">Subtotal</th>
                                             <th style="width: 5%;"></th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr class="item-row">
                                             <td>
+                                                <select name="item_type[]" class="form-select form-select-sm item-type-select">
+                                                    <option value="producto" selected>Producto</option>
+                                                    <option value="servicio">Servicio</option>
+                                                </select>
+                                            </td>
+                                            <td>
                                                 <select name="product_id[]" class="form-select form-select-sm product-select">
                                                     <option value="">Selecciona</option>
                                                     <?php foreach ($products as $product): ?>
-                                                        <option value="<?php echo (int)$product['id']; ?>" data-cost="<?php echo e((float)($product['cost'] ?? $product['price'] ?? 0)); ?>">
+                                                        <option value="<?php echo (int)$product['id']; ?>" data-cost="<?php echo e((float)($product['cost'] ?? $product['price'] ?? 0)); ?>" data-name="<?php echo e($product['name']); ?>">
                                                             <?php echo e($product['name']); ?> (Stock: <?php echo (int)($product['stock'] ?? 0); ?>)
                                                         </option>
                                                     <?php endforeach; ?>
                                                 </select>
+                                            </td>
+                                            <td>
+                                                <input type="text" name="description[]" class="form-control form-control-sm description-input" placeholder="Detalle del producto o servicio" required>
                                             </td>
                                             <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="1"></td>
                                             <td><input type="number" name="unit_cost[]" class="form-control form-control-sm cost-input" step="0.01" min="0" value="0"></td>
@@ -78,7 +89,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-item">Agregar producto</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="add-item">Agregar ítem</button>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Notas internas</label>
@@ -107,13 +118,13 @@
                             </div>
                         </div>
                     </div>
-                
-    <?php
-    $reportTemplate = 'informeIcargaEspanol.php';
-    $reportSource = 'purchases/create';
-    include __DIR__ . '/../partials/report-download.php';
-    ?>
-</form>
+
+                    <?php
+                    $reportTemplate = 'informeIcargaEspanol.php';
+                    $reportSource = 'purchases/create';
+                    include __DIR__ . '/../partials/report-download.php';
+                    ?>
+                </form>
             </div>
         </div>
     </div>
@@ -163,7 +174,8 @@
         siiWarningLink.href = `index.php?route=suppliers/edit&id=${supplierId}`;
         siiWarning.classList.remove('d-none');
     };
-    const applySupplierSii = (supplierId, force = false) => {
+
+    const applySupplierSii = (supplierId) => {
         const data = supplierSiiMap?.[supplierId];
         if (!data) {
             updateSiiWarning({}, supplierId);
@@ -182,7 +194,7 @@
         applySupplierSii(supplierId);
     });
     if (supplierSelect?.value) {
-        applySupplierSii(Number(supplierSelect.value || 0), true);
+        applySupplierSii(Number(supplierSelect.value || 0));
     }
 
     (function() {
@@ -194,6 +206,25 @@
 
         function formatCurrency(amount) {
             return new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 }).format(amount || 0);
+        }
+
+        function syncRowType(row) {
+            const typeSelect = row.querySelector('.item-type-select');
+            const productSelect = row.querySelector('.product-select');
+            const descriptionInput = row.querySelector('.description-input');
+            const isService = typeSelect?.value === 'servicio';
+
+            if (productSelect) {
+                productSelect.disabled = isService;
+                productSelect.required = !isService;
+                if (isService) {
+                    productSelect.value = '';
+                }
+            }
+
+            if (descriptionInput) {
+                descriptionInput.required = true;
+            }
         }
 
         function recalc() {
@@ -214,18 +245,38 @@
             const template = tableBody.querySelector('.item-row');
             const clone = template.cloneNode(true);
             clone.querySelectorAll('input').forEach((input) => {
-                input.value = input.classList.contains('quantity-input') ? '1' : '0';
+                if (input.classList.contains('quantity-input')) {
+                    input.value = '1';
+                } else if (input.classList.contains('description-input')) {
+                    input.value = '';
+                } else {
+                    input.value = '0';
+                }
             });
+            clone.querySelector('.item-type-select').value = 'producto';
             clone.querySelector('.product-select').selectedIndex = 0;
             clone.querySelector('.item-subtotal').innerText = formatCurrency(0);
+            syncRowType(clone);
             tableBody.appendChild(clone);
         }
 
         tableBody.addEventListener('change', (event) => {
+            const row = event.target.closest('.item-row');
+            if (!row) {
+                return;
+            }
+            if (event.target.classList.contains('item-type-select')) {
+                syncRowType(row);
+            }
             if (event.target.classList.contains('product-select')) {
-                const cost = event.target.selectedOptions[0]?.dataset.cost || 0;
-                const row = event.target.closest('.item-row');
+                const option = event.target.selectedOptions[0];
+                const cost = option?.dataset.cost || 0;
+                const productName = option?.dataset.name || '';
                 row.querySelector('.cost-input').value = cost;
+                const descriptionInput = row.querySelector('.description-input');
+                if (descriptionInput && !descriptionInput.value.trim()) {
+                    descriptionInput.value = productName;
+                }
             }
             recalc();
         });
@@ -250,6 +301,7 @@
             addRow();
         });
 
+        tableBody.querySelectorAll('.item-row').forEach((row) => syncRowType(row));
         taxInput?.addEventListener('input', recalc);
         recalc();
     })();

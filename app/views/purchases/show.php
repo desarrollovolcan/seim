@@ -61,6 +61,8 @@
                     <table class="table table-sm align-middle">
                         <thead>
                             <tr>
+                                <th>Tipo</th>
+                                <th>Detalle</th>
                                 <th>Producto</th>
                                 <th>Cantidad</th>
                                 <th class="text-end">Costo unitario</th>
@@ -70,7 +72,9 @@
                         <tbody>
                             <?php foreach ($items as $item): ?>
                                 <tr>
-                                    <td><?php echo e($item['product_name'] ?? 'Producto eliminado'); ?></td>
+                                    <td><?php echo e(ucfirst($item['item_type'] ?? 'producto')); ?></td>
+                                    <td><?php echo e($item['description'] ?? '-'); ?></td>
+                                    <td><?php echo e($item['product_name'] ?? (($item['item_type'] ?? 'producto') === 'servicio' ? 'No aplica' : 'Producto eliminado')); ?></td>
                                     <td><?php echo (int)($item['quantity'] ?? 0); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['unit_cost'] ?? 0))); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>

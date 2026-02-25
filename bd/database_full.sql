@@ -505,7 +505,9 @@ CREATE TABLE purchase_order_items (
 CREATE TABLE purchase_items (
     id INT AUTO_INCREMENT PRIMARY KEY,
     purchase_id INT NOT NULL,
-    product_id INT NOT NULL,
+    item_type ENUM('producto', 'servicio') NOT NULL DEFAULT 'producto',
+    description VARCHAR(255) NOT NULL,
+    product_id INT NULL,
     quantity INT NOT NULL DEFAULT 0,
     unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
     subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,

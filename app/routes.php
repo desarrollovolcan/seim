@@ -82,6 +82,7 @@ return [
     'purchase-orders/create' => ['PurchaseOrdersController', 'create'],
     'purchase-orders/store' => ['PurchaseOrdersController', 'store'],
     'purchase-orders/show' => ['PurchaseOrdersController', 'show'],
+    'costs' => ['CostsController', 'index'],
     'production' => ['ProductionController', 'index'],
     'production/create' => ['ProductionController', 'create'],
     'production/store' => ['ProductionController', 'store'],

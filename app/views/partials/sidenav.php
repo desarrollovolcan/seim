@@ -235,19 +235,26 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'competitor_companies_view'])): ?>
-                <li class="side-nav-title">Compras</li>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'competitor_companies_view'])): ?>
+                <li class="side-nav-title">Costos</li>
                 <li class="side-nav-item">
-                    <a data-bs-toggle="collapse" href="#sidebarPurchases" aria-expanded="false" aria-controls="sidebarPurchases" class="side-nav-link">
-                        <span class="menu-icon"><i data-lucide="shopping-bag"></i></span>
+                    <a data-bs-toggle="collapse" href="#sidebarCosts" aria-expanded="false" aria-controls="sidebarCosts" class="side-nav-link">
+                        <span class="menu-icon"><i data-lucide="receipt"></i></span>
                         <span class="menu-label">
-                            <span class="menu-text">Compras</span>
-                            <span class="menu-caption">Órdenes, proveedores y recepciones</span>
+                            <span class="menu-text">Costos</span>
+                            <span class="menu-caption">Flujo integral de gastos</span>
                         </span>
                         <span class="menu-arrow"></span>
                     </a>
-                    <div class="collapse" id="sidebarPurchases">
+                    <div class="collapse" id="sidebarCosts">
                         <ul class="sub-menu">
+                            <?php if ($canAccessAny(['purchases_view', 'purchase_orders_view', 'suppliers_view'])): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=costs" class="side-nav-link">
+                                        <span class="menu-text">Panel de costos</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('purchase_orders_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=purchase-orders" class="side-nav-link">
@@ -258,7 +265,12 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                             <?php if ($hasPermission('purchases_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=purchases" class="side-nav-link">
-                                        <span class="menu-text">Compras</span>
+                                        <span class="menu-text">Compras y gastos</span>
+                                    </a>
+                                </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=purchases/create" class="side-nav-link">
+                                        <span class="menu-text">Registrar gasto</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -266,6 +278,34 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 <li class="side-nav-item">
                                     <a href="index.php?route=suppliers" class="side-nav-link">
                                         <span class="menu-text">Proveedores</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('production_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=production/expenses" class="side-nav-link">
+                                        <span class="menu-text">Gastos de producción</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('honorarios_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=honorarios" class="side-nav-link">
+                                        <span class="menu-text">Honorarios</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('fixed_assets_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=fixed-assets" class="side-nav-link">
+                                        <span class="menu-text">Activos fijos</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('treasury_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=treasury/transactions" class="side-nav-link">
+                                        <span class="menu-text">Movimientos tesorería</span>
                                     </a>
                                 </li>
                             <?php endif; ?>

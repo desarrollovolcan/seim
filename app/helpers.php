@@ -693,7 +693,7 @@ function permission_catalog(): array
             'edit_key' => 'suppliers_edit',
         ],
         'purchases' => [
-            'label' => 'Compras de productos',
+            'label' => 'Compras y gastos',
             'routes' => ['purchases'],
             'legacy_key' => 'purchases',
             'view_key' => 'purchases_view',

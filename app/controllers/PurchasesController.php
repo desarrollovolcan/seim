@@ -36,7 +36,7 @@ class PurchasesController extends Controller
 
         $this->render('purchases/index', [
             'title' => 'Compras',
-            'pageTitle' => 'Compras de productos',
+            'pageTitle' => 'Compras y gastos',
             'purchases' => $purchases,
         ]);
     }
@@ -80,7 +80,7 @@ class PurchasesController extends Controller
 
         $items = $this->collectItems($companyId);
         if (empty($items)) {
-            flash('error', 'Agrega al menos un producto a la compra.');
+            flash('error', 'Agrega al menos un ítem (producto o servicio) a la compra.');
             $this->redirect('index.php?route=purchases/create');
         }
 
@@ -108,14 +108,18 @@ class PurchasesController extends Controller
             foreach ($items as $item) {
                 $this->purchaseItems->create([
                     'purchase_id' => $purchaseId,
-                    'product_id' => $item['product']['id'],
+                    'item_type' => $item['item_type'],
+                    'description' => $item['description'],
+                    'product_id' => $item['product']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_cost' => $item['unit_cost'],
                     'subtotal' => $item['subtotal'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-                $this->products->adjustStock($item['product']['id'], $item['quantity']);
+                if ($item['item_type'] === 'producto' && !empty($item['product']['id'])) {
+                    $this->products->adjustStock((int)$item['product']['id'], $item['quantity']);
+                }
             }
 
             audit($this->db, Auth::user()['id'], 'create', 'purchases', $purchaseId);
@@ -176,23 +180,46 @@ class PurchasesController extends Controller
 
     private function collectItems(int $companyId): array
     {
+        $itemTypes = $_POST['item_type'] ?? [];
+        $descriptions = $_POST['description'] ?? [];
         $productIds = $_POST['product_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitCosts = $_POST['unit_cost'] ?? [];
         $items = [];
 
-        foreach ($productIds as $index => $productId) {
-            $productId = (int)$productId;
+        foreach ($quantities as $index => $rawQuantity) {
+            $itemType = trim((string)($itemTypes[$index] ?? 'producto'));
+            if (!in_array($itemType, ['producto', 'servicio'], true)) {
+                $itemType = 'producto';
+            }
+
+            $description = trim((string)($descriptions[$index] ?? ''));
+            $productId = (int)($productIds[$index] ?? 0);
             $quantity = max(0, (int)($quantities[$index] ?? 0));
             $unitCost = max(0.0, (float)($unitCosts[$index] ?? 0));
-            if ($productId <= 0 || $quantity <= 0) {
+            if ($quantity <= 0) {
                 continue;
             }
-            $product = $this->products->findForCompany($productId, $companyId);
-            if (!$product) {
+
+            $product = null;
+            if ($itemType === 'producto') {
+                if ($productId <= 0) {
+                    continue;
+                }
+                $product = $this->products->findForCompany($productId, $companyId);
+                if (!$product) {
+                    continue;
+                }
+                if ($description === '') {
+                    $description = (string)($product['name'] ?? 'Producto');
+                }
+            } elseif ($description === '') {
                 continue;
             }
+
             $items[] = [
+                'item_type' => $itemType,
+                'description' => $description,
                 'product' => $product,
                 'quantity' => $quantity,
                 'unit_cost' => $unitCost,
