@@ -19,7 +19,16 @@ class PurchaseOrdersModel extends Model
     public function findForCompany(int $id, int $companyId): ?array
     {
         return $this->db->fetch(
-            'SELECT po.*, s.name AS supplier_name
+            'SELECT po.*, s.name AS supplier_name,
+                    s.code AS supplier_code,
+                    s.tax_id AS supplier_tax_id,
+                    s.contact_name AS supplier_contact_name,
+                    s.email AS supplier_email,
+                    s.phone AS supplier_phone,
+                    s.address AS supplier_address,
+                    s.commune AS supplier_commune,
+                    s.giro AS supplier_giro,
+                    s.website AS supplier_website
              FROM purchase_orders po
              LEFT JOIN suppliers s ON po.supplier_id = s.id
              WHERE po.id = :id AND po.company_id = :company_id AND po.deleted_at IS NULL',
