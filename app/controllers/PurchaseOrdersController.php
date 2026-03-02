@@ -73,6 +73,12 @@ class PurchaseOrdersController extends Controller
             $this->redirect('index.php?route=purchase-orders/create');
         }
 
+        $terms = trim((string)($_POST['terms'] ?? ''));
+        $notes = trim((string)($_POST['notes'] ?? ''));
+        if ($terms !== '') {
+            $notes .= ($notes !== '' ? "\n\n" : '') . "Condiciones de la orden:" . "\n" . $terms;
+        }
+
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
         $total = $subtotal;
 
@@ -87,7 +93,7 @@ class PurchaseOrdersController extends Controller
                 'status' => $_POST['status'] ?? 'pendiente',
                 'subtotal' => $subtotal,
                 'total' => $total,
-                'notes' => trim($_POST['notes'] ?? ''),
+                'notes' => $notes,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
@@ -176,6 +182,7 @@ class PurchaseOrdersController extends Controller
         extract([
             'order' => $order,
             'items' => $items,
+            'company' => (new SettingsModel($this->db))->get('company', []),
             'title' => 'Imprimir orden de compra',
         ], EXTR_SKIP);
 
