@@ -5,172 +5,104 @@
     <title>Orden de compra #<?php echo (int)($order['id'] ?? 0); ?></title>
     <style>
         :root {
-            --doc-blue: #1e40af;
-            --doc-blue-soft: #eaf1ff;
-            --doc-line: #b9cdf8;
-            --doc-text: #1f2937;
-            --doc-muted: #64748b;
+            --primary: #1e40af;
+            --primary-soft: #eaf1ff;
+            --line: #9fb8f5;
+            --text: #1f2937;
+            --muted: #64748b;
         }
 
         * { box-sizing: border-box; }
-        body { font-family: Arial, Helvetica, sans-serif; color: var(--doc-text); margin: 16px; }
-        .print-actions { margin-bottom: 10px; }
-        .print-actions button { border: 0; background: var(--doc-blue); color:#fff; border-radius: 6px; padding: 8px 12px; cursor:pointer; }
+        body { font-family: Arial, Helvetica, sans-serif; color: var(--text); margin: 14px; background: #fff; }
 
-        .sheet {
-            border: 1px solid var(--doc-line);
+        .print-actions { margin-bottom: 8px; }
+        .print-actions button { background: var(--primary); color: #fff; border: 0; border-radius: 4px; padding: 7px 12px; cursor: pointer; }
+
+        .doc {
             width: 100%;
-            max-width: 980px;
+            max-width: 860px;
             margin: 0 auto;
-            background: #fff;
+            border: 1px solid var(--line);
         }
 
-        .top {
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            border-bottom: 1px solid var(--doc-line);
-        }
-
-        .company {
-            padding: 12px;
-            display: grid;
-            grid-template-columns: 80px 1fr;
-            gap: 10px;
-            align-items: start;
-        }
-
-        .company img {
-            width: 74px;
-            height: 74px;
-            object-fit: contain;
-            border: 1px solid var(--doc-line);
-            padding: 4px;
-            background: #fff;
-        }
-
-        .company h1 {
-            margin: 0;
-            color: var(--doc-blue);
-            font-size: 20px;
-            line-height: 1.1;
-        }
-
-        .company .meta {
-            margin-top: 4px;
-            font-size: 11px;
-            color: var(--doc-muted);
-            line-height: 1.35;
-        }
-
-        .doc-box {
-            border-left: 1px solid var(--doc-line);
-            padding: 10px;
-        }
-
-        .doc-box h2 {
-            margin: 0 0 8px;
-            text-align: center;
-            color: var(--doc-blue);
-            font-size: 18px;
-            letter-spacing: .03em;
-        }
-
-        .doc-table,
-        .info-table,
-        .detail-table,
-        .totals-table,
-        .bank-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .doc-table td,
-        .info-table td,
-        .detail-table th,
-        .detail-table td,
-        .totals-table td,
-        .bank-table td {
-            border: 1px solid var(--doc-line);
-            padding: 6px 7px;
-            font-size: 11px;
-            vertical-align: top;
-        }
-
-        .label { background: var(--doc-blue-soft); color: #1e3a8a; font-weight: 700; width: 18%; }
-        .doc-table .label { width: 42%; }
-
-        .section {
-            margin: 10px;
-        }
-
-        .section-title {
-            margin: 0 0 6px;
-            padding: 6px 8px;
-            font-size: 12px;
-            font-weight: 700;
-            color: #1e3a8a;
-            border: 1px solid var(--doc-line);
-            background: var(--doc-blue-soft);
-        }
-
-        .detail-table th {
-            background: var(--doc-blue-soft);
-            color: #1e3a8a;
-            font-weight: 700;
-            text-align: left;
-        }
-
-        .text-end { text-align: right; }
-        .totals-wrap { display: flex; justify-content: flex-end; margin-top: 8px; }
-        .totals-table { width: 320px; }
-        .totals-table tr:last-child td { background: var(--doc-blue-soft); color: #1e3a8a; font-weight: 700; }
-
-        .bottom-grid {
-            margin: 10px;
+        .header {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            border-bottom: 1px solid var(--line);
         }
 
-        .notes-box {
-            border: 1px solid var(--doc-line);
-            padding: 8px;
-            min-height: 110px;
-            font-size: 11px;
-            line-height: 1.45;
-        }
+        .header-left, .header-right { padding: 8px; min-height: 88px; }
+        .header-right { border-left: 1px solid var(--line); }
 
-        .signatures {
-            margin: 18px 10px 12px;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 22px;
-            text-align: center;
-            font-size: 11px;
-        }
+        .brand { display: grid; grid-template-columns: 66px 1fr; gap: 8px; }
+        .brand img { width: 62px; height: 62px; object-fit: contain; border: 1px solid var(--line); padding: 2px; }
+        .company-title { font-size: 22px; font-weight: 700; letter-spacing: .02em; color: var(--primary); margin: 0 0 3px; text-transform: uppercase; }
+        .company-meta { font-size: 10px; line-height: 1.25; color: var(--muted); }
 
-        .sign-line {
-            margin-top: 34px;
-            border-top: 1px solid #334155;
-            padding-top: 6px;
-        }
+        .doc-title { font-size: 32px; line-height: 1; margin: 2px 0 8px; color: var(--primary); font-weight: 800; text-transform: uppercase; text-align: right; }
+        .doc-info { width: 100%; border-collapse: collapse; }
+        .doc-info td { border: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
+        .doc-info td.label { background: var(--primary-soft); color: #1d3d9f; font-weight: 700; width: 42%; }
 
-        .footer-note {
-            margin: 0 10px 10px;
-            color: var(--doc-muted);
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid var(--line); }
+        .panel { border-right: 1px solid var(--line); }
+        .panel:last-child { border-right: 0; }
+
+        .panel-title {
+            background: var(--primary);
+            color: #fff;
             font-size: 10px;
-            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+            padding: 4px 6px;
         }
+
+        .panel table { width: 100%; border-collapse: collapse; }
+        .panel td { border-top: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
+        .panel td.label { width: 35%; background: #f7faff; color: #1d3d9f; font-weight: 700; }
+
+        .triplet {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border-bottom: 1px solid var(--line);
+        }
+        .triplet > div { border-right: 1px solid var(--line); }
+        .triplet > div:last-child { border-right: 0; }
+
+        .detail { border-bottom: 1px solid var(--line); }
+        .detail table { width: 100%; border-collapse: collapse; }
+        .detail th, .detail td { border: 1px solid var(--line); padding: 4px 5px; font-size: 10px; }
+        .detail th { background: var(--primary-soft); color: #1d3d9f; text-transform: uppercase; font-weight: 700; }
+        .text-end { text-align: right; }
+
+        .bottom {
+            display: grid;
+            grid-template-columns: 1.2fr .8fr;
+            gap: 0;
+        }
+        .notes { border-right: 1px solid var(--line); }
+        .notes-box { min-height: 126px; padding: 6px; font-size: 10px; line-height: 1.35; }
+
+        .totals table { width: 100%; border-collapse: collapse; }
+        .totals td { border: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
+        .totals td.label { background: #f7faff; color: #1d3d9f; font-weight: 700; }
+        .totals tr.total td { background: var(--primary-soft); font-size: 11px; font-weight: 700; }
+
+        .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 10px 8px 12px; border-top: 1px solid var(--line); }
+        .signatures .line { border-top: 1px solid #334155; margin-top: 24px; text-align: center; font-size: 10px; padding-top: 4px; }
+
+        .footer { font-size: 9px; color: var(--muted); text-align: center; padding: 0 8px 8px; }
 
         @media print {
             .print-actions { display: none; }
-            body { margin: 0; padding: 6mm; }
+            body { margin: 0; padding: 5mm; }
         }
     </style>
 </head>
 <body onload="window.print()">
 <?php
-$companyName = $company['name'] ?? 'Nombre Empresa';
+$companyName = $company['name'] ?? 'Empresa';
 $companyRut = $company['rut'] ?? '';
 $companyEmail = $company['email'] ?? '';
 $companyPhone = $company['phone'] ?? '';
@@ -223,82 +155,79 @@ $neto = max(0, $subtotal - $discount);
     <button type="button" onclick="window.print()">Imprimir</button>
 </div>
 
-<div class="sheet">
-    <div class="top">
-        <div class="company">
-            <div>
-                <?php if ($logoData !== ''): ?>
-                    <img src="<?php echo e($logoData); ?>" alt="Logo empresa">
-                <?php endif; ?>
-            </div>
-            <div>
-                <h1><?php echo e($companyName); ?></h1>
-                <div class="meta">
-                    <?php if ($companyRut !== ''): ?>RUT: <?php echo e($companyRut); ?><br><?php endif; ?>
-                    <?php if ($companyGiro !== ''): ?>Giro: <?php echo e($companyGiro); ?><br><?php endif; ?>
-                    <?php if ($companyAddress !== ''): ?>Dirección: <?php echo e($companyAddress); ?><br><?php endif; ?>
-                    <?php if ($companyEmail !== ''): ?>Email: <?php echo e($companyEmail); ?><?php endif; ?>
-                    <?php if ($companyPhone !== ''): ?> · Tel: <?php echo e($companyPhone); ?><?php endif; ?>
+<div class="doc">
+    <div class="header">
+        <div class="header-left">
+            <div class="brand">
+                <div><?php if ($logoData !== ''): ?><img src="<?php echo e($logoData); ?>" alt="logo"><?php endif; ?></div>
+                <div>
+                    <h1 class="company-title"><?php echo e($companyName); ?></h1>
+                    <div class="company-meta">
+                        <?php if ($companyRut !== ''): ?>RUT: <?php echo e($companyRut); ?><br><?php endif; ?>
+                        <?php if ($companyGiro !== ''): ?>Giro: <?php echo e($companyGiro); ?><br><?php endif; ?>
+                        <?php if ($companyAddress !== ''): ?><?php echo e($companyAddress); ?><br><?php endif; ?>
+                        <?php if ($companyEmail !== ''): ?><?php echo e($companyEmail); ?><?php endif; ?>
+                        <?php if ($companyPhone !== ''): ?> · <?php echo e($companyPhone); ?><?php endif; ?>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="doc-box">
-            <h2>ORDEN DE COMPRA</h2>
-            <table class="doc-table">
-                <tr><td class="label">N° Orden</td><td><?php echo (int)($order['id'] ?? 0); ?></td></tr>
+        <div class="header-right">
+            <div class="doc-title">ORDEN DE COMPRA</div>
+            <table class="doc-info">
+                <tr><td class="label">N° OC</td><td><?php echo (int)($order['id'] ?? 0); ?></td></tr>
                 <tr><td class="label">Referencia</td><td><?php echo e((string)($order['reference'] ?: 'Sin referencia')); ?></td></tr>
-                <tr><td class="label">Fecha Emisión</td><td><?php echo e(format_date($order['order_date'] ?? null)); ?></td></tr>
+                <tr><td class="label">Fecha</td><td><?php echo e(format_date($order['order_date'] ?? null)); ?></td></tr>
                 <tr><td class="label">Estado</td><td><?php echo e(ucfirst((string)($order['status'] ?? 'pendiente'))); ?></td></tr>
             </table>
         </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">DATOS PROVEEDOR</div>
-        <table class="info-table">
-            <tr>
-                <td class="label">Razón Social</td><td><?php echo e($supplierName ?: '—'); ?></td>
-                <td class="label">Código</td><td><?php echo e($supplierCode ?: '—'); ?></td>
-            </tr>
-            <tr>
-                <td class="label">RUT</td><td><?php echo e($supplierTax ?: '—'); ?></td>
-                <td class="label">Giro</td><td><?php echo e($supplierGiro ?: '—'); ?></td>
-            </tr>
-            <tr>
-                <td class="label">Contacto</td><td><?php echo e($supplierContact ?: '—'); ?></td>
-                <td class="label">Email</td><td><?php echo e($supplierEmail ?: '—'); ?></td>
-            </tr>
-            <tr>
-                <td class="label">Teléfono</td><td><?php echo e($supplierPhone ?: '—'); ?></td>
-                <td class="label">Dirección</td><td><?php echo e($supplierAddress ?: '—'); ?></td>
-            </tr>
-        </table>
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">Proveedor</div>
+            <table>
+                <tr><td class="label">Razón social</td><td><?php echo e($supplierName ?: '—'); ?></td></tr>
+                <tr><td class="label">RUT</td><td><?php echo e($supplierTax ?: '—'); ?></td></tr>
+                <tr><td class="label">Código</td><td><?php echo e($supplierCode ?: '—'); ?></td></tr>
+                <tr><td class="label">Dirección</td><td><?php echo e($supplierAddress ?: '—'); ?></td></tr>
+            </table>
+        </div>
+        <div class="panel">
+            <div class="panel-title">Enviar a</div>
+            <table>
+                <tr><td class="label">Contacto</td><td><?php echo e($supplierContact ?: '—'); ?></td></tr>
+                <tr><td class="label">Email</td><td><?php echo e($supplierEmail ?: '—'); ?></td></tr>
+                <tr><td class="label">Teléfono</td><td><?php echo e($supplierPhone ?: '—'); ?></td></tr>
+                <tr><td class="label">Giro</td><td><?php echo e($supplierGiro ?: '—'); ?></td></tr>
+            </table>
+        </div>
     </div>
 
-    <div class="section">
-        <div class="section-title">DETALLE DE PRODUCTOS / SERVICIOS</div>
+    <div class="triplet">
+        <div><div class="panel-title">Solicitante</div><div style="padding:6px;font-size:10px;"><?php echo e($companyName); ?></div></div>
+        <div><div class="panel-title">Enviar vía</div><div style="padding:6px;font-size:10px;">Correo electrónico</div></div>
+        <div><div class="panel-title">Condiciones de envío</div><div style="padding:6px;font-size:10px;">Según acuerdo comercial vigente</div></div>
+    </div>
+
+    <div class="detail">
         <table class="detail-table">
             <thead>
                 <tr>
-                    <th style="width:5%;">#</th>
-                    <th style="width:39%;">Detalle</th>
-                    <th style="width:9%;" class="text-end">Cant.</th>
-                    <th style="width:8%;">UM</th>
-                    <th style="width:14%;" class="text-end">Valor Unit.</th>
-                    <th style="width:10%;" class="text-end">% Desc.</th>
-                    <th style="width:15%;" class="text-end">Total</th>
+                    <th style="width:6%;">#</th>
+                    <th style="width:42%;">Descripción</th>
+                    <th style="width:8%;" class="text-end">Cant.</th>
+                    <th style="width:10%;">Precio Unit.</th>
+                    <th style="width:8%;" class="text-end">% Dcto</th>
+                    <th style="width:16%;" class="text-end">Total</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($items as $index => $item): ?>
                     <tr>
                         <td><?php echo (int)$index + 1; ?></td>
-                        <td>
-                            <?php echo e($item['product_name'] ?? ''); ?>
-                            <?php if (!empty($item['sku'])): ?><br><span style="color:#64748b;">SKU: <?php echo e($item['sku']); ?></span><?php endif; ?>
-                        </td>
+                        <td><?php echo e($item['product_name'] ?? ''); ?><?php if (!empty($item['sku'])): ?><br><span style="color:#64748b;">SKU: <?php echo e($item['sku']); ?></span><?php endif; ?></td>
                         <td class="text-end"><?php echo (int)($item['quantity'] ?? 0); ?></td>
-                        <td>UNID</td>
                         <td class="text-end"><?php echo e(format_currency((float)($item['unit_cost'] ?? 0))); ?></td>
                         <td class="text-end">0%</td>
                         <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>
@@ -306,19 +235,11 @@ $neto = max(0, $subtotal - $discount);
                 <?php endforeach; ?>
             </tbody>
         </table>
-
-        <div class="totals-wrap">
-            <table class="totals-table">
-                <tr><td class="label">Descuento</td><td class="text-end"><?php echo e(format_currency($discount)); ?></td></tr>
-                <tr><td class="label">Neto</td><td class="text-end"><?php echo e(format_currency($neto)); ?></td></tr>
-                <tr><td class="label">TOTAL</td><td class="text-end"><?php echo e(format_currency($total)); ?></td></tr>
-            </table>
-        </div>
     </div>
 
-    <div class="bottom-grid">
-        <div>
-            <div class="section-title">CONDICIONES Y OBSERVACIONES</div>
+    <div class="bottom">
+        <div class="notes">
+            <div class="panel-title">Comentarios o instrucciones especiales</div>
             <div class="notes-box">
                 <strong>Condiciones:</strong><br>
                 <?php echo nl2br(e($conditions !== '' ? $conditions : 'Entrega y pago según acuerdo comercial.')); ?>
@@ -327,26 +248,30 @@ $neto = max(0, $subtotal - $discount);
                 <?php echo nl2br(e($notesBody !== '' ? $notesBody : 'Sin observaciones adicionales.')); ?>
             </div>
         </div>
-        <div>
-            <div class="section-title">DATOS BANCARIOS EMPRESA</div>
-            <table class="bank-table">
+        <div class="totals">
+            <table>
+                <tr><td class="label">Sub-total</td><td class="text-end"><?php echo e(format_currency($subtotal)); ?></td></tr>
+                <tr><td class="label">Descuento</td><td class="text-end"><?php echo e(format_currency($discount)); ?></td></tr>
+                <tr><td class="label">Neto</td><td class="text-end"><?php echo e(format_currency($neto)); ?></td></tr>
+                <tr><td class="label">Impuesto</td><td class="text-end">0%</td></tr>
+                <tr><td class="label">Total</td><td class="text-end"><?php echo e(format_currency($total)); ?></td></tr>
                 <tr><td class="label">Banco</td><td><?php echo e($companyBank ?: '—'); ?></td></tr>
-                <tr><td class="label">Tipo Cuenta</td><td><?php echo e($companyAccountType ?: '—'); ?></td></tr>
+                <tr><td class="label">Tipo Cta.</td><td><?php echo e($companyAccountType ?: '—'); ?></td></tr>
                 <tr><td class="label">N° Cuenta</td><td><?php echo e($companyAccountNumber ?: '—'); ?></td></tr>
-                <tr><td class="label">Email pago</td><td><?php echo e($companyEmail ?: '—'); ?></td></tr>
             </table>
         </div>
     </div>
 
     <div class="signatures">
-        <div><div class="sign-line">Solicitado por</div></div>
-        <div><div class="sign-line">Aprobado por</div></div>
-        <div><div class="sign-line">Recibido/Aceptado proveedor</div></div>
+        <div><div class="line">Solicitado por</div></div>
+        <div><div class="line">Aprobado por</div></div>
+        <div><div class="line">Aceptado por proveedor</div></div>
     </div>
 
-    <?php if ($companySignature !== ''): ?>
-        <div class="footer-note"><?php echo nl2br(e($companySignature)); ?></div>
-    <?php endif; ?>
+    <div class="footer">
+        <?php if ($companySignature !== ''): ?><?php echo nl2br(e($companySignature)); ?><br><?php endif; ?>
+        Si tiene alguna consulta sobre esta orden, contáctenos por email o teléfono.
+    </div>
 </div>
 </body>
 </html>
