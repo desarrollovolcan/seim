@@ -66,39 +66,8 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
-                <li class="side-nav-title">Control Camiones</li>
-                <li class="side-nav-item">
-                    <a data-bs-toggle="collapse" href="#sidebarTruckControl" aria-expanded="false" aria-controls="sidebarTruckControl" class="side-nav-link">
-                        <span class="menu-icon"><i data-lucide="truck"></i></span>
-                        <span class="menu-label">
-                            <span class="menu-text">Control Camiones</span>
-                            <span class="menu-caption">Despacho y recepción</span>
-                        </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarTruckControl">
-                        <ul class="sub-menu">
-                            <?php if ($hasPermission('sales_dispatches_edit')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=sales/dispatches/create" class="side-nav-link">
-                                        <span class="menu-text">Despachar camión vendedor</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('sales_dispatches_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=sales/dispatches/reception" class="side-nav-link">
-                                        <span class="menu-text">Recepcionar camión vendedor</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
-                </li>
-            <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit'])): ?>
-                <li class="side-nav-title">Ventas</li>
+            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit', 'sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+                <li class="side-nav-title">Flujo Comercial</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarSales" aria-expanded="false" aria-controls="sidebarSales" class="side-nav-link">
                         <span class="menu-icon"><i data-lucide="shopping-cart"></i></span>
@@ -111,46 +80,34 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
                             <?php if ($hasPermission('sales_view')): ?>
+                                <li class="menu-group-label">1. Venta</li>
                                 <li class="side-nav-item"><a href="index.php?route=sales" class="side-nav-link"><span class="menu-text">Listado ventas</span></a></li>
                                 <li class="side-nav-item"><a href="index.php?route=sales/create" class="side-nav-link"><span class="menu-text">Registrar venta</span></a></li>
                                 <li class="side-nav-item"><a href="index.php?route=pos" class="side-nav-link"><span class="menu-text">Punto de venta</span></a></li>
                                 <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
                                 <?php if ($hasPermission('clients_view')): ?>
+                                    <li class="menu-group-label">2. Clientes</li>
                                     <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
                                 <?php endif; ?>
+                                <li class="menu-group-label">3. Seguimiento</li>
                                 <li class="side-nav-item"><a href="index.php?route=sales/profit-analysis" class="side-nav-link"><span class="menu-text">Análisis ganancias</span></a></li>
                             <?php endif; ?>
-                        </ul>
-                    </div>
-                </li>
-            <?php endif; ?>
-
-            <?php if ($hasCompany && $canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
-                <li class="side-nav-title">Control Camiones</li>
-                <li class="side-nav-item">
-                    <a data-bs-toggle="collapse" href="#sidebarTruckControl" aria-expanded="false" aria-controls="sidebarTruckControl" class="side-nav-link">
-                        <span class="menu-icon"><i data-lucide="truck"></i></span>
-                        <span class="menu-label">
-                            <span class="menu-text">Control Camiones</span>
-                            <span class="menu-caption">Despacho y recepción</span>
-                        </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarTruckControl">
-                        <ul class="sub-menu">
-                            <?php if ($hasPermission('sales_dispatches_edit')): ?>
-                                <li class="side-nav-item"><a href="index.php?route=sales/dispatches/create" class="side-nav-link"><span class="menu-text">Despachar camión vendedor</span></a></li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('sales_dispatches_view')): ?>
-                                <li class="side-nav-item"><a href="index.php?route=sales/dispatches/reception" class="side-nav-link"><span class="menu-text">Recepcionar camión vendedor</span></a></li>
+                            <?php if ($canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+                                <li class="menu-group-label">4. Despacho</li>
+                                <?php if ($hasPermission('sales_dispatches_edit')): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=sales/dispatches/create" class="side-nav-link"><span class="menu-text">Despachar camión vendedor</span></a></li>
+                                <?php endif; ?>
+                                <?php if ($hasPermission('sales_dispatches_view')): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=sales/dispatches/reception" class="side-nav-link"><span class="menu-text">Recepcionar camión vendedor</span></a></li>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </ul>
                     </div>
                 </li>
             <?php endif; ?>
 
-            <?php if ($hasCompany && $canAccessAny(['products_view', 'products_edit', 'produced_products_view', 'produced_products_edit', 'product_families_view', 'product_subfamilies_view', 'production_view', 'production_edit'])): ?>
-                <li class="side-nav-title">Productos</li>
+            <?php if ($hasCompany && $canAccessAny(['products_view', 'products_edit', 'product_families_view', 'product_subfamilies_view'])): ?>
+                <li class="side-nav-title">Flujo Operacional</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarInventory" aria-expanded="false" aria-controls="sidebarInventory" class="side-nav-link">
                         <span class="menu-icon"><i data-lucide="package"></i></span>
@@ -162,22 +119,11 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarInventory">
                         <ul class="sub-menu">
+                            <li class="menu-group-label">1. Catálogo</li>
                             <?php if ($hasPermission('products_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=products" class="side-nav-link">
                                         <span class="menu-text">Listado productos</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('production_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production/inputs" class="side-nav-link">
-                                        <span class="menu-text">Consumos para producción</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production/expenses" class="side-nav-link">
-                                        <span class="menu-text">Gastos para producción</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -200,7 +146,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                 </li>
             <?php endif; ?>
             <?php if ($hasCompany && $canAccessAny(['production_view', 'production_edit'])): ?>
-                <li class="side-nav-title">Producción</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarProduction" aria-expanded="false" aria-controls="sidebarProduction" class="side-nav-link">
                         <span class="menu-icon"><i data-lucide="factory"></i></span>
@@ -212,10 +157,16 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarProduction">
                         <ul class="sub-menu">
+                            <li class="menu-group-label">2. Producción</li>
                             <?php if ($hasPermission('production_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=production" class="side-nav-link">
                                         <span class="menu-text">Órdenes de producción</span>
+                                    </a>
+                                </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=production/inputs" class="side-nav-link">
+                                        <span class="menu-text">Consumos para producción</span>
                                     </a>
                                 </li>
                                 <?php if ($hasPermission('produced_products_view')): ?>
@@ -235,8 +186,8 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'competitor_companies_view'])): ?>
-                <li class="side-nav-title">Costos</li>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view'])): ?>
+                <li class="side-nav-title">Flujo Financiero</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarCosts" aria-expanded="false" aria-controls="sidebarCosts" class="side-nav-link">
                         <span class="menu-icon"><i data-lucide="receipt"></i></span>
@@ -248,6 +199,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarCosts">
                         <ul class="sub-menu">
+                            <li class="menu-group-label">1. Compras</li>
                             <?php if ($canAccessAny(['purchases_view', 'purchase_orders_view', 'suppliers_view'])): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=costs" class="side-nav-link">
@@ -281,6 +233,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
+                            <li class="menu-group-label">2. Gastos productivos</li>
                             <?php if ($hasPermission('production_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=production/expenses" class="side-nav-link">
@@ -288,6 +241,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
+                            <li class="menu-group-label">3. Caja y activos</li>
                             <?php if ($hasPermission('honorarios_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=honorarios" class="side-nav-link">
@@ -306,13 +260,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 <li class="side-nav-item">
                                     <a href="index.php?route=treasury/transactions" class="side-nav-link">
                                         <span class="menu-text">Movimientos tesorería</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('competitor_companies_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=maintainers/competitor-companies/create" class="side-nav-link">
-                                        <span class="menu-text">Empresas competencia</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -346,6 +293,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                 <?php endif; ?>
             <?php endif; ?>
             <?php if ($canAccessAny(['users_view', 'roles_view', 'users_companies_view', 'users_permissions_view', 'companies_view', 'settings_view', 'email_config_view', 'online_payments_config_view', 'system_services_view', 'service_types_view', 'chile_regions_view', 'competitor_companies_view', 'hr_maintainers_view'])): ?>
+                <li class="side-nav-title">Administración</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarMaintainers" aria-expanded="false" aria-controls="sidebarMaintainers" class="side-nav-link">
                         <span class="menu-icon"><i data-lucide="database"></i></span>
@@ -452,6 +400,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                     <div class="collapse" id="sidebarMaintainersHr">
                                         <ul class="sub-menu">
+                                            <li class="menu-group-label">Estructura organizacional</li>
                                             <li class="side-nav-item">
                                                 <a href="index.php?route=maintainers/hr-departments" class="side-nav-link">
                                                     <span class="menu-text">Departamentos</span>
@@ -472,6 +421,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                                     <span class="menu-text">Jornadas</span>
                                                 </a>
                                             </li>
+                                            <li class="menu-group-label">Previsión</li>
                                             <li class="side-nav-item">
                                                 <a href="index.php?route=maintainers/hr-health-providers" class="side-nav-link">
                                                     <span class="menu-text">Instituciones de salud</span>
