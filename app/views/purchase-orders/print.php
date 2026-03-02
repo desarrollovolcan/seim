@@ -6,93 +6,101 @@
     <style>
         :root {
             --primary: #1e40af;
-            --primary-soft: #eaf1ff;
-            --line: #9fb8f5;
+            --primary-soft: #eef4ff;
             --text: #1f2937;
-            --muted: #64748b;
+            --muted: #6b7280;
+            --line-soft: #e5e7eb;
         }
 
         * { box-sizing: border-box; }
         body { font-family: Arial, Helvetica, sans-serif; color: var(--text); margin: 14px; background: #fff; }
-
         .print-actions { margin-bottom: 8px; }
         .print-actions button { background: var(--primary); color: #fff; border: 0; border-radius: 4px; padding: 7px 12px; cursor: pointer; }
 
-        .doc {
-            width: 100%;
-            max-width: 860px;
-            margin: 0 auto;
-            border: 1px solid var(--line);
-        }
+        .doc { width: 100%; max-width: 860px; margin: 0 auto; }
 
         .header {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            border-bottom: 1px solid var(--line);
+            gap: 12px;
+            padding: 10px 0 12px;
+            border-bottom: 2px solid var(--primary);
         }
 
-        .header-left, .header-right { padding: 8px; min-height: 88px; }
-        .header-right { border-left: 1px solid var(--line); }
+        .header-left, .header-right { padding: 0; }
 
         .brand { display: grid; grid-template-columns: 66px 1fr; gap: 8px; }
-        .brand img { width: 62px; height: 62px; object-fit: contain; border: 1px solid var(--line); padding: 2px; }
+        .brand img { width: 62px; height: 62px; object-fit: contain; }
         .company-title { font-size: 22px; font-weight: 700; letter-spacing: .02em; color: var(--primary); margin: 0 0 3px; text-transform: uppercase; }
-        .company-meta { font-size: 10px; line-height: 1.25; color: var(--muted); }
+        .company-meta { font-size: 10px; line-height: 1.3; color: var(--muted); }
 
-        .doc-title { font-size: 32px; line-height: 1; margin: 2px 0 8px; color: var(--primary); font-weight: 800; text-transform: uppercase; text-align: right; }
+        .doc-title { font-size: 30px; line-height: 1; margin: 0 0 8px; color: var(--primary); font-weight: 800; text-transform: uppercase; text-align: right; }
         .doc-info { width: 100%; border-collapse: collapse; }
-        .doc-info td { border: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
-        .doc-info td.label { background: var(--primary-soft); color: #1d3d9f; font-weight: 700; width: 42%; }
+        .doc-info td { padding: 4px 0 4px 8px; font-size: 10px; }
+        .doc-info td.label { color: #1d3d9f; font-weight: 700; width: 42%; padding-left: 0; }
 
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-bottom: 1px solid var(--line); }
-        .panel { border-right: 1px solid var(--line); }
-        .panel:last-child { border-right: 0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
 
         .panel-title {
-            background: var(--primary);
-            color: #fff;
+            color: #1d3d9f;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: .04em;
-            padding: 4px 6px;
+            padding: 5px 7px;
+            background: var(--primary-soft);
+            border-radius: 4px;
+            margin-bottom: 4px;
         }
 
         .panel table { width: 100%; border-collapse: collapse; }
-        .panel td { border-top: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
-        .panel td.label { width: 35%; background: #f7faff; color: #1d3d9f; font-weight: 700; }
+        .panel td { padding: 5px 0 5px 6px; font-size: 10px; border-bottom: 1px solid var(--line-soft); }
+        .panel tr:last-child td { border-bottom: 0; }
+        .panel td.label { width: 35%; color: #1d3d9f; font-weight: 700; padding-left: 0; }
 
-        .triplet {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            border-bottom: 1px solid var(--line);
+        .triplet { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+        .triplet .panel-title { margin-bottom: 0; }
+        .triplet .value { padding: 6px 2px 0; font-size: 10px; color: var(--muted); }
+
+        .detail { margin-top: 12px; }
+        .detail-table { width: 100%; border-collapse: collapse; }
+        .detail-table th, .detail-table td { padding: 6px 6px; font-size: 10px; }
+        .detail-table thead th {
+            background: var(--primary-soft);
+            color: #1d3d9f;
+            text-transform: uppercase;
+            font-weight: 700;
+            border-bottom: 1px solid #cddcfd;
         }
-        .triplet > div { border-right: 1px solid var(--line); }
-        .triplet > div:last-child { border-right: 0; }
+        .detail-table tbody td { border-bottom: 1px solid var(--line-soft); }
+        .detail-table tbody tr:last-child td { border-bottom: 0; }
 
-        .detail { border-bottom: 1px solid var(--line); }
-        .detail table { width: 100%; border-collapse: collapse; }
-        .detail th, .detail td { border: 1px solid var(--line); padding: 4px 5px; font-size: 10px; }
-        .detail th { background: var(--primary-soft); color: #1d3d9f; text-transform: uppercase; font-weight: 700; }
         .text-end { text-align: right; }
 
         .bottom {
+            margin-top: 12px;
             display: grid;
             grid-template-columns: 1.2fr .8fr;
-            gap: 0;
+            gap: 12px;
         }
-        .notes { border-right: 1px solid var(--line); }
-        .notes-box { min-height: 126px; padding: 6px; font-size: 10px; line-height: 1.35; }
+
+        .notes-box {
+            min-height: 110px;
+            font-size: 10px;
+            line-height: 1.45;
+            color: #374151;
+            padding: 6px 2px;
+        }
 
         .totals table { width: 100%; border-collapse: collapse; }
-        .totals td { border: 1px solid var(--line); padding: 4px 6px; font-size: 10px; }
-        .totals td.label { background: #f7faff; color: #1d3d9f; font-weight: 700; }
-        .totals tr.total td { background: var(--primary-soft); font-size: 11px; font-weight: 700; }
+        .totals td { padding: 5px 0 5px 6px; font-size: 10px; border-bottom: 1px solid var(--line-soft); }
+        .totals tr:last-child td { border-bottom: 0; color: #1d3d9f; font-weight: 700; }
+        .totals td.label { width: 45%; color: #1d3d9f; font-weight: 700; padding-left: 0; }
 
-        .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 10px 8px 12px; border-top: 1px solid var(--line); }
-        .signatures .line { border-top: 1px solid #334155; margin-top: 24px; text-align: center; font-size: 10px; padding-top: 4px; }
+        .signatures { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; padding: 14px 0 10px; margin-top: 8px; }
+        .signatures .line { border-top: 1px solid #9ca3af; margin-top: 20px; text-align: center; font-size: 10px; padding-top: 4px; }
 
-        .footer { font-size: 9px; color: var(--muted); text-align: center; padding: 0 8px 8px; }
+        .footer { font-size: 9px; color: var(--muted); text-align: center; padding: 0 0 8px; }
 
         @media print {
             .print-actions { display: none; }
@@ -205,9 +213,9 @@ $neto = max(0, $subtotal - $discount);
     </div>
 
     <div class="triplet">
-        <div><div class="panel-title">Solicitante</div><div style="padding:6px;font-size:10px;"><?php echo e($companyName); ?></div></div>
-        <div><div class="panel-title">Enviar vía</div><div style="padding:6px;font-size:10px;">Correo electrónico</div></div>
-        <div><div class="panel-title">Condiciones de envío</div><div style="padding:6px;font-size:10px;">Según acuerdo comercial vigente</div></div>
+        <div><div class="panel-title">Solicitante</div><div class="value"><?php echo e($companyName); ?></div></div>
+        <div><div class="panel-title">Enviar vía</div><div class="value">Correo electrónico</div></div>
+        <div><div class="panel-title">Condiciones de envío</div><div class="value">Según acuerdo comercial vigente</div></div>
     </div>
 
     <div class="detail">
@@ -238,7 +246,7 @@ $neto = max(0, $subtotal - $discount);
     </div>
 
     <div class="bottom">
-        <div class="notes">
+        <div>
             <div class="panel-title">Comentarios o instrucciones especiales</div>
             <div class="notes-box">
                 <strong>Condiciones:</strong><br>
@@ -249,6 +257,7 @@ $neto = max(0, $subtotal - $discount);
             </div>
         </div>
         <div class="totals">
+            <div class="panel-title">Resumen</div>
             <table>
                 <tr><td class="label">Sub-total</td><td class="text-end"><?php echo e(format_currency($subtotal)); ?></td></tr>
                 <tr><td class="label">Descuento</td><td class="text-end"><?php echo e(format_currency($discount)); ?></td></tr>
