@@ -6,7 +6,10 @@
                     <h4 class="card-title mb-1">Orden de compra #<?php echo (int)$order['id']; ?></h4>
                     <div class="text-muted">Fecha: <?php echo e(format_date($order['order_date'] ?? null)); ?></div>
                 </div>
-                <a href="index.php?route=purchase-orders" class="btn btn-light">Volver</a>
+                <div class="d-flex gap-2">
+                    <a href="index.php?route=purchase-orders/print&id=<?php echo (int)$order['id']; ?>" class="btn btn-outline-primary" target="_blank">Imprimir</a>
+                    <a href="index.php?route=purchase-orders" class="btn btn-light">Volver</a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row g-3 mb-4">

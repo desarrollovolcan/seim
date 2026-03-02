@@ -3,7 +3,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="card-title mb-0">Nueva orden de compra</h4>
-                <a href="index.php?route=products/create" class="btn btn-soft-secondary btn-sm">Crear producto</a>
+                <div class="d-flex gap-2">
+                    <a href="index.php?route=products/create" class="btn btn-soft-secondary btn-sm">Crear producto</a>
+                    <button type="button" class="btn btn-outline-primary btn-sm" id="print-order-preview">Vista previa impresión</button>
+                </div>
             </div>
             <div class="card-body">
                 <form method="post" action="index.php?route=purchase-orders/store" id="purchase-order-form">
@@ -85,6 +88,7 @@
                             <div class="form-actions">
                                 <a href="index.php?route=purchase-orders" class="btn btn-light">Cancelar</a>
                                 <button type="submit" class="btn btn-primary">Guardar orden</button>
+                                <button type="submit" class="btn btn-outline-primary" name="print_after_save" value="1">Guardar e imprimir</button>
                             </div>
                         </div>
                     </div>
@@ -153,5 +157,38 @@
 
         document.querySelectorAll('.item-row').forEach(attachRowHandlers);
         recalc();
+
+        document.getElementById('print-order-preview')?.addEventListener('click', () => {
+            const supplierText = document.querySelector('select[name="supplier_id"] option:checked')?.textContent?.trim() || 'Sin proveedor';
+            const orderDate = document.querySelector('input[name="order_date"]')?.value || '';
+            const reference = document.querySelector('input[name="reference"]')?.value || 'Sin referencia';
+            const notes = document.querySelector('textarea[name="notes"]')?.value || '';
+            const rows = [...tableBody.querySelectorAll('.item-row')]
+                .map((row, i) => {
+                    const product = row.querySelector('.product-select option:checked')?.textContent?.trim() || 'Producto';
+                    const qty = parseFloat(row.querySelector('.quantity-input')?.value || 0);
+                    const cost = parseFloat(row.querySelector('.cost-input')?.value || 0);
+                    if (!qty) return '';
+                    const subtotal = qty * cost;
+                    return `<tr><td>${i + 1}</td><td>${product}</td><td style="text-align:right">${qty}</td><td style="text-align:right">${formatCurrency(cost)}</td><td style="text-align:right">${formatCurrency(subtotal)}</td></tr>`;
+                })
+                .filter(Boolean)
+                .join('');
+
+            const printWindow = window.open('', '_blank', 'noopener,noreferrer,width=1024,height=768');
+            if (!printWindow) return;
+            const total = totalDisplay.innerText;
+            printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Vista previa orden de compra</title><style>
+                body{font-family:Arial,sans-serif;color:#1f2937;padding:24px} h1{margin:0 0 6px;font-size:24px} .muted{color:#6b7280} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{border:1px solid #d1d5db;padding:8px;font-size:12px} th{background:#eff6ff} .top{display:flex;justify-content:space-between;gap:16px;margin-bottom:12px}.box{border:1px solid #d1d5db;border-radius:8px;padding:10px;flex:1} .footer{margin-top:40px;display:flex;justify-content:space-between;gap:24px}.sign{flex:1;text-align:center}.line{border-top:1px solid #374151;margin-top:42px;padding-top:8px} .total{margin-top:10px;text-align:right;font-weight:bold}
+            </style></head><body>
+            <h1>Orden de compra</h1><div class="muted">Referencia: ${reference}</div>
+            <div class="top"><div class="box"><strong>Proveedor</strong><div>${supplierText}</div></div><div class="box"><strong>Fecha</strong><div>${orderDate}</div></div></div>
+            <table><thead><tr><th>#</th><th>Producto</th><th>Cantidad</th><th>Costo unitario</th><th>Subtotal</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center">Sin productos</td></tr>'}</tbody></table>
+            <div class="total">Total: ${total}</div>
+            <p><strong>Notas:</strong> ${notes || 'Sin observaciones.'}</p>
+            <div class="footer"><div class="sign"><div class="line">Solicitado por</div></div><div class="sign"><div class="line">Aprobado por</div></div><div class="sign"><div class="line">Proveedor</div></div></div>
+            <script>window.onload=()=>window.print()<\/script></body></html>`);
+            printWindow.document.close();
+        });
     })();
 </script>
