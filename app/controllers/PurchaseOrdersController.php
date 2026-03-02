@@ -73,6 +73,12 @@ class PurchaseOrdersController extends Controller
             $this->redirect('index.php?route=purchase-orders/create');
         }
 
+        $terms = trim((string)($_POST['terms'] ?? ''));
+        $notes = trim((string)($_POST['notes'] ?? ''));
+        if ($terms !== '') {
+            $notes .= ($notes !== '' ? "\n\n" : '') . "Condiciones de la orden:" . "\n" . $terms;
+        }
+
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
         $total = $subtotal;
 
@@ -87,7 +93,7 @@ class PurchaseOrdersController extends Controller
                 'status' => $_POST['status'] ?? 'pendiente',
                 'subtotal' => $subtotal,
                 'total' => $total,
-                'notes' => trim($_POST['notes'] ?? ''),
+                'notes' => $notes,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
@@ -107,6 +113,10 @@ class PurchaseOrdersController extends Controller
             audit($this->db, Auth::user()['id'], 'create', 'purchase_orders', $orderId);
             $pdo->commit();
             flash('success', 'Orden de compra registrada correctamente.');
+
+            if ((int)($_POST['print_after_save'] ?? 0) === 1) {
+                $this->redirect('index.php?route=purchase-orders/print&id=' . (int)$orderId);
+            }
         } catch (Throwable $e) {
             $pdo->rollBack();
             log_message('error', 'Error al registrar orden de compra: ' . $e->getMessage());
@@ -141,6 +151,42 @@ class PurchaseOrdersController extends Controller
             'order' => $order,
             'items' => $items,
         ]);
+    }
+
+
+    public function print(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $id = (int)($_GET['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $items = $this->db->fetchAll(
+            'SELECT poi.*, p.name AS product_name, p.sku
+             FROM purchase_order_items poi
+             LEFT JOIN products p ON poi.product_id = p.id
+             WHERE poi.purchase_order_id = :order_id
+             ORDER BY poi.id ASC',
+            ['order_id' => $id]
+        );
+
+        $viewPath = __DIR__ . '/../views/purchase-orders/print.php';
+        if (!file_exists($viewPath)) {
+            echo 'Vista no encontrada';
+            return;
+        }
+
+        extract([
+            'order' => $order,
+            'items' => $items,
+            'company' => (new SettingsModel($this->db))->get('company', []),
+            'title' => 'Imprimir orden de compra',
+        ], EXTR_SKIP);
+
+        include $viewPath;
     }
 
     private function collectItems(int $companyId): array
