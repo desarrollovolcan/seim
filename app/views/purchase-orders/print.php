@@ -28,7 +28,7 @@
         }
 
         .invoice {
-            width: 900px;
+            width: 880px;
             margin: auto;
             background: var(--card);
             padding: 30px 34px 34px;
@@ -52,6 +52,7 @@
         }
 
         .top-bar {
+            margin-top: 4px;
             background: var(--primary);
             color: white;
             padding: 18px 22px;
@@ -95,6 +96,14 @@
             margin-top: 24px;
         }
 
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #1d3d9f;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
         .flex {
             display: flex;
             justify-content: space-between;
@@ -125,6 +134,7 @@
             border-collapse: collapse;
             margin-top: 16px;
             font-size: 13px;
+            table-layout: fixed;
         }
 
         thead {
@@ -135,6 +145,9 @@
         th, td {
             padding: 10px;
             text-align: left;
+            vertical-align: top;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         tbody tr {
@@ -147,7 +160,14 @@
 
         .text-end {
             text-align: right;
+            white-space: nowrap;
         }
+
+        .col-description { width: 44%; }
+        .col-qty { width: 10%; }
+        .col-unit { width: 16%; }
+        .col-discount { width: 12%; }
+        .col-total { width: 18%; }
 
         .summary {
             margin-top: 24px;
@@ -209,7 +229,7 @@
         }
 
         @page {
-            size: A4;
+            size: Letter portrait;
             margin: 10mm;
         }
 
@@ -221,7 +241,7 @@
             }
 
             .invoice {
-                width: 900px;
+                width: 880px;
                 max-width: 100%;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
                 border-radius: 8px;
@@ -229,7 +249,13 @@
                 break-inside: avoid;
             }
 
-            .top-bar { background: var(--primary) !important; }
+            table, tr, td, th {
+                page-break-inside: avoid;
+            }
+
+            .top-bar {
+                background: var(--primary) !important;
+            }
             thead { background: var(--primary-2) !important; }
             .summary .total { background: var(--primary-2) !important; }
 
@@ -319,7 +345,9 @@ $executive = Auth::user()['name'] ?? 'Ejecutivo asignado';
         </div>
     </div>
 
-    <div class="section flex">
+    <div class="section">
+        <h3 class="section-title">Datos generales</h3>
+        <div class="flex">
         <div class="box">
             <strong class="title">Facturar a</strong><br>
             <?php echo e($supplierName ?: 'Proveedor sin nombre'); ?><br>
@@ -342,17 +370,19 @@ $executive = Auth::user()['name'] ?? 'Ejecutivo asignado';
             Ejecutivo: <?php echo e($executive); ?><br>
             Estado: <?php echo e(ucfirst((string)($order['status'] ?? 'pendiente'))); ?>
         </div>
+        </div>
     </div>
 
     <div class="section">
+        <h3 class="section-title">Detalle de productos</h3>
         <table>
             <thead>
             <tr>
-                <th>Descripción</th>
-                <th class="text-end">Cant.</th>
-                <th class="text-end">Valor Unitario</th>
-                <th class="text-end">Desc.</th>
-                <th class="text-end">Total</th>
+                <th class="col-description">Descripción</th>
+                <th class="text-end col-qty">Cant.</th>
+                <th class="text-end col-unit">Valor Unitario</th>
+                <th class="text-end col-discount">Desc.</th>
+                <th class="text-end col-total">Total</th>
             </tr>
             </thead>
             <tbody>
