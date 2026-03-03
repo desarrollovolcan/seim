@@ -55,14 +55,15 @@
 
         .top-bar {
             margin-top: 4px;
-            background: var(--primary);
-            color: white;
-            padding: 18px 22px;
+            background: #fff;
+            color: var(--text);
+            padding: 12px 14px;
             border-radius: 8px;
+            border: 1px solid #d6deea;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 20px;
+            gap: 12px;
         }
 
         .top-left {
@@ -72,26 +73,35 @@
         }
 
         .top-left img {
-            width: 58px;
-            height: 58px;
+            width: 42px;
+            height: 42px;
             object-fit: contain;
             border-radius: 6px;
             background: #fff;
-            padding: 4px;
+            border: 1px solid #e5e7eb;
+            padding: 3px;
         }
 
         .top-bar h1 {
             margin: 0;
-            font-size: 27px;
-            letter-spacing: 2px;
+            font-size: 22px;
+            letter-spacing: .05em;
             text-transform: uppercase;
-            line-height: 1;
+            line-height: 1.1;
+            color: #1e3a8a;
+        }
+
+        .top-bar .folio {
+            margin-top: 3px;
+            font-size: 12px;
+            color: var(--muted);
         }
 
         .company-data {
-            font-size: 12px;
+            font-size: 11px;
             text-align: right;
             line-height: 1.35;
+            color: #475569;
         }
 
         .section {
@@ -268,7 +278,8 @@
             }
 
             .top-bar {
-                background: var(--primary) !important;
+                background: #fff !important;
+                border: 1px solid #d6deea !important;
             }
             thead { background: var(--primary-2) !important; }
             .summary .total { background: var(--primary-2) !important; }
@@ -346,7 +357,7 @@ $executive = Auth::user()['name'] ?? 'Ejecutivo asignado';
             <?php endif; ?>
             <div>
                 <h1>Orden de compra</h1>
-                <div>Folio Nº: <?php echo str_pad((string)(int)($order['id'] ?? 0), 6, '0', STR_PAD_LEFT); ?></div>
+                <div class="folio">Folio Nº: <?php echo str_pad((string)(int)($order['id'] ?? 0), 6, '0', STR_PAD_LEFT); ?></div>
             </div>
         </div>
         <div class="company-data">
