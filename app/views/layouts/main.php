@@ -45,6 +45,7 @@
     </div>
 
     <?php include __DIR__ . '/../../../partials/footer-scripts.php'; ?>
+    <?php include __DIR__ . '/../partials/ux-enhancements.php'; ?>
     <?php ?>
 </body>
 
