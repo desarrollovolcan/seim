@@ -91,6 +91,20 @@ $portalToken = $client['portal_token'] ?? '';
         #invoice-document .table-responsive {
             overflow: visible !important;
         }
+
+        #invoice-document .row {
+            --bs-gutter-x: .75rem;
+        }
+
+        #invoice-document .row > .col-4 {
+            width: 50%;
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+
+        #invoice-document .row > .col-4.text-end {
+            display: none;
+        }
     }
 </style>
 

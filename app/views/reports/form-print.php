@@ -11,9 +11,10 @@
         .sheet { width:100%; max-width:920px; margin:16px auto; background:#fff; border-radius:8px; box-shadow:0 8px 24px rgba(15,23,42,.08); padding:18px; box-sizing:border-box; }
         .print-actions { text-align:right; margin-bottom:10px; }
         .print-actions button { background:var(--azul); color:#fff; border:0; border-radius:6px; padding:8px 12px; font-size:12px; cursor:pointer; }
-        .header { display:table; width:100%; }
-        .header .left, .header .right { display:table-cell; vertical-align:top; }
+        .header { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:100%; }
+        .header .left, .header .right { vertical-align:top; }
         .header .right { text-align:right; }
+        @media (max-width: 860px) { .header { grid-template-columns:1fr; } .header .right{ text-align:left; } }
         .report-title { font-size:18px; font-weight:700; color:var(--azul); text-transform:uppercase; }
         .meta { font-size:11px; line-height:1.45; color:var(--gris); }
         hr { border:none; border-top:2px solid var(--azul); margin:10px 0; }
