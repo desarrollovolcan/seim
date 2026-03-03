@@ -43,7 +43,7 @@
                                     ?>
                                     <?php echo e($docLabel ?: 'No informado'); ?>
                                 </p>
-                                <p class="mb-1"><strong>Folio:</strong> <?php echo e($purchase['sii_document_number'] ?? ''); ?></p>
+                                <p class="mb-1"><strong>N° documento:</strong> <?php echo e($purchase['sii_document_number'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>RUT proveedor:</strong> <?php echo e($purchase['sii_receiver_rut'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>Razón social:</strong> <?php echo e($purchase['sii_receiver_name'] ?? ''); ?></p>
                             </div>
