@@ -1,38 +1,43 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8">
+    <meta charset="UTF-8">
     <title>Informe de formulario</title>
     <style>
-        :root { --primary:#1e40af; --soft:#eef4ff; --text:#1f2937; --muted:#6b7280; }
-        @page { size: Letter; margin: 12mm; }
+        @page { size: Letter; margin: 16mm; }
+        :root { --azul:#1c3474; --gris:#6b7280; --gris-claro:#e5e7eb; }
         html, body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        body { font-family:'Segoe UI', Arial, sans-serif; margin:0; background:#eef2f7; color:var(--text); }
-        .sheet { width: 900px; max-width: 100%; margin: 18px auto; background:#fff; border-radius:8px; box-shadow:0 10px 30px rgba(0,0,0,.08); padding:24px; }
-        .actions { text-align:right; margin-bottom:10px; }
-        .actions button { background:var(--primary); color:#fff; border:0; border-radius:6px; padding:8px 12px; }
-        .top { background:var(--primary); color:#fff; border-radius:8px; padding:16px 18px; display:flex; justify-content:space-between; gap:16px; }
-        .title { font-size:26px; margin:0; text-transform:uppercase; }
-        .meta { font-size:12px; text-align:right; line-height:1.35; }
-        .box { margin-top:16px; background:#f4f7fb; border-left:5px solid #2563eb; border-radius:6px; padding:14px; font-size:13px; }
-        table { width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; }
-        thead { background:#2563eb; color:#fff; }
-        th,td { padding:10px; text-align:left; border-bottom:1px solid #d6deea; }
-        tr:nth-child(even) td { background:#f9fbff; }
-        .footer { margin-top:24px; text-align:center; color:var(--muted); font-size:11px; border-top:1px solid #d8dbe3; padding-top:10px; }
-        @media print { body{background:#fff;} .sheet{box-shadow:none; margin:0; border-radius:0; width:100%;} .actions{display:none;} }
+        body { font-family:"Segoe UI", Arial, Helvetica, sans-serif; font-size:11px; color:#1f2933; margin:0; background:#f3f6fb; }
+        .sheet { width:920px; max-width:100%; margin:16px auto; background:#fff; border-radius:8px; box-shadow:0 8px 24px rgba(15,23,42,.08); padding:18px; }
+        .print-actions { text-align:right; margin-bottom:10px; }
+        .print-actions button { background:var(--azul); color:#fff; border:0; border-radius:6px; padding:8px 12px; font-size:12px; cursor:pointer; }
+        .header { display:table; width:100%; }
+        .header .left, .header .right { display:table-cell; vertical-align:top; }
+        .header .right { text-align:right; }
+        .report-title { font-size:18px; font-weight:700; color:var(--azul); text-transform:uppercase; }
+        .meta { font-size:11px; line-height:1.45; color:var(--gris); }
+        hr { border:none; border-top:2px solid var(--azul); margin:10px 0; }
+        .section-title { font-size:12px; font-weight:700; color:var(--azul); text-transform:uppercase; border-bottom:1px solid var(--gris-claro); padding-bottom:4px; margin-bottom:8px; }
+        .note { background:#f8faff; border-left:4px solid var(--azul); padding:10px; color:#334155; margin-bottom:12px; }
+        .table-items { width:100%; border-collapse:collapse; }
+        .table-items th { background:var(--azul); color:#fff; text-align:left; padding:7px; font-size:11px; }
+        .table-items td { border-bottom:1px solid var(--gris-claro); padding:7px; vertical-align:top; }
+        .table-items tr:last-child td { border-bottom:2px solid var(--azul); }
+        .footer { margin-top:18px; text-align:center; color:var(--gris); font-size:10px; border-top:1px solid var(--gris-claro); padding-top:8px; }
+        @media print { body{background:#fff;} .sheet{box-shadow:none;border-radius:0;margin:0;width:100%;} .print-actions{display:none;} }
     </style>
 </head>
 <body onload="window.print()">
 <div class="sheet">
-    <div class="actions"><button onclick="window.print()">Imprimir</button></div>
-    <div class="top">
-        <div>
-            <h1 class="title">Informe</h1>
-            <div>Origen: <?php echo e($source); ?></div>
-            <?php if ($template !== ''): ?><div>Plantilla: <?php echo e($template); ?></div><?php endif; ?>
+    <div class="print-actions"><button type="button" onclick="window.print()">Imprimir</button></div>
+
+    <div class="header">
+        <div class="left">
+            <div class="report-title">Informe</div>
+            <div class="meta">Origen: <?php echo e($source); ?></div>
+            <?php if ($template !== ''): ?><div class="meta">Plantilla: <?php echo e($template); ?></div><?php endif; ?>
         </div>
-        <div class="meta">
+        <div class="right meta">
             <strong><?php echo e((string)($company['name'] ?? 'Empresa')); ?></strong><br>
             <?php if (!empty($company['rut'])): ?>RUT: <?php echo e((string)$company['rut']); ?><br><?php endif; ?>
             <?php if (!empty($company['giro'])): ?><?php echo e((string)$company['giro']); ?><br><?php endif; ?>
@@ -41,13 +46,14 @@
         </div>
     </div>
 
-    <div class="box">
-        Este informe se generó con los datos ingresados en el formulario seleccionado del menú.
-    </div>
+    <hr>
 
-    <table>
+    <div class="section-title">Datos del formulario</div>
+    <div class="note">Documento generado automáticamente con la información registrada en el formulario.</div>
+
+    <table class="table-items">
         <thead>
-            <tr><th style="width:35%">Campo</th><th>Valor</th></tr>
+        <tr><th style="width:35%">Campo</th><th>Valor</th></tr>
         </thead>
         <tbody>
         <?php if (!empty($fields)): ?>
@@ -63,9 +69,7 @@
         </tbody>
     </table>
 
-    <div class="footer">
-        Documento generado electrónicamente · Tamaño carta
-    </div>
+    <div class="footer">Documento generado electrónicamente · Formato Carta</div>
 </div>
 </body>
 </html>

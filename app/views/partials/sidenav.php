@@ -80,15 +80,20 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
                             <?php if ($hasPermission('sales_view')): ?>
-                                <li class="menu-group-label">1. Venta</li>
-                                <li class="side-nav-item"><a href="index.php?route=sales" class="side-nav-link"><span class="menu-text">Listado ventas</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=sales/create" class="side-nav-link"><span class="menu-text">Registrar venta</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=pos" class="side-nav-link"><span class="menu-text">Punto de venta</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
+                                <li class="menu-group-label">1. Prospección y cartera</li>
                                 <?php if ($hasPermission('clients_view')): ?>
-                                    <li class="menu-group-label">2. Clientes</li>
                                     <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
                                 <?php endif; ?>
+                                <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=services" class="side-nav-link"><span class="menu-text">Servicios</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=projects" class="side-nav-link"><span class="menu-text">Proyectos</span></a></li>
+
+                                <li class="menu-group-label">2. Cierre comercial</li>
+                                <li class="side-nav-item"><a href="index.php?route=sales/create" class="side-nav-link"><span class="menu-text">Registrar venta</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=sales" class="side-nav-link"><span class="menu-text">Listado ventas</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=invoices" class="side-nav-link"><span class="menu-text">Facturación</span></a></li>
+                                <li class="side-nav-item"><a href="index.php?route=pos" class="side-nav-link"><span class="menu-text">Punto de venta</span></a></li>
+
                                 <li class="menu-group-label">3. Seguimiento</li>
                                 <li class="side-nav-item"><a href="index.php?route=sales/profit-analysis" class="side-nav-link"><span class="menu-text">Análisis ganancias</span></a></li>
                             <?php endif; ?>
