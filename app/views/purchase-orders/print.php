@@ -28,12 +28,14 @@
         }
 
         .invoice {
-            width: 880px;
+            width: 100%;
+            max-width: 920px;
             margin: auto;
             background: var(--card);
             padding: 30px 34px 34px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
             border-radius: 8px;
+            box-sizing: border-box;
         }
 
         .print-actions {
@@ -108,6 +110,7 @@
             display: flex;
             justify-content: space-between;
             gap: 18px;
+            flex-wrap: wrap;
         }
 
         .box {
@@ -116,6 +119,7 @@
             border-left: 5px solid var(--primary-2);
             border-radius: 6px;
             width: 100%;
+            min-width: 0;
             font-size: 13px;
             line-height: 1.45;
         }
@@ -241,11 +245,12 @@
             }
 
             .invoice {
-                width: 880px;
+                width: 100%;
                 max-width: 100%;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-                border-radius: 8px;
-                margin: 0 auto;
+                margin: 0;
+                padding: 16px;
+                box-shadow: none;
+                border-radius: 0;
                 break-inside: avoid;
             }
 

@@ -11,6 +11,11 @@
             margin: 16mm;
         }
 
+        html, body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         body {
             font-family: "Segoe UI", Arial, Helvetica, sans-serif;
             font-size: 11px;
@@ -28,6 +33,7 @@
         /* ===== ESTRUCTURA ===== */
         .page {
             width: 100%;
+            box-sizing: border-box;
         }
 
         hr {
@@ -104,10 +110,13 @@
         .table-info {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .table-info td {
             padding: 4px 6px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .label {
@@ -121,6 +130,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 8px;
+            table-layout: fixed;
         }
 
         .table-items th {
@@ -135,6 +145,8 @@
         .table-items td {
             border-bottom: 1px solid var(--gris-claro);
             padding: 6px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .table-items tr:last-child td {
@@ -210,6 +222,11 @@
         @media print {
             .print-actions {
                 display: none;
+            }
+
+            .footer {
+                position: static;
+                margin-top: 16px;
             }
         }
 
