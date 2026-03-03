@@ -206,6 +206,16 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                         <span class="menu-text">Panel de costos</span>
                                     </a>
                                 </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=costs/accountant-list" class="side-nav-link">
+                                        <span class="menu-text">Listado para contador</span>
+                                    </a>
+                                </li>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=costs/cash-flow-analysis" class="side-nav-link">
+                                        <span class="menu-text">Análisis entradas/salidas</span>
+                                    </a>
+                                </li>
                             <?php endif; ?>
                             <?php if ($hasPermission('purchase_orders_view')): ?>
                                 <li class="side-nav-item">

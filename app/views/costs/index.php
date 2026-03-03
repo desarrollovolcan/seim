@@ -80,3 +80,24 @@
         </div>
     </div>
 </div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card h-100 border-primary border-opacity-25">
+            <div class="card-body">
+                <h5 class="card-title">Listado completo para contador</h5>
+                <p class="text-muted mb-3">Vista ordenada con mayor detalle y exportación completa a Excel (CSV).</p>
+                <a href="index.php?route=costs/accountant-list" class="btn btn-primary">Abrir listado contable</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card h-100 border-info border-opacity-25">
+            <div class="card-body">
+                <h5 class="card-title">Análisis contable de entradas y salidas</h5>
+                <p class="text-muted mb-3">Detalle de movimientos de caja/banco con exportación de información ampliada.</p>
+                <a href="index.php?route=costs/cash-flow-analysis" class="btn btn-info text-white">Abrir análisis de caja</a>
+            </div>
+        </div>
+    </div>
+</div>
