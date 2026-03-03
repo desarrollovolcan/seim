@@ -106,6 +106,14 @@
             letter-spacing: .04em;
         }
 
+        .section-title {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #1d3d9f;
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
         .flex {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
