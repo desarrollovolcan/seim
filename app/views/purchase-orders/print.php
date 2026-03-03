@@ -14,6 +14,11 @@
             --soft: #f4f7fb;
         }
 
+        html, body, .invoice {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
             background: var(--surface);
@@ -203,9 +208,31 @@
             line-height: 1.4;
         }
 
+        @page {
+            size: A4;
+            margin: 10mm;
+        }
+
         @media print {
-            body { background: white; padding: 0; }
-            .invoice { box-shadow: none; width: 100%; margin: 0; border-radius: 0; }
+            body {
+                background: var(--surface);
+                padding: 0;
+                margin: 0;
+            }
+
+            .invoice {
+                width: 900px;
+                max-width: 100%;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+                border-radius: 8px;
+                margin: 0 auto;
+                break-inside: avoid;
+            }
+
+            .top-bar { background: var(--primary) !important; }
+            thead { background: var(--primary-2) !important; }
+            .summary .total { background: var(--primary-2) !important; }
+
             .print-actions { display: none; }
         }
     </style>
