@@ -15,6 +15,7 @@ return [
     'documents/categories/delete' => ['DocumentsController', 'deleteCategory'],
     'documents/download' => ['DocumentsController', 'download'],
     'reports/download' => ['ReportsController', 'download'],
+    'reports/print-form' => ['ReportsController', 'printForm'],
     'calendar' => ['CalendarController', 'index'],
     'calendar/events' => ['CalendarController', 'events'],
     'calendar/store' => ['CalendarController', 'store'],
