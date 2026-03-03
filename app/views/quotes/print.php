@@ -118,7 +118,7 @@
             margin-top: 0;
         }
 
-        @media (max-width: 860px) {
+        @media screen and (max-width: 860px) {
             .info-grid {
                 grid-template-columns: 1fr;
             }
