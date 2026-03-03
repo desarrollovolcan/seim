@@ -46,8 +46,8 @@ $receiverHelp = $siiHelp ?? ($siiLabel === 'Proveedor'
             <?php endif; ?>
             <?php if ($siiShowDocumentNumber): ?>
                 <div class="col-md-4 mb-3">
-                    <label class="form-label">Folio / Nº documento</label>
-                    <input type="text" name="sii_document_number" class="form-control" value="<?php echo e($siiData['sii_document_number'] ?? ''); ?>" <?php echo $requiredAttr; ?>>
+                    <label class="form-label">N° documento de referencia</label>
+                    <input type="text" name="sii_document_number" class="form-control" placeholder="Se puede generar automáticamente o ingresar manualmente" value="<?php echo e($siiData['sii_document_number'] ?? ''); ?>">
                 </div>
             <?php else: ?>
                 <input type="hidden" name="sii_document_number" value="<?php echo e($siiData['sii_document_number'] ?? ''); ?>">

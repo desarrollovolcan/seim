@@ -425,7 +425,6 @@ function sii_required_fields(): array
 {
     return [
         'sii_document_type' => 'el tipo de documento',
-        'sii_document_number' => 'el folio del documento',
         'sii_receiver_rut' => 'el RUT del receptor',
         'sii_receiver_name' => 'la razón social del receptor',
         'sii_receiver_giro' => 'el giro del receptor',
