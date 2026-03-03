@@ -197,4 +197,48 @@ class ReportsController
         require_once $reportPath;
         return;
     }
+
+    public function printForm(): void
+    {
+        if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
+            http_response_code(405);
+            echo 'Método no permitido.';
+            return;
+        }
+
+        verify_csrf();
+
+        $source = (string)($_POST['report_source'] ?? 'formulario');
+        $template = (string)($_POST['report_template'] ?? '');
+        $company = app_config('company', []);
+
+        $excluded = ['csrf_token', 'report_template', 'report_source'];
+        $fields = [];
+        foreach ($_POST as $key => $value) {
+            if (in_array($key, $excluded, true)) {
+                continue;
+            }
+            if (is_array($value)) {
+                $value = implode(', ', array_filter(array_map(static fn($v) => trim((string)$v), $value), static fn($v) => $v !== ''));
+            }
+            $clean = trim((string)$value);
+            if ($clean === '') {
+                continue;
+            }
+            $fields[] = [
+                'label' => ucwords(str_replace(['_', '-'], ' ', (string)$key)),
+                'value' => $clean,
+            ];
+        }
+
+        $viewPath = __DIR__ . '/../views/reports/form-print.php';
+        if (!file_exists($viewPath)) {
+            http_response_code(404);
+            echo 'Vista no encontrada.';
+            return;
+        }
+
+        include $viewPath;
+    }
+
 }

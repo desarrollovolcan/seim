@@ -1,7 +1,7 @@
 <?php
 $reportTemplate = $reportTemplate ?? '';
 $reportSource = $reportSource ?? '';
-$reportDownloadEnabled = $reportDownloadEnabled ?? false;
+$reportDownloadEnabled = $reportDownloadEnabled ?? true;
 ?>
 <?php if ($reportDownloadEnabled && $reportTemplate !== '' && $reportSource !== ''): ?>
     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
@@ -9,5 +9,8 @@ $reportDownloadEnabled = $reportDownloadEnabled ?? false;
     <input type="hidden" name="report_source" value="<?php echo e($reportSource); ?>">
     <button type="submit" class="btn btn-outline-primary" formaction="index.php?route=reports/download" formmethod="post" formtarget="_blank">
         Descargar PDF
+    </button>
+    <button type="submit" class="btn btn-primary" formaction="index.php?route=reports/print-form" formmethod="post" formtarget="_blank">
+        Imprimir informe
     </button>
 <?php endif; ?>
