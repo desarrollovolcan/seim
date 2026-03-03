@@ -11,6 +11,11 @@
             margin: 16mm;
         }
 
+        html, body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
         body {
             font-family: "Segoe UI", Arial, Helvetica, sans-serif;
             font-size: 11px;
@@ -28,6 +33,7 @@
         /* ===== ESTRUCTURA ===== */
         .page {
             width: 100%;
+            box-sizing: border-box;
         }
 
         hr {
@@ -100,14 +106,35 @@
             margin-bottom: 8px;
         }
 
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .info-grid .section {
+            margin-top: 0;
+        }
+
+        @media (max-width: 860px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ===== TABLA INFO ===== */
         .table-info {
             width: 100%;
             border-collapse: collapse;
+            table-layout: fixed;
         }
 
         .table-info td {
             padding: 4px 6px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .label {
@@ -121,6 +148,7 @@
             width: 100%;
             border-collapse: collapse;
             margin-top: 8px;
+            table-layout: fixed;
         }
 
         .table-items th {
@@ -135,6 +163,8 @@
         .table-items td {
             border-bottom: 1px solid var(--gris-claro);
             padding: 6px;
+            word-break: break-word;
+            overflow-wrap: anywhere;
         }
 
         .table-items tr:last-child td {
@@ -210,6 +240,11 @@
         @media print {
             .print-actions {
                 display: none;
+            }
+
+            .footer {
+                position: static;
+                margin-top: 16px;
             }
         }
 
@@ -315,6 +350,7 @@ $validUntil = $quote['valid_until'] ?? '';
 
     <hr>
 
+    <div class="info-grid">
     <div class="section">
         <div class="section-title">Datos del Cliente</div>
         <table class="table-info">
@@ -378,6 +414,8 @@ $validUntil = $quote['valid_until'] ?? '';
                 </tr>
             <?php endif; ?>
         </table>
+    </div>
+
     </div>
 
     <div class="section">
