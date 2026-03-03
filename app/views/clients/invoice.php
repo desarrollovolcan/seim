@@ -64,6 +64,50 @@ $invoiceData = [
 $portalToken = $client['portal_token'] ?? '';
 ?>
 
+<style>
+    @page { size: Letter portrait; margin: 12mm; }
+
+    #invoice-document table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+    #invoice-document th,
+    #invoice-document td {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    @media print {
+        .content-page .container-fluid {
+            padding: 0;
+        }
+
+        #invoice-document {
+            box-shadow: none !important;
+            border: 0 !important;
+        }
+
+        #invoice-document .table-responsive {
+            overflow: visible !important;
+        }
+
+        #invoice-document .row {
+            --bs-gutter-x: .75rem;
+        }
+
+        #invoice-document .row > .col-4 {
+            width: 50%;
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+
+        #invoice-document .row > .col-4.text-end {
+            display: none;
+        }
+    }
+</style>
+
 <div class="row justify-content-center">
     <div class="col-xxl-12">
         <div class="row">

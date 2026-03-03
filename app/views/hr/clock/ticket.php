@@ -1,8 +1,12 @@
+<style>
+    @page { size: Letter portrait; margin: 12mm; }
+    @media print { .ticket-print-action { display:none !important; } .card{box-shadow:none !important;} }
+</style>
 <div class="card">
     <div class="card-body">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Ticket de marcación</h4>
-            <button class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            <button class="btn btn-primary ticket-print-action" onclick="window.print()">Imprimir</button>
         </div>
         <div class="border rounded p-3" style="max-width: 420px;">
             <div class="fw-semibold"><?php echo e($employeeName); ?></div>
