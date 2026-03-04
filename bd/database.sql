@@ -482,13 +482,15 @@ CREATE TABLE purchase_items (
     item_type ENUM('producto', 'servicio') NOT NULL DEFAULT 'producto',
     description VARCHAR(255) NOT NULL,
     product_id INT NULL,
+    petty_cash_product_id INT NULL,
     quantity INT NOT NULL DEFAULT 0,
     unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
     subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (purchase_id) REFERENCES purchases(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
+    FOREIGN KEY (product_id) REFERENCES products(id),
+    FOREIGN KEY (petty_cash_product_id) REFERENCES petty_cash_products(id)
 );
 
 

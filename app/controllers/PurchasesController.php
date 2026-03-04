@@ -5,6 +5,7 @@ class PurchasesController extends Controller
     private PurchasesModel $purchases;
     private SuppliersModel $suppliers;
     private ProductsModel $products;
+    private PettyCashProductsModel $pettyCashProducts;
     private PurchaseItemsModel $purchaseItems;
     private SettingsModel $settings;
 
@@ -14,6 +15,7 @@ class PurchasesController extends Controller
         $this->purchases = new PurchasesModel($db);
         $this->suppliers = new SuppliersModel($db);
         $this->products = new ProductsModel($db);
+        $this->pettyCashProducts = new PettyCashProductsModel($db);
         $this->purchaseItems = new PurchaseItemsModel($db);
         $this->settings = new SettingsModel($db);
     }
@@ -46,7 +48,7 @@ class PurchasesController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $suppliers = $this->suppliers->active($companyId);
-        $products = $this->products->active($companyId);
+        $catalogProducts = $this->pettyCashProducts->active($companyId);
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
         $taxDefault = !empty($invoiceDefaults['apply_tax']) ? (float)($invoiceDefaults['tax_rate'] ?? 0) : 0;
 
@@ -54,7 +56,7 @@ class PurchasesController extends Controller
             'title' => 'Registrar compra',
             'pageTitle' => 'Registrar compra',
             'suppliers' => $suppliers,
-            'products' => $products,
+            'catalogProducts' => $catalogProducts,
             'today' => date('Y-m-d'),
             'taxDefault' => $taxDefault,
         ]);
@@ -110,16 +112,14 @@ class PurchasesController extends Controller
                     'purchase_id' => $purchaseId,
                     'item_type' => $item['item_type'],
                     'description' => $item['description'],
-                    'product_id' => $item['product']['id'] ?? null,
+                    'product_id' => null,
+                    'petty_cash_product_id' => $item['petty_cash_product']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_cost' => $item['unit_cost'],
                     'subtotal' => $item['subtotal'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
                 ]);
-                if ($item['item_type'] === 'producto' && !empty($item['product']['id'])) {
-                    $this->products->adjustStock((int)$item['product']['id'], $item['quantity']);
-                }
             }
 
             audit($this->db, Auth::user()['id'], 'create', 'purchases', $purchaseId);
@@ -145,9 +145,10 @@ class PurchasesController extends Controller
         }
 
         $items = $this->db->fetchAll(
-            'SELECT pi.*, p.name AS product_name, p.sku
+            'SELECT pi.*, p.name AS product_name, p.sku, pc.name AS petty_cash_product_name
              FROM purchase_items pi
              LEFT JOIN products p ON pi.product_id = p.id
+             LEFT JOIN petty_cash_products pc ON pi.petty_cash_product_id = pc.id
              WHERE pi.purchase_id = :purchase_id
              ORDER BY pi.id ASC',
             ['purchase_id' => $id]
@@ -159,6 +160,43 @@ class PurchasesController extends Controller
             'purchase' => $purchase,
             'items' => $items,
         ]);
+    }
+
+    public function storeCatalogProduct(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+
+        $name = trim($_POST['name'] ?? '');
+        $classification = trim($_POST['classification'] ?? 'servicio');
+        $suggestedPrice = max(0, (float)($_POST['suggested_price'] ?? 0));
+
+        if (!in_array($classification, ['producto', 'servicio'], true)) {
+            $classification = 'servicio';
+        }
+
+        if ($name === '') {
+            flash('error', 'Debes ingresar el nombre del ítem.');
+            $this->redirect('index.php?route=purchases/create');
+        }
+
+        try {
+            $this->pettyCashProducts->create([
+                'company_id' => $companyId,
+                'name' => $name,
+                'category' => $classification,
+                'suggested_price' => $suggestedPrice,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            flash('success', 'Ítem agregado al catálogo compartido correctamente.');
+        } catch (Throwable $e) {
+            log_message('error', 'Error al crear ítem para compras: ' . $e->getMessage());
+            flash('error', 'No se pudo guardar el ítem en el catálogo.');
+        }
+
+        $this->redirect('index.php?route=purchases/create');
     }
 
     public function delete(): void
@@ -180,47 +218,46 @@ class PurchasesController extends Controller
 
     private function collectItems(int $companyId): array
     {
-        $itemTypes = $_POST['item_type'] ?? [];
+        $catalogIds = $_POST['catalog_product_id'] ?? [];
         $descriptions = $_POST['description'] ?? [];
-        $productIds = $_POST['product_id'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitCosts = $_POST['unit_cost'] ?? [];
         $items = [];
 
         foreach ($quantities as $index => $rawQuantity) {
-            $itemType = trim((string)($itemTypes[$index] ?? 'producto'));
-            if (!in_array($itemType, ['producto', 'servicio'], true)) {
-                $itemType = 'producto';
-            }
-
+            $catalogId = (int)($catalogIds[$index] ?? 0);
             $description = trim((string)($descriptions[$index] ?? ''));
-            $productId = (int)($productIds[$index] ?? 0);
-            $quantity = max(0, (int)($quantities[$index] ?? 0));
+            $quantity = max(0, (int)$rawQuantity);
             $unitCost = max(0.0, (float)($unitCosts[$index] ?? 0));
+
             if ($quantity <= 0) {
                 continue;
             }
 
-            $product = null;
-            if ($itemType === 'producto') {
-                if ($productId <= 0) {
+            $catalogProduct = null;
+            $itemType = 'servicio';
+            if ($catalogId > 0) {
+                $catalogProduct = $this->pettyCashProducts->findForCompany($catalogId, $companyId);
+                if (!$catalogProduct) {
                     continue;
                 }
-                $product = $this->products->findForCompany($productId, $companyId);
-                if (!$product) {
-                    continue;
-                }
+                $itemType = ($catalogProduct['category'] ?? '') === 'producto' ? 'producto' : 'servicio';
                 if ($description === '') {
-                    $description = (string)($product['name'] ?? 'Producto');
+                    $description = (string)($catalogProduct['name'] ?? 'Ítem');
                 }
-            } elseif ($description === '') {
+                if ($unitCost <= 0) {
+                    $unitCost = (float)($catalogProduct['suggested_price'] ?? 0);
+                }
+            }
+
+            if ($description === '') {
                 continue;
             }
 
             $items[] = [
                 'item_type' => $itemType,
                 'description' => $description,
-                'product' => $product,
+                'petty_cash_product' => $catalogProduct,
                 'quantity' => $quantity,
                 'unit_cost' => $unitCost,
                 'subtotal' => $quantity * $unitCost,
