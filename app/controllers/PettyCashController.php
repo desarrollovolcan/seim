@@ -145,7 +145,12 @@ class PettyCashController extends Controller
         $companyId = $this->requireCompany();
 
         $name = trim($_POST['name'] ?? '');
+        $classification = trim($_POST['classification'] ?? 'servicio');
         $category = trim($_POST['category'] ?? 'General');
+        if (!in_array($classification, ['producto', 'servicio'], true)) {
+            $classification = 'servicio';
+        }
+        $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
         $price = max(0, (float)($_POST['suggested_price'] ?? 0));
 
         if ($name === '') {
@@ -154,14 +159,20 @@ class PettyCashController extends Controller
         }
 
         try {
-            $this->products->create([
+            $productData = [
                 'company_id' => $companyId,
                 'name' => $name,
+                'classification' => $classification,
                 'category' => $category,
                 'suggested_price' => $price,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+            ];
+            if ($this->products->hasUnitMeasureColumn()) {
+                $productData['unit_measure'] = $unitMeasure !== '' ? $unitMeasure : 'Unidad';
+            }
+
+            $this->products->create($productData);
             flash('success', 'Producto de caja chica creado correctamente.');
         } catch (Throwable $e) {
             log_message('error', 'Error creando producto caja chica: ' . $e->getMessage());

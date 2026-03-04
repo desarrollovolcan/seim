@@ -13,11 +13,23 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Banco</label>
-                        <input type="text" name="bank_name" class="form-control">
+                        <input type="text" name="bank_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de cuenta</label>
+                        <input type="text" name="account_type" class="form-control" placeholder="Corriente, Vista, Ahorro" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Número cuenta</label>
-                        <input type="text" name="account_number" class="form-control">
+                        <input type="text" name="account_number" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Titular de la cuenta</label>
+                        <input type="text" name="account_holder" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">RUT titular</label>
+                        <input type="text" name="account_holder_rut" class="form-control" placeholder="12.345.678-9" required>
                     </div>
                     <div class="row g-2">
                         <div class="col-6">
@@ -51,6 +63,8 @@
                             <tr>
                                 <th>Cuenta</th>
                                 <th>Banco</th>
+                                <th>Tipo</th>
+                                <th>Titular</th>
                                 <th>Moneda</th>
                                 <th>Saldo</th>
                                 <th class="text-end">Acciones</th>
@@ -61,6 +75,8 @@
                                 <tr>
                                     <td><?php echo e($account['name']); ?></td>
                                     <td><?php echo e($account['bank_name']); ?></td>
+                                    <td><?php echo e($account['account_type'] ?? ''); ?></td>
+                                    <td><?php echo e($account['account_holder'] ?? ''); ?></td>
                                     <td><?php echo e($account['currency']); ?></td>
                                     <td><?php echo e(format_currency((float)($account['current_balance'] ?? 0))); ?></td>
                                     <td class="text-end">
@@ -82,7 +98,7 @@
                             <?php endforeach; ?>
                             <?php if (empty($accounts)): ?>
                                 <tr>
-                                    <td colspan="5" class="text-center text-muted">No hay cuentas registradas.</td>
+                                    <td colspan="7" class="text-center text-muted">No hay cuentas registradas.</td>
                                 </tr>
                             <?php endif; ?>
                         </tbody>

@@ -18,8 +18,20 @@
                 <div class="fw-semibold"><?php echo e($account['currency'] ?? ''); ?></div>
             </div>
             <div class="col-md-4">
+                <div class="text-muted small">Tipo de cuenta</div>
+                <div class="fw-semibold"><?php echo e($account['account_type'] ?? ''); ?></div>
+            </div>
+            <div class="col-md-4">
                 <div class="text-muted small">Número cuenta</div>
                 <div class="fw-semibold"><?php echo e($account['account_number'] ?? ''); ?></div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">Titular de la cuenta</div>
+                <div class="fw-semibold"><?php echo e($account['account_holder'] ?? ''); ?></div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-muted small">RUT titular</div>
+                <div class="fw-semibold"><?php echo e($account['account_holder_rut'] ?? ''); ?></div>
             </div>
             <div class="col-md-4">
                 <div class="text-muted small">Saldo actual</div>
