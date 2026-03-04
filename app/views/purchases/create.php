@@ -18,7 +18,13 @@
                             <select name="supplier_id" class="form-select" required>
                                 <option value="">Selecciona proveedor</option>
                                 <?php foreach ($suppliers as $supplier): ?>
-                                    <option value="<?php echo (int)$supplier['id']; ?>"><?php echo e($supplier['name']); ?></option>
+                                    <option value="<?php echo (int)$supplier['id']; ?>"
+                                        data-rut="<?php echo e($supplier['tax_id'] ?? ''); ?>"
+                                        data-name="<?php echo e($supplier['name'] ?? ''); ?>"
+                                        data-giro="<?php echo e($supplier['giro'] ?? ''); ?>"
+                                        data-address="<?php echo e($supplier['address'] ?? ''); ?>"
+                                        data-commune="<?php echo e($supplier['commune'] ?? ''); ?>"
+                                    ><?php echo e($supplier['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -314,9 +320,11 @@
         recalc();
     });
 
+    supplierSelect?.addEventListener('change', applySupplierSii);
     addButton?.addEventListener('click', addRow);
     taxInput?.addEventListener('input', recalc);
     tableBody.querySelectorAll('.item-row').forEach((row) => updateClassification(row));
+    applySupplierSii();
     recalc();
 })();
 </script>
