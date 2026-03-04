@@ -206,31 +206,75 @@ class PettyCashController extends Controller
         ];
         $receipts = $this->receipts->listWithFilters($companyId, $filters);
 
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="caja_chica_' . date('Ymd_His') . '.csv"');
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="caja_chica_' . date('Ymd_His') . '.xls"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
-        $output = fopen('php://output', 'w');
-        fputcsv($output, ['N° Boleta', 'Fecha', 'Proveedor', 'Moneda', 'Total', 'Items', 'Detalle']);
+        echo '<html><head><meta charset="UTF-8">';
+        echo '<style>';
+        echo 'table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;}';
+        echo 'th,td{border:1px solid #777;padding:6px 8px;}';
+        echo 'th{background:#e6e6e6;font-weight:bold;text-align:center;}';
+        echo '.text-right{text-align:right;}';
+        echo '.text-center{text-align:center;}';
+        echo '</style>';
+        echo '</head><body>';
 
+        echo '<table>';
+        echo '<thead><tr>';
+        echo '<th>N°</th>';
+        echo '<th>Fecha</th>';
+        echo '<th>N° Boleta</th>';
+        echo '<th>Proveedor</th>';
+        echo '<th>Detalle</th>';
+        echo '<th>Cant.</th>';
+        echo '<th>Valor Unit.</th>';
+        echo '<th>Valor</th>';
+        echo '<th>Obs.</th>';
+        echo '</tr></thead><tbody>';
+
+        $rowNumber = 1;
         foreach ($receipts as $receipt) {
             $items = $this->items->byReceipt((int)$receipt['id']);
-            $detail = implode(' | ', array_map(static function (array $item): string {
-                $obs = trim((string)($item['observation'] ?? ''));
-                return ($item['description'] ?? '') . ' x' . (float)($item['quantity'] ?? 0) . ($obs !== '' ? ' (' . $obs . ')' : '');
-            }, $items));
+            if (empty($items)) {
+                $items = [[
+                    'description' => '-',
+                    'quantity' => 0,
+                    'unit_price' => 0,
+                    'subtotal' => 0,
+                    'observation' => '',
+                ]];
+            }
 
-            fputcsv($output, [
-                $receipt['receipt_number'] ?? '',
-                $receipt['receipt_date'] ?? '',
-                $receipt['supplier_name'] ?? '',
-                $receipt['currency'] ?? 'CLP',
-                (float)($receipt['total_amount'] ?? 0),
-                (int)($receipt['items_count'] ?? 0),
-                $detail,
-            ]);
+            foreach ($items as $item) {
+                $date = (string)($receipt['receipt_date'] ?? '');
+                $date = $date !== '' ? date('d.m.Y', strtotime($date)) : '';
+                $boleta = htmlspecialchars((string)($receipt['receipt_number'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $supplier = htmlspecialchars((string)($receipt['supplier_name'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $detail = htmlspecialchars((string)($item['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $obs = htmlspecialchars((string)($item['observation'] ?? ''), ENT_QUOTES, 'UTF-8');
+                $qty = number_format((float)($item['quantity'] ?? 0), 2, ',', '.');
+                $unitPrice = number_format((float)($item['unit_price'] ?? 0), 0, ',', '.');
+                $subtotal = number_format((float)($item['subtotal'] ?? 0), 0, ',', '.');
+
+                echo '<tr>';
+                echo '<td class="text-center">' . $rowNumber . '</td>';
+                echo '<td>' . htmlspecialchars($date, ENT_QUOTES, 'UTF-8') . '</td>';
+                echo '<td>' . $boleta . '</td>';
+                echo '<td>' . $supplier . '</td>';
+                echo '<td>' . $detail . '</td>';
+                echo '<td class="text-right">' . $qty . '</td>';
+                echo '<td class="text-right">$ ' . $unitPrice . '</td>';
+                echo '<td class="text-right">$ ' . $subtotal . '</td>';
+                echo '<td>' . $obs . '</td>';
+                echo '</tr>';
+                $rowNumber++;
+            }
         }
 
-        fclose($output);
+        echo '</tbody></table>';
+        echo '</body></html>';
         exit;
     }
 }

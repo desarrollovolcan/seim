@@ -3,7 +3,7 @@
         <h4 class="card-title mb-0">Listado de boletas</h4>
         <div class="d-flex gap-2">
             <a href="index.php?route=petty-cash/create" class="btn btn-primary">Nueva boleta</a>
-            <a href="index.php?route=petty-cash/export&date_from=<?php echo urlencode($filters['date_from'] ?? ''); ?>&date_to=<?php echo urlencode($filters['date_to'] ?? ''); ?>&supplier=<?php echo urlencode($filters['supplier'] ?? ''); ?>" class="btn btn-success">Exportar Excel (CSV)</a>
+            <a href="index.php?route=petty-cash/export&date_from=<?php echo urlencode($filters['date_from'] ?? ''); ?>&date_to=<?php echo urlencode($filters['date_to'] ?? ''); ?>&supplier=<?php echo urlencode($filters['supplier'] ?? ''); ?>" class="btn btn-success">Exportar Excel tabulado</a>
         </div>
     </div>
     <div class="card-body">
