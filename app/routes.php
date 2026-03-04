@@ -77,6 +77,8 @@ return [
     'purchases' => ['PurchasesController', 'index'],
     'purchases/create' => ['PurchasesController', 'create'],
     'purchases/store' => ['PurchasesController', 'store'],
+    'purchases/catalog-products/store' => ['PurchasesController', 'storeCatalogProduct'],
+    'purchases/suppliers/store' => ['PurchasesController', 'storeQuickSupplier'],
     'purchases/show' => ['PurchasesController', 'show'],
     'purchases/delete' => ['PurchasesController', 'delete'],
     'purchase-orders' => ['PurchaseOrdersController', 'index'],

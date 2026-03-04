@@ -193,46 +193,95 @@ class CostsController extends Controller
 
         $cashData = $this->buildCashAnalysis($this->fetchCashMovements($companyId));
 
-        header('Content-Type: text/csv; charset=utf-8');
-        header('Content-Disposition: attachment; filename="analisis_caja_contable_' . date('Ymd_His') . '.csv"');
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="analisis_caja_contable_' . date('Ymd_His') . '.xls"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
 
-        $output = fopen('php://output', 'wb');
-        if ($output === false) {
-            return;
-        }
+        echo '<html><head><meta charset="UTF-8">';
+        echo '<style>';
+        echo 'table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;}';
+        echo 'th,td{border:1px solid #777;padding:6px 8px;}';
+        echo 'th{background:#e6e6e6;font-weight:bold;text-align:center;}';
+        echo '.text-right{text-align:right;}';
+        echo '.text-center{text-align:center;}';
+        echo '.title{font-size:14px;font-weight:bold;margin-bottom:8px;}';
+        echo '.summary-label{background:#f5f5f5;font-weight:bold;}';
+        echo '</style>';
+        echo '</head><body>';
 
-        fwrite($output, "\xEF\xBB\xBF");
-        fputcsv($output, ['ID', 'Fecha', 'Cuenta', 'Banco', 'Nro cuenta', 'Moneda', 'Tipo', 'Referencia', 'Descripción', 'Entrada', 'Salida', 'Saldo', 'Creado']);
+        echo '<div class="title">Análisis contable de caja y bancos</div>';
+        echo '<table>';
+        echo '<thead><tr>';
+        echo '<th>ID</th>';
+        echo '<th>Fecha</th>';
+        echo '<th>Cuenta</th>';
+        echo '<th>Banco</th>';
+        echo '<th>Nro cuenta</th>';
+        echo '<th>Moneda</th>';
+        echo '<th>Tipo</th>';
+        echo '<th>Referencia</th>';
+        echo '<th>Descripción</th>';
+        echo '<th>Entrada</th>';
+        echo '<th>Salida</th>';
+        echo '<th>Saldo</th>';
+        echo '<th>Creado</th>';
+        echo '</tr></thead><tbody>';
 
         foreach ($cashData['movements'] as $movement) {
-            fputcsv($output, [
-                (int)($movement['id'] ?? 0),
-                $movement['transaction_date'] ?? '',
-                $movement['account_name'] ?? '-',
-                $movement['bank_name'] ?? '-',
-                $movement['account_number'] ?? '-',
-                $movement['currency'] ?? 'CLP',
-                $movement['type'] ?? '',
-                $movement['reference'] ?? '',
-                $movement['description'] ?? '',
-                (float)($movement['entry_amount'] ?? 0),
-                (float)($movement['exit_amount'] ?? 0),
-                (float)($movement['balance'] ?? 0),
-                $movement['created_at'] ?? '',
-            ]);
+            $id = (int)($movement['id'] ?? 0);
+            $date = htmlspecialchars((string)($movement['transaction_date'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $accountName = htmlspecialchars((string)($movement['account_name'] ?? '-'), ENT_QUOTES, 'UTF-8');
+            $bankName = htmlspecialchars((string)($movement['bank_name'] ?? '-'), ENT_QUOTES, 'UTF-8');
+            $accountNumber = htmlspecialchars((string)($movement['account_number'] ?? '-'), ENT_QUOTES, 'UTF-8');
+            $currency = htmlspecialchars((string)($movement['currency'] ?? 'CLP'), ENT_QUOTES, 'UTF-8');
+            $type = htmlspecialchars((string)($movement['type'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $reference = htmlspecialchars((string)($movement['reference'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $description = htmlspecialchars((string)($movement['description'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $entryAmount = number_format((float)($movement['entry_amount'] ?? 0), 2, ',', '.');
+            $exitAmount = number_format((float)($movement['exit_amount'] ?? 0), 2, ',', '.');
+            $balance = number_format((float)($movement['balance'] ?? 0), 2, ',', '.');
+            $createdAt = htmlspecialchars((string)($movement['created_at'] ?? ''), ENT_QUOTES, 'UTF-8');
+
+            echo '<tr>';
+            echo '<td class="text-center">' . $id . '</td>';
+            echo '<td>' . $date . '</td>';
+            echo '<td>' . $accountName . '</td>';
+            echo '<td>' . $bankName . '</td>';
+            echo '<td>' . $accountNumber . '</td>';
+            echo '<td class="text-center">' . $currency . '</td>';
+            echo '<td class="text-center">' . $type . '</td>';
+            echo '<td>' . $reference . '</td>';
+            echo '<td>' . $description . '</td>';
+            echo '<td class="text-right">' . $entryAmount . '</td>';
+            echo '<td class="text-right">' . $exitAmount . '</td>';
+            echo '<td class="text-right">' . $balance . '</td>';
+            echo '<td>' . $createdAt . '</td>';
+            echo '</tr>';
         }
 
-        fputcsv($output, []);
-        fputcsv($output, ['RESUMEN', '', '', '', '', '', '', '', '', 'Entradas', 'Salidas', 'Neto', '']);
-        fputcsv($output, [
-            '', '', '', '', '', '', '', '', '',
-            (float)($cashData['summary']['entries'] ?? 0),
-            (float)($cashData['summary']['exits'] ?? 0),
-            (float)($cashData['summary']['net'] ?? 0),
-            '',
-        ]);
+        $entries = number_format((float)($cashData['summary']['entries'] ?? 0), 2, ',', '.');
+        $exits = number_format((float)($cashData['summary']['exits'] ?? 0), 2, ',', '.');
+        $net = number_format((float)($cashData['summary']['net'] ?? 0), 2, ',', '.');
 
-        fclose($output);
+        echo '<tr><td colspan="13" style="border:0;height:8px;"></td></tr>';
+        echo '<tr>';
+        echo '<td class="summary-label text-center" colspan="9">RESUMEN</td>';
+        echo '<td class="summary-label text-right">Entradas</td>';
+        echo '<td class="summary-label text-right">Salidas</td>';
+        echo '<td class="summary-label text-right">Neto</td>';
+        echo '<td class="summary-label"></td>';
+        echo '</tr>';
+        echo '<tr>';
+        echo '<td colspan="9"></td>';
+        echo '<td class="text-right">' . $entries . '</td>';
+        echo '<td class="text-right">' . $exits . '</td>';
+        echo '<td class="text-right">' . $net . '</td>';
+        echo '<td></td>';
+        echo '</tr>';
+
+        echo '</tbody></table>';
+        echo '</body></html>';
         exit;
     }
 }

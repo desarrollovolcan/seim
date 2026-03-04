@@ -14,11 +14,23 @@
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Banco</label>
-                    <input type="text" name="bank_name" class="form-control" value="<?php echo e($account['bank_name'] ?? ''); ?>">
+                    <input type="text" name="bank_name" class="form-control" value="<?php echo e($account['bank_name'] ?? ''); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Tipo de cuenta</label>
+                    <input type="text" name="account_type" class="form-control" value="<?php echo e($account['account_type'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Número cuenta</label>
-                    <input type="text" name="account_number" class="form-control" value="<?php echo e($account['account_number'] ?? ''); ?>">
+                    <input type="text" name="account_number" class="form-control" value="<?php echo e($account['account_number'] ?? ''); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">Titular de la cuenta</label>
+                    <input type="text" name="account_holder" class="form-control" value="<?php echo e($account['account_holder'] ?? ''); ?>" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">RUT titular</label>
+                    <input type="text" name="account_holder_rut" class="form-control" value="<?php echo e($account['account_holder_rut'] ?? ''); ?>" required>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Moneda</label>
