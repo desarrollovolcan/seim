@@ -224,13 +224,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
-                            <?php if ($hasPermission('purchases_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=purchases" class="side-nav-link">
-                                        <span class="menu-text">Registro facturas</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
                             <li class="menu-group-label">2. Caja y activos</li>
                             <?php if ($hasPermission('treasury_view')): ?>
                                 <li class="side-nav-item">

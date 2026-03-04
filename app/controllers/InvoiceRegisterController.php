@@ -4,12 +4,16 @@ class InvoiceRegisterController extends Controller
 {
     private InvoiceRegisterModel $records;
     private InvoiceRegisterItemsModel $items;
+    private SuppliersModel $suppliers;
+    private PettyCashProductsModel $catalogProducts;
 
     public function __construct(array $config, Database $db)
     {
         parent::__construct($config, $db);
         $this->records = new InvoiceRegisterModel($db);
         $this->items = new InvoiceRegisterItemsModel($db);
+        $this->suppliers = new SuppliersModel($db);
+        $this->catalogProducts = new PettyCashProductsModel($db);
     }
 
     private function requireCompany(): int
@@ -26,13 +30,190 @@ class InvoiceRegisterController extends Controller
     public function create(): void
     {
         $this->requireLogin();
-        $this->requireCompany();
+        $companyId = $this->requireCompany();
+        $suppliers = $this->suppliers->active($companyId);
+        $catalogProducts = $this->catalogProducts->active($companyId);
 
         $this->render('invoice-register/create', [
             'title' => 'Registro facturas',
             'pageTitle' => 'Registrar factura de compra o servicio',
             'today' => date('Y-m-d'),
+            'suppliers' => $suppliers,
+            'catalogProducts' => $catalogProducts,
         ]);
+    }
+
+    public function storeQuickSupplier(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $isAjax = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+
+        $name = trim($_POST['supplier_name'] ?? '');
+        $code = trim($_POST['supplier_code'] ?? '');
+        $email = trim($_POST['supplier_email'] ?? '');
+        $website = trim($_POST['supplier_website'] ?? '');
+
+        if (!Validator::required($name) || !Validator::required($code)) {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'message' => 'Nombre y código del proveedor son obligatorios.']);
+                exit;
+            }
+
+            flash('error', 'Nombre y código del proveedor son obligatorios.');
+            $this->redirect('index.php?route=invoice-register/create');
+        }
+
+        if (!Validator::optionalEmail($email)) {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'message' => 'El email del proveedor no es válido.']);
+                exit;
+            }
+
+            flash('error', 'El email del proveedor no es válido.');
+            $this->redirect('index.php?route=invoice-register/create');
+        }
+
+        if (!Validator::url($website)) {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'message' => 'El sitio web del proveedor no es válido.']);
+                exit;
+            }
+
+            flash('error', 'El sitio web del proveedor no es válido.');
+            $this->redirect('index.php?route=invoice-register/create');
+        }
+
+        try {
+            $supplierId = $this->suppliers->create([
+                'company_id' => $companyId,
+                'name' => $name,
+                'code' => $code,
+                'contact_name' => trim($_POST['supplier_contact_name'] ?? ''),
+                'tax_id' => trim($_POST['supplier_tax_id'] ?? ''),
+                'email' => $email,
+                'phone' => trim($_POST['supplier_phone'] ?? ''),
+                'address' => trim($_POST['supplier_address'] ?? ''),
+                'giro' => trim($_POST['supplier_giro'] ?? ''),
+                'commune' => trim($_POST['supplier_commune'] ?? ''),
+                'website' => $website,
+                'notes' => trim($_POST['supplier_notes'] ?? ''),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'ok' => true,
+                    'supplier' => [
+                        'id' => $supplierId,
+                        'name' => $name,
+                        'tax_id' => trim($_POST['supplier_tax_id'] ?? ''),
+                    ],
+                ]);
+                exit;
+            }
+
+            flash('success', 'Proveedor creado correctamente.');
+        } catch (Throwable $e) {
+            log_message('error', 'Error creando proveedor rápido en registro facturas: ' . $e->getMessage());
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'message' => 'No se pudo crear el proveedor.']);
+                exit;
+            }
+
+            flash('error', 'No se pudo crear el proveedor.');
+        }
+
+        $this->redirect('index.php?route=invoice-register/create');
+    }
+
+    public function storeCatalogProduct(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $isAjax = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
+
+        $name = trim($_POST['name'] ?? '');
+        $classification = trim($_POST['classification'] ?? 'servicio');
+        $category = trim($_POST['category'] ?? 'General');
+        $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
+        $suggestedPrice = max(0, (float)($_POST['suggested_price'] ?? 0));
+
+        if (!in_array($classification, ['producto', 'servicio'], true)) {
+            $classification = 'servicio';
+        }
+
+        if ($name === '') {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'message' => 'Debes ingresar el nombre del ítem.']);
+                exit;
+            }
+
+            flash('error', 'Debes ingresar el nombre del ítem.');
+            $this->redirect('index.php?route=invoice-register/create');
+        }
+
+        try {
+            $catalogData = [
+                'company_id' => $companyId,
+                'name' => $name,
+                'classification' => $classification,
+                'category' => $category,
+                'suggested_price' => $suggestedPrice,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ];
+
+            if ($this->catalogProducts->hasUnitMeasureColumn()) {
+                $catalogData['unit_measure'] = $unitMeasure !== '' ? $unitMeasure : 'Unidad';
+            }
+
+            $catalogId = $this->catalogProducts->create($catalogData);
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'ok' => true,
+                    'product' => [
+                        'id' => $catalogId,
+                        'name' => $name,
+                        'classification' => $classification,
+                        'suggested_price' => $suggestedPrice,
+                    ],
+                ]);
+                exit;
+            }
+
+            flash('success', 'Ítem agregado al catálogo compartido correctamente.');
+        } catch (Throwable $e) {
+            log_message('error', 'Error al crear ítem para registro facturas: ' . $e->getMessage());
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'message' => 'No se pudo guardar el ítem en el catálogo.']);
+                exit;
+            }
+
+            flash('error', 'No se pudo guardar el ítem en el catálogo.');
+        }
+
+        $this->redirect('index.php?route=invoice-register/create');
     }
 
     public function store(): void
