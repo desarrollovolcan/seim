@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Registrar compra con factura</h4>
+                <h4 class="card-title mb-0">Facturas compras</h4>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#supplierModal">Agregar proveedor</button>
                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#catalogItemModal">Agregar producto/servicio</button>
@@ -36,20 +36,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">N° factura / ref.</label>
-                            <input type="text" name="reference" class="form-control" placeholder="F-12345">
-                        </div>
-
-                        <div class="col-12">
-                            <?php
-                            $siiData = [
-                                'sii_document_type' => 'factura_electronica',
-                                'sii_tax_rate' => 19,
-                                'sii_exempt_amount' => 0,
-                            ];
-                            $siiLabel = 'Proveedor';
-                            $siiShowDocumentNumber = false;
-                            include __DIR__ . '/../partials/sii-document-fields.php';
-                            ?>
+                            <input type="text" name="reference" class="form-control" placeholder="F-12345" required>
                         </div>
 
                         <div class="col-12">
@@ -215,7 +202,6 @@
     const subtotalDisplay = document.getElementById('subtotal-display');
     const totalDisplay = document.getElementById('total-display');
     const taxInput = document.getElementById('tax-input');
-
     const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', {
         style: 'currency', currency: 'CLP', minimumFractionDigits: 0,
     }).format(amount || 0);

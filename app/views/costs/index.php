@@ -32,7 +32,7 @@
                 <h5 class="card-title mb-0">Accesos rápidos de costos</h5>
             </div>
             <div class="card-body d-grid gap-2">
-                <a href="index.php?route=purchases/create" class="btn btn-primary">Registrar compra / gasto</a>
+                <a href="index.php?route=purchases/create" class="btn btn-primary">Registrar factura compra</a>
                 <a href="index.php?route=purchase-orders/create" class="btn btn-outline-primary">Nueva orden de compra</a>
                 <a href="index.php?route=suppliers/create" class="btn btn-outline-secondary">Crear proveedor</a>
                 <a href="index.php?route=treasury/transactions" class="btn btn-outline-secondary">Movimientos de tesorería</a>
