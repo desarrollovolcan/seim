@@ -38,6 +38,8 @@
                 <a href="index.php?route=treasury/transactions" class="btn btn-outline-secondary">Movimientos de tesorería</a>
                 <a href="index.php?route=petty-cash" class="btn btn-outline-secondary">Caja chica (listado)</a>
                 <a href="index.php?route=petty-cash/create" class="btn btn-outline-secondary">Caja chica (registrar)</a>
+                <a href="index.php?route=invoice-register" class="btn btn-outline-secondary">Registro facturas (listado)</a>
+                <a href="index.php?route=invoice-register/create" class="btn btn-outline-secondary">Registro facturas (registrar)</a>
             </div>
         </div>
     </div>
