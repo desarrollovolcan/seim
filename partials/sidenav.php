@@ -439,6 +439,32 @@
                 </div>
             </li>
 
+
+            <li class="side-nav-item">
+                <a data-bs-toggle="collapse" href="#sidebarPettyCash" aria-expanded="false" aria-controls="sidebarPettyCash" class="side-nav-link">
+                    <span class="menu-icon"><i data-lucide="wallet"></i></span>
+                    <span>
+                        <span class="menu-text">Caja Chica</span>
+                        <span class="menu-caption">Boletas y gastos menores</span>
+                    </span>
+                    <span class="menu-arrow"></span>
+                </a>
+                <div class="collapse" id="sidebarPettyCash">
+                    <ul class="sub-menu">
+                        <li class="side-nav-item">
+                            <a href="caja-chica-registro.php" class="side-nav-link">
+                                <span class="menu-text">Registro de Boletas</span>
+                            </a>
+                        </li>
+                        <li class="side-nav-item">
+                            <a href="caja-chica-listado.php" class="side-nav-link">
+                                <span class="menu-text">Listado y Exportación</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </li>
+
             <li class="side-nav-item">
                 <a href="social-feed.php" class="side-nav-link">
                     <span class="menu-icon"><i data-lucide="rss"></i></span>

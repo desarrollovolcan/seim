@@ -36,6 +36,8 @@
                 <a href="index.php?route=purchase-orders/create" class="btn btn-outline-primary">Nueva orden de compra</a>
                 <a href="index.php?route=suppliers/create" class="btn btn-outline-secondary">Crear proveedor</a>
                 <a href="index.php?route=treasury/transactions" class="btn btn-outline-secondary">Movimientos de tesorería</a>
+                <a href="index.php?route=petty-cash" class="btn btn-outline-secondary">Caja chica (listado)</a>
+                <a href="index.php?route=petty-cash/create" class="btn btn-outline-secondary">Caja chica (registrar)</a>
             </div>
         </div>
     </div>

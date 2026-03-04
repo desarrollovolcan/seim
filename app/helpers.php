@@ -909,6 +909,13 @@ function permission_catalog(): array
             'view_key' => 'treasury_view',
             'edit_key' => 'treasury_edit',
         ],
+        'petty_cash' => [
+            'label' => 'Caja chica',
+            'routes' => ['petty-cash'],
+            'legacy_key' => 'costs',
+            'view_key' => 'petty_cash_view',
+            'edit_key' => 'petty_cash_edit',
+        ],
         'inventory' => [
             'label' => 'Inventario (kardex)',
             'routes' => ['inventory'],
