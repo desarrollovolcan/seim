@@ -12,6 +12,11 @@ class PettyCashProductsModel extends Model
         );
     }
 
+    public function hasUnitMeasureColumn(): bool
+    {
+        return $this->hasColumn('unit_measure');
+    }
+
     public function findForCompany(int $id, int $companyId): ?array
     {
         return $this->db->fetch(

@@ -4,7 +4,7 @@
             <h5 class="card-title mb-0">Análisis contable de entradas y salidas</h5>
             <small class="text-muted">Movimientos ordenados por fecha con cuenta bancaria, moneda y saldos.</small>
         </div>
-        <a href="index.php?route=costs/export-cash-flow-excel" class="btn btn-success btn-sm">Exportar a Excel (CSV)</a>
+        <a href="index.php?route=costs/export-cash-flow-excel" class="btn btn-success btn-sm">Exportar a Excel tabulado</a>
     </div>
     <div class="card-body pt-2">
         <div class="d-flex gap-2 flex-wrap mb-3">

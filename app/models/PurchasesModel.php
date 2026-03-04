@@ -16,6 +16,11 @@ class PurchasesModel extends Model
         );
     }
 
+    public function hasColumnNamed(string $column): bool
+    {
+        return $this->hasColumn($column);
+    }
+
     public function findForCompany(int $id, int $companyId): ?array
     {
         return $this->db->fetch(
