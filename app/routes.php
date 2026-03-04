@@ -95,6 +95,8 @@ return [
     'invoice-register' => ['InvoiceRegisterController', 'index'],
     'invoice-register/create' => ['InvoiceRegisterController', 'create'],
     'invoice-register/store' => ['InvoiceRegisterController', 'store'],
+    'invoice-register/catalog-products/store' => ['InvoiceRegisterController', 'storeCatalogProduct'],
+    'invoice-register/suppliers/store' => ['InvoiceRegisterController', 'storeQuickSupplier'],
     'invoice-register/export' => ['InvoiceRegisterController', 'export'],
     'costs/accountant-list' => ['CostsController', 'accountantList'],
     'costs/cash-flow-analysis' => ['CostsController', 'cashFlowAnalysis'],
