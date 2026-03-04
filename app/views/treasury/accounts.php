@@ -43,7 +43,7 @@
                         </div>
                         <div class="col-6">
                             <label class="form-label">Saldo inicial</label>
-                            <input type="number" step="0.01" name="current_balance" class="form-control" value="0">
+                            <input type="number" step="0.01" name="current_balance" class="form-control" value="0" min="0">
                         </div>
                     </div>
                     <button type="submit" class="btn btn-primary mt-3">Guardar</button>

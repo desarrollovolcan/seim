@@ -11,4 +11,12 @@ class InvoiceRegisterItemsModel extends Model
             ['invoice_id' => $invoiceId]
         );
     }
+
+    public function deleteByInvoice(int $invoiceId): bool
+    {
+        return $this->db->execute(
+            'DELETE FROM purchase_invoice_record_items WHERE invoice_id = :invoice_id',
+            ['invoice_id' => $invoiceId]
+        );
+    }
 }

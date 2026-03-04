@@ -325,6 +325,143 @@ class InvoiceRegisterController extends Controller
         $this->redirect('index.php?route=invoice-register');
     }
 
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $recordId = (int)($_GET['id'] ?? 0);
+        $record = $this->records->findForCompany($recordId, $companyId);
+
+        if (!$record) {
+            flash('error', 'Factura no encontrada.');
+            $this->redirect('index.php?route=invoice-register');
+        }
+
+        $this->render('invoice-register/edit', [
+            'title' => 'Registro facturas',
+            'pageTitle' => 'Editar factura de compra o servicio',
+            'record' => $record,
+            'items' => $this->items->byInvoice($recordId),
+            'suppliers' => $this->suppliers->active($companyId),
+            'catalogProducts' => $this->catalogProducts->active($companyId),
+        ]);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $recordId = (int)($_POST['id'] ?? 0);
+        $record = $this->records->findForCompany($recordId, $companyId);
+
+        if (!$record) {
+            flash('error', 'Factura no encontrada.');
+            $this->redirect('index.php?route=invoice-register');
+        }
+
+        $documentType = trim($_POST['document_type'] ?? 'factura');
+        $invoiceNumber = trim($_POST['invoice_number'] ?? '');
+        $invoiceDate = trim($_POST['invoice_date'] ?? date('Y-m-d'));
+        $dueDate = trim($_POST['due_date'] ?? '');
+        $supplierName = trim($_POST['supplier_name'] ?? '');
+        $supplierTaxId = trim($_POST['supplier_tax_id'] ?? '');
+        $currency = trim($_POST['currency'] ?? 'CLP');
+        $notes = trim($_POST['notes'] ?? '');
+
+        if ($invoiceNumber === '' || $supplierName === '') {
+            flash('error', 'Debes completar número de factura y proveedor.');
+            $this->redirect('index.php?route=invoice-register/edit&id=' . $recordId);
+        }
+
+        $itemTypes = $_POST['item_type'] ?? [];
+        $itemDescriptions = $_POST['item_description'] ?? [];
+        $itemQuantities = $_POST['item_quantity'] ?? [];
+        $itemPrices = $_POST['item_unit_price'] ?? [];
+        $itemObservations = $_POST['item_observation'] ?? [];
+
+        $rows = [];
+        foreach ($itemDescriptions as $index => $description) {
+            $description = trim((string)$description);
+            $qty = max(0, (float)($itemQuantities[$index] ?? 0));
+            $price = max(0, (float)($itemPrices[$index] ?? 0));
+            $type = trim((string)($itemTypes[$index] ?? 'producto'));
+            $observation = trim((string)($itemObservations[$index] ?? ''));
+
+            if (!in_array($type, ['producto', 'servicio'], true)) {
+                $type = 'producto';
+            }
+
+            if ($description === '' || $qty <= 0) {
+                continue;
+            }
+
+            $rows[] = [
+                'item_type' => $type,
+                'description' => $description,
+                'quantity' => $qty,
+                'unit_price' => $price,
+                'subtotal' => round($qty * $price, 2),
+                'observation' => $observation,
+            ];
+        }
+
+        if (empty($rows)) {
+            flash('error', 'Debes ingresar al menos un producto/servicio válido.');
+            $this->redirect('index.php?route=invoice-register/edit&id=' . $recordId);
+        }
+
+        $netAmount = array_sum(array_map(static fn(array $r): float => (float)$r['subtotal'], $rows));
+        $taxAmount = round($netAmount * 0.19, 2);
+        $totalAmount = $netAmount + $taxAmount;
+
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $this->records->update($recordId, [
+                'document_type' => $documentType,
+                'invoice_number' => $invoiceNumber,
+                'invoice_date' => $invoiceDate,
+                'due_date' => $dueDate !== '' ? $dueDate : null,
+                'supplier_name' => $supplierName,
+                'supplier_tax_id' => $supplierTaxId,
+                'currency' => $currency,
+                'net_amount' => $netAmount,
+                'tax_amount' => $taxAmount,
+                'total_amount' => $totalAmount,
+                'notes' => $notes,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $this->items->deleteByInvoice($recordId);
+            foreach ($rows as $row) {
+                $this->items->create([
+                    'invoice_id' => $recordId,
+                    'item_type' => $row['item_type'],
+                    'description' => $row['description'],
+                    'quantity' => $row['quantity'],
+                    'unit_price' => $row['unit_price'],
+                    'subtotal' => $row['subtotal'],
+                    'observation' => $row['observation'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            audit($this->db, Auth::user()['id'] ?? null, 'update', 'purchase_invoice_records', $recordId);
+            $pdo->commit();
+            flash('success', 'Factura actualizada correctamente.');
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            log_message('error', 'Error actualizando registro facturas: ' . $e->getMessage());
+            flash('error', 'No se pudo actualizar la factura.');
+        }
+
+        $this->redirect('index.php?route=invoice-register');
+    }
+
     public function index(): void
     {
         $this->requireLogin();

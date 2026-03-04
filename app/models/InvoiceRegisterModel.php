@@ -36,4 +36,13 @@ class InvoiceRegisterModel extends Model
             $params
         );
     }
+
+    public function findForCompany(int $id, int $companyId): ?array
+    {
+        return $this->db->fetch(
+            'SELECT * FROM purchase_invoice_records WHERE id = :id AND company_id = :company_id AND deleted_at IS NULL',
+            ['id' => $id, 'company_id' => $companyId]
+        );
+    }
+
 }

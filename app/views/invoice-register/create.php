@@ -94,7 +94,7 @@
                                 </select>
                             </td>
                             <td><input type="text" name="item_description[]" class="form-control description-input" required></td>
-                            <td><input type="number" min="1" step="1" name="item_quantity[]" class="form-control qty-input" value="1" required></td>
+                            <td><input type="number" min="0.01" step="0.01" name="item_quantity[]" class="form-control qty-input" value="1.00" required></td>
                             <td><input type="number" min="0" step="0.01" name="item_unit_price[]" class="form-control price-input" value="0" required></td>
                             <td><input type="text" class="form-control subtotal-input" value="0.00" readonly></td>
                             <td><input type="text" name="item_observation[]" class="form-control" placeholder="Opcional"></td>
@@ -238,7 +238,7 @@
             if (body.querySelectorAll('.item-row').length === 1) {
                 row.querySelectorAll('input').forEach((input) => {
                     if (input.type === 'number') {
-                        input.value = input.classList.contains('qty-input') ? '1' : '0';
+                        input.value = input.classList.contains('qty-input') ? '1.00' : '0';
                     } else {
                         input.value = '';
                     }
@@ -256,7 +256,7 @@
     addRowBtn.addEventListener('click', () => {
         const row = body.querySelector('.item-row').cloneNode(true);
         row.querySelectorAll('input').forEach((input) => {
-            if (input.classList.contains('qty-input')) input.value = '1';
+            if (input.classList.contains('qty-input')) input.value = '1.00';
             else if (input.classList.contains('subtotal-input')) input.value = '0.00';
             else if (input.classList.contains('price-input')) input.value = '0';
             else input.value = '';

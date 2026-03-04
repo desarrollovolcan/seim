@@ -43,11 +43,12 @@
                         <th class="text-end">IVA</th>
                         <th class="text-end">Total</th>
                         <th>Detalle</th>
+                        <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($records)): ?>
-                        <tr><td colspan="9" class="text-center text-muted py-3">No hay facturas registradas.</td></tr>
+                        <tr><td colspan="10" class="text-center text-muted py-3">No hay facturas registradas.</td></tr>
                     <?php else: ?>
                         <?php foreach ($records as $record): ?>
                             <tr>
@@ -70,6 +71,9 @@
                                             • <?php echo e(ucfirst($item['item_type'])); ?>: <?php echo e($item['description']); ?> x<?php echo e((string)$item['quantity']); ?>
                                         </div>
                                     <?php endforeach; ?>
+                                </td>
+                                <td class="text-end">
+                                    <a href="index.php?route=invoice-register/edit&id=<?php echo (int)$record['id']; ?>" class="btn btn-soft-primary btn-sm">Editar</a>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
