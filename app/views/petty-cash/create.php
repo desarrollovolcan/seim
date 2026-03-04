@@ -56,7 +56,7 @@
                                 </select>
                             </td>
                             <td><input type="text" name="item_description[]" class="form-control description-input" required></td>
-                            <td><input type="number" min="1" step="1" name="item_quantity[]" class="form-control qty-input" value="1" required></td>
+                            <td><input type="number" min="0.01" step="0.01" name="item_quantity[]" class="form-control qty-input" value="1.00" required></td>
                             <td><input type="number" min="0" step="0.01" name="item_unit_price[]" class="form-control price-input" value="0" required></td>
                             <td><input type="text" class="form-control subtotal-input" value="0.00" readonly></td>
                             <td><input type="text" name="item_observation[]" class="form-control" placeholder="Observación por ítem"></td>

@@ -15,4 +15,12 @@ class PettyCashReceiptItemsModel extends Model
             ['receipt_id' => $receiptId]
         );
     }
+
+    public function deleteByReceipt(int $receiptId): bool
+    {
+        return $this->db->execute(
+            'DELETE FROM petty_cash_receipt_items WHERE receipt_id = :receipt_id',
+            ['receipt_id' => $receiptId]
+        );
+    }
 }

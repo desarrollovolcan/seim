@@ -32,7 +32,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Monto</label>
-                        <input type="number" step="0.01" name="amount" class="form-control" value="0">
+                        <input type="number" step="0.01" name="amount" class="form-control" value="0" min="0.01">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Referencia</label>

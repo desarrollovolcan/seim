@@ -203,6 +203,133 @@ class PettyCashController extends Controller
         $this->redirect('index.php?route=petty-cash/create');
     }
 
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $receiptId = (int)($_GET['id'] ?? 0);
+        $receipt = $this->receipts->findForCompany($receiptId, $companyId);
+
+        if (!$receipt) {
+            flash('error', 'Boleta no encontrada.');
+            $this->redirect('index.php?route=petty-cash');
+        }
+
+        $this->render('petty-cash/edit', [
+            'title' => 'Caja chica',
+            'pageTitle' => 'Editar boleta de caja chica',
+            'products' => $this->products->active($companyId),
+            'receipt' => $receipt,
+            'items' => $this->items->byReceipt($receiptId),
+        ]);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $receiptId = (int)($_POST['id'] ?? 0);
+        $receipt = $this->receipts->findForCompany($receiptId, $companyId);
+
+        if (!$receipt) {
+            flash('error', 'Boleta no encontrada.');
+            $this->redirect('index.php?route=petty-cash');
+        }
+
+        $receiptNumber = trim($_POST['receipt_number'] ?? '');
+        $receiptDate = trim($_POST['receipt_date'] ?? date('Y-m-d'));
+        $supplierName = trim($_POST['supplier_name'] ?? '');
+        $currency = trim($_POST['currency'] ?? 'CLP');
+        $notes = trim($_POST['notes'] ?? '');
+
+        if ($receiptNumber === '' || $supplierName === '') {
+            flash('error', 'Debes completar número de boleta y proveedor.');
+            $this->redirect('index.php?route=petty-cash/edit&id=' . $receiptId);
+        }
+
+        $itemProductIds = $_POST['item_product_id'] ?? [];
+        $itemDescriptions = $_POST['item_description'] ?? [];
+        $itemQuantities = $_POST['item_quantity'] ?? [];
+        $itemPrices = $_POST['item_unit_price'] ?? [];
+        $itemObservations = $_POST['item_observation'] ?? [];
+
+        $rows = [];
+        foreach ($itemDescriptions as $index => $description) {
+            $description = trim((string)$description);
+            $qty = max(0, (float)($itemQuantities[$index] ?? 0));
+            $price = max(0, (float)($itemPrices[$index] ?? 0));
+            $productId = (int)($itemProductIds[$index] ?? 0);
+            $observation = trim((string)($itemObservations[$index] ?? ''));
+
+            if ($description === '' && $productId > 0) {
+                $product = $this->products->findForCompany($productId, $companyId);
+                $description = $product['name'] ?? '';
+            }
+
+            if ($description === '' || $qty <= 0) {
+                continue;
+            }
+
+            $rows[] = [
+                'product_id' => $productId > 0 ? $productId : null,
+                'description' => $description,
+                'quantity' => $qty,
+                'unit_price' => $price,
+                'subtotal' => round($qty * $price, 2),
+                'observation' => $observation,
+            ];
+        }
+
+        if (empty($rows)) {
+            flash('error', 'Debes ingresar al menos un producto/ítem válido.');
+            $this->redirect('index.php?route=petty-cash/edit&id=' . $receiptId);
+        }
+
+        $total = array_sum(array_map(static fn(array $r): float => (float)$r['subtotal'], $rows));
+
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $this->receipts->update($receiptId, [
+                'receipt_number' => $receiptNumber,
+                'receipt_date' => $receiptDate,
+                'supplier_name' => $supplierName,
+                'currency' => $currency,
+                'total_amount' => $total,
+                'notes' => $notes,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $this->items->deleteByReceipt($receiptId);
+            foreach ($rows as $row) {
+                $this->items->create([
+                    'receipt_id' => $receiptId,
+                    'product_id' => $row['product_id'],
+                    'description' => $row['description'],
+                    'quantity' => $row['quantity'],
+                    'unit_price' => $row['unit_price'],
+                    'subtotal' => $row['subtotal'],
+                    'observation' => $row['observation'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            audit($this->db, Auth::user()['id'] ?? null, 'update', 'petty_cash_receipts', $receiptId);
+            $pdo->commit();
+            flash('success', 'Boleta actualizada correctamente.');
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            log_message('error', 'Error actualizando caja chica: ' . $e->getMessage());
+            flash('error', 'No se pudo actualizar la boleta.');
+        }
+
+        $this->redirect('index.php?route=petty-cash');
+    }
+
     public function index(): void
     {
         $this->requireLogin();
