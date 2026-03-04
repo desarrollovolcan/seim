@@ -50,7 +50,7 @@
                                     <option value="">Seleccionar...</option>
                                     <?php foreach ($products as $product): ?>
                                         <option value="<?php echo (int)$product['id']; ?>" data-name="<?php echo e($product['name']); ?>" data-price="<?php echo e((string)$product['suggested_price']); ?>">
-                                            <?php echo e($product['name']); ?> (<?php echo e($product['category'] ?: 'General'); ?>)
+                                            <?php $cls = ($product['classification'] ?? $product['category'] ?? 'servicio'); ?><?php echo e($product['name']); ?> (<?php echo e(ucfirst($cls)); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -98,6 +98,13 @@
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
                         <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Clasificación</label>
+                        <select name="classification" class="form-select" required>
+                            <option value="servicio">Servicio</option>
+                            <option value="producto">Producto</option>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Categoría</label>

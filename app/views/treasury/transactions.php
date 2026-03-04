@@ -13,7 +13,7 @@
                             <option value="">Selecciona cuenta</option>
                             <?php foreach ($accounts as $account): ?>
                                 <option value="<?php echo (int)$account['id']; ?>">
-                                    <?php echo e($account['name']); ?>
+                                    <?php echo e(($account['bank_name'] ?? '') . ' - ' . ($account['account_type'] ?? '') . ' - ' . ($account['account_number'] ?? '')); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
