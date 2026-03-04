@@ -37,8 +37,8 @@ class PurchasesController extends Controller
         $purchases = $this->purchases->listWithRelations($companyId);
 
         $this->render('purchases/index', [
-            'title' => 'Compras',
-            'pageTitle' => 'Compras y gastos',
+            'title' => 'Facturas compras',
+            'pageTitle' => 'Facturas de compras',
             'purchases' => $purchases,
         ]);
     }
@@ -53,8 +53,8 @@ class PurchasesController extends Controller
         $taxDefault = !empty($invoiceDefaults['apply_tax']) ? (float)($invoiceDefaults['tax_rate'] ?? 0) : 0;
 
         $this->render('purchases/create', [
-            'title' => 'Registrar compra',
-            'pageTitle' => 'Registrar compra',
+            'title' => 'Facturas compras',
+            'pageTitle' => 'Registrar factura de compra',
             'suppliers' => $suppliers,
             'catalogProducts' => $catalogProducts,
             'today' => date('Y-m-d'),
@@ -73,13 +73,14 @@ class PurchasesController extends Controller
             flash('error', 'Proveedor no válido.');
             $this->redirect('index.php?route=purchases/create');
         }
-        $siiData = sii_document_payload($_POST, sii_receiver_payload($supplier));
-        $siiErrors = validate_sii_document_payload($siiData);
-        if ($siiErrors) {
-            flash('error', implode(' ', $siiErrors));
+
+        $reference = trim((string)($_POST['reference'] ?? ''));
+        if ($reference === '') {
+            flash('error', 'Debes indicar el número de factura o referencia.');
             $this->redirect('index.php?route=purchases/create');
         }
 
+        $siiData = sii_document_payload($_POST, sii_receiver_payload($supplier));
         $itemCollection = $this->collectItems($companyId);
         $items = $itemCollection['items'];
         if (!empty($itemCollection['errors'])) {
@@ -105,7 +106,7 @@ class PurchasesController extends Controller
             $purchaseData = array_merge([
                 'company_id' => $companyId,
                 'supplier_id' => $supplierId,
-                'reference' => trim($_POST['reference'] ?? ''),
+                'reference' => $reference,
                 'purchase_date' => trim($_POST['purchase_date'] ?? date('Y-m-d')),
                 'status' => $_POST['status'] ?? 'pendiente',
                 'subtotal' => $subtotal,

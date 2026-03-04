@@ -1,7 +1,7 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title mb-0">Compras registradas</h4>
-        <a href="index.php?route=purchases/create" class="btn btn-primary">Registrar compra</a>
+        <h4 class="card-title mb-0">Facturas de compras registradas</h4>
+        <a href="index.php?route=purchases/create" class="btn btn-primary">Registrar factura compra</a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -28,7 +28,7 @@
                         };
                         ?>
                         <tr>
-                            <td class="text-muted"><?php echo render_id_badge($purchase['id'] ?? null, 'Compra'); ?></td>
+                            <td class="text-muted"><?php echo render_id_badge($purchase['id'] ?? null, 'Factura compra'); ?></td>
                             <td><?php echo e($purchase['reference'] ?? '-'); ?></td>
                             <td><?php echo e($purchase['supplier_name'] ?? ''); ?></td>
                             <td><?php echo e(format_date($purchase['purchase_date'] ?? null)); ?></td>

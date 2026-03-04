@@ -204,7 +204,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </a>
                     <div class="collapse" id="sidebarCosts">
                         <ul class="sub-menu">
-                            <li class="menu-group-label">1. Compras</li>
+                            <li class="menu-group-label">1. Facturas compras</li>
                             <?php if ($canAccessAny(['purchases_view', 'purchase_orders_view', 'suppliers_view'])): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=costs" class="side-nav-link">

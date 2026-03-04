@@ -2,7 +2,7 @@
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Registrar compra con factura</h4>
+                <h4 class="card-title mb-0">Facturas compras</h4>
                 <div class="d-flex gap-2">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#supplierModal">Agregar proveedor</button>
                     <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#catalogItemModal">Agregar producto/servicio</button>
@@ -42,20 +42,7 @@
                         </div>
                         <div class="col-md-2">
                             <label class="form-label">N° factura / ref.</label>
-                            <input type="text" name="reference" class="form-control" placeholder="F-12345">
-                        </div>
-
-                        <div class="col-12">
-                            <?php
-                            $siiData = [
-                                'sii_document_type' => 'factura_electronica',
-                                'sii_tax_rate' => 19,
-                                'sii_exempt_amount' => 0,
-                            ];
-                            $siiLabel = 'Proveedor';
-                            $siiShowDocumentNumber = false;
-                            include __DIR__ . '/../partials/sii-document-fields.php';
-                            ?>
+                            <input type="text" name="reference" class="form-control" placeholder="F-12345" required>
                         </div>
 
                         <div class="col-12">
@@ -221,60 +208,6 @@
     const subtotalDisplay = document.getElementById('subtotal-display');
     const totalDisplay = document.getElementById('total-display');
     const taxInput = document.getElementById('tax-input');
-    const supplierSelect = document.querySelector('[name="supplier_id"]');
-
-    const siiInputs = {
-        sii_receiver_rut: document.querySelector('[name="sii_receiver_rut"]'),
-        sii_receiver_name: document.querySelector('[name="sii_receiver_name"]'),
-        sii_receiver_giro: document.querySelector('[name="sii_receiver_giro"]'),
-        sii_receiver_address: document.querySelector('[name="sii_receiver_address"]'),
-        sii_receiver_commune: document.querySelector('[name="sii_receiver_commune"]'),
-    };
-    const siiWarning = document.querySelector('[data-sii-warning]');
-    const siiWarningText = document.querySelector('[data-sii-warning-text]');
-    const siiWarningLink = document.querySelector('[data-sii-warning-link]');
-    const siiRequiredFields = [
-        { key: 'rut', label: 'RUT' },
-        { key: 'name', label: 'Razón social' },
-        { key: 'giro', label: 'Giro' },
-        { key: 'address', label: 'Dirección' },
-        { key: 'commune', label: 'Comuna' },
-    ];
-
-    const updateSiiWarning = (data, supplierId) => {
-        if (!siiWarning || !siiWarningText || !siiWarningLink) {
-            return;
-        }
-        const missing = siiRequiredFields.filter((field) => !(data?.[field.key] || '').trim());
-        if (missing.length === 0 || !supplierId) {
-            siiWarning.classList.add('d-none');
-            return;
-        }
-        siiWarningText.textContent = `Completa en la ficha del proveedor: ${missing.map((field) => field.label).join(', ')}.`;
-        siiWarningLink.href = `index.php?route=suppliers/edit&id=${supplierId}`;
-        siiWarning.classList.remove('d-none');
-    };
-
-    const applySupplierSii = () => {
-        const option = supplierSelect?.selectedOptions?.[0];
-        const supplierId = option?.value || '';
-        const data = {
-            rut: option?.dataset?.rut || '',
-            name: option?.dataset?.name || '',
-            giro: option?.dataset?.giro || '',
-            address: option?.dataset?.address || '',
-            commune: option?.dataset?.commune || '',
-        };
-
-        if (siiInputs.sii_receiver_rut) siiInputs.sii_receiver_rut.value = data.rut;
-        if (siiInputs.sii_receiver_name) siiInputs.sii_receiver_name.value = data.name;
-        if (siiInputs.sii_receiver_giro) siiInputs.sii_receiver_giro.value = data.giro;
-        if (siiInputs.sii_receiver_address) siiInputs.sii_receiver_address.value = data.address;
-        if (siiInputs.sii_receiver_commune) siiInputs.sii_receiver_commune.value = data.commune;
-
-        updateSiiWarning(data, supplierId);
-    };
-
     const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', {
         style: 'currency', currency: 'CLP', minimumFractionDigits: 0,
     }).format(amount || 0);
