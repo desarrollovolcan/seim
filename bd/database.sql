@@ -491,6 +491,51 @@ CREATE TABLE purchase_items (
     FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
+
+CREATE TABLE petty_cash_products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    name VARCHAR(180) NOT NULL,
+    category VARCHAR(120) NULL,
+    suggested_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id)
+);
+
+CREATE TABLE petty_cash_receipts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    receipt_number VARCHAR(100) NOT NULL,
+    receipt_date DATE NOT NULL,
+    supplier_name VARCHAR(180) NOT NULL,
+    currency VARCHAR(10) NOT NULL DEFAULT 'CLP',
+    total_amount DECIMAL(12,2) NOT NULL DEFAULT 0,
+    notes TEXT NULL,
+    created_by INT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
+    FOREIGN KEY (company_id) REFERENCES companies(id),
+    FOREIGN KEY (created_by) REFERENCES users(id)
+);
+
+CREATE TABLE petty_cash_receipt_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    receipt_id INT NOT NULL,
+    product_id INT NULL,
+    description VARCHAR(255) NOT NULL,
+    quantity DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
+    observation VARCHAR(255) NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    FOREIGN KEY (receipt_id) REFERENCES petty_cash_receipts(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES petty_cash_products(id)
+);
+
 CREATE TABLE production_orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
@@ -627,6 +672,12 @@ CREATE TABLE sale_payments (
     updated_at DATETIME NOT NULL,
     FOREIGN KEY (sale_id) REFERENCES sales(id)
 );
+
+
+CREATE INDEX idx_petty_cash_products_company ON petty_cash_products(company_id);
+CREATE INDEX idx_petty_cash_receipts_company_date ON petty_cash_receipts(company_id, receipt_date);
+CREATE INDEX idx_petty_cash_receipts_supplier ON petty_cash_receipts(supplier_name);
+CREATE INDEX idx_petty_cash_items_receipt ON petty_cash_receipt_items(receipt_id);
 
 CREATE TABLE email_templates (
     id INT AUTO_INCREMENT PRIMARY KEY,

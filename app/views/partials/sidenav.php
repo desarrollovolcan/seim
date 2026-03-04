@@ -191,7 +191,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit'])): ?>
                 <li class="side-nav-title">Flujo Financiero</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarCosts" aria-expanded="false" aria-controls="sidebarCosts" class="side-nav-link">
@@ -277,6 +277,20 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                         <span class="menu-text">Movimientos tesorería</span>
                                     </a>
                                 </li>
+                            <?php endif; ?>
+                            <?php if ($canAccessAny(['petty_cash_view', 'petty_cash_edit'])): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=petty-cash" class="side-nav-link">
+                                        <span class="menu-text">Caja chica (listado)</span>
+                                    </a>
+                                </li>
+                                <?php if ($hasPermission('petty_cash_edit')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=petty-cash/create" class="side-nav-link">
+                                            <span class="menu-text">Caja chica (registrar boleta)</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                             <?php endif; ?>
                         </ul>
                     </div>
