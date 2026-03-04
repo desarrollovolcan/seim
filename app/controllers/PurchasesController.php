@@ -74,8 +74,18 @@ class PurchasesController extends Controller
             $this->redirect('index.php?route=purchases/create');
         }
         $siiData = sii_document_payload($_POST, sii_receiver_payload($supplier));
+        $siiErrors = validate_sii_document_payload($siiData);
+        if ($siiErrors) {
+            flash('error', implode(' ', $siiErrors));
+            $this->redirect('index.php?route=purchases/create');
+        }
 
-        $items = $this->collectItems($companyId);
+        $itemCollection = $this->collectItems($companyId);
+        $items = $itemCollection['items'];
+        if (!empty($itemCollection['errors'])) {
+            flash('error', implode(' ', $itemCollection['errors']));
+            $this->redirect('index.php?route=purchases/create');
+        }
         $hasPettyCashProductColumn = $this->purchaseItems->hasPettyCashProductColumn();
         $hasUnitMeasureColumn = $this->purchaseItems->hasUnitMeasureColumn();
         $hasItemTypeColumn = $this->purchaseItems->hasItemTypeColumn();
@@ -307,10 +317,12 @@ class PurchasesController extends Controller
         $unitCosts = $_POST['unit_cost'] ?? [];
         $unitMeasures = $_POST['unit_measure'] ?? [];
         $items = [];
+        $errors = [];
 
         foreach ($quantities as $index => $rawQuantity) {
             $catalogId = (int)($catalogIds[$index] ?? 0);
             $description = trim((string)($descriptions[$index] ?? ''));
+            $rowNumber = $index + 1;
             $quantity = max(0, (int)$rawQuantity);
             $unitCost = max(0.0, (float)($unitCosts[$index] ?? 0));
             $unitMeasure = trim((string)($unitMeasures[$index] ?? 'Unidad'));
@@ -324,6 +336,7 @@ class PurchasesController extends Controller
             if ($catalogId > 0) {
                 $catalogProduct = $this->pettyCashProducts->findForCompany($catalogId, $companyId);
                 if (!$catalogProduct) {
+                    $errors[] = 'El ítem #' . $rowNumber . ' usa un producto de catálogo no válido.';
                     continue;
                 }
                 $itemType = ($catalogProduct['classification'] ?? $catalogProduct['category'] ?? '') === 'producto' ? 'producto' : 'servicio';
@@ -339,6 +352,12 @@ class PurchasesController extends Controller
             }
 
             if ($description === '') {
+                $errors[] = 'El ítem #' . $rowNumber . ' debe incluir descripción.';
+                continue;
+            }
+
+            if ($unitCost <= 0) {
+                $errors[] = 'El ítem #' . $rowNumber . ' debe tener costo unitario mayor a cero.';
                 continue;
             }
 
@@ -353,6 +372,9 @@ class PurchasesController extends Controller
             ];
         }
 
-        return $items;
+        return [
+            'items' => $items,
+            'errors' => $errors,
+        ];
     }
 }

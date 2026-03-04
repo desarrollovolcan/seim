@@ -18,7 +18,13 @@
                             <select name="supplier_id" class="form-select" required>
                                 <option value="">Selecciona proveedor</option>
                                 <?php foreach ($suppliers as $supplier): ?>
-                                    <option value="<?php echo (int)$supplier['id']; ?>"><?php echo e($supplier['name']); ?></option>
+                                    <option value="<?php echo (int)$supplier['id']; ?>"
+                                        data-rut="<?php echo e($supplier['tax_id'] ?? ''); ?>"
+                                        data-name="<?php echo e($supplier['name'] ?? ''); ?>"
+                                        data-giro="<?php echo e($supplier['giro'] ?? ''); ?>"
+                                        data-address="<?php echo e($supplier['address'] ?? ''); ?>"
+                                        data-commune="<?php echo e($supplier['commune'] ?? ''); ?>"
+                                    ><?php echo e($supplier['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -215,6 +221,59 @@
     const subtotalDisplay = document.getElementById('subtotal-display');
     const totalDisplay = document.getElementById('total-display');
     const taxInput = document.getElementById('tax-input');
+    const supplierSelect = document.querySelector('[name="supplier_id"]');
+
+    const siiInputs = {
+        sii_receiver_rut: document.querySelector('[name="sii_receiver_rut"]'),
+        sii_receiver_name: document.querySelector('[name="sii_receiver_name"]'),
+        sii_receiver_giro: document.querySelector('[name="sii_receiver_giro"]'),
+        sii_receiver_address: document.querySelector('[name="sii_receiver_address"]'),
+        sii_receiver_commune: document.querySelector('[name="sii_receiver_commune"]'),
+    };
+    const siiWarning = document.querySelector('[data-sii-warning]');
+    const siiWarningText = document.querySelector('[data-sii-warning-text]');
+    const siiWarningLink = document.querySelector('[data-sii-warning-link]');
+    const siiRequiredFields = [
+        { key: 'rut', label: 'RUT' },
+        { key: 'name', label: 'Razón social' },
+        { key: 'giro', label: 'Giro' },
+        { key: 'address', label: 'Dirección' },
+        { key: 'commune', label: 'Comuna' },
+    ];
+
+    const updateSiiWarning = (data, supplierId) => {
+        if (!siiWarning || !siiWarningText || !siiWarningLink) {
+            return;
+        }
+        const missing = siiRequiredFields.filter((field) => !(data?.[field.key] || '').trim());
+        if (missing.length === 0 || !supplierId) {
+            siiWarning.classList.add('d-none');
+            return;
+        }
+        siiWarningText.textContent = `Completa en la ficha del proveedor: ${missing.map((field) => field.label).join(', ')}.`;
+        siiWarningLink.href = `index.php?route=suppliers/edit&id=${supplierId}`;
+        siiWarning.classList.remove('d-none');
+    };
+
+    const applySupplierSii = () => {
+        const option = supplierSelect?.selectedOptions?.[0];
+        const supplierId = option?.value || '';
+        const data = {
+            rut: option?.dataset?.rut || '',
+            name: option?.dataset?.name || '',
+            giro: option?.dataset?.giro || '',
+            address: option?.dataset?.address || '',
+            commune: option?.dataset?.commune || '',
+        };
+
+        if (siiInputs.sii_receiver_rut) siiInputs.sii_receiver_rut.value = data.rut;
+        if (siiInputs.sii_receiver_name) siiInputs.sii_receiver_name.value = data.name;
+        if (siiInputs.sii_receiver_giro) siiInputs.sii_receiver_giro.value = data.giro;
+        if (siiInputs.sii_receiver_address) siiInputs.sii_receiver_address.value = data.address;
+        if (siiInputs.sii_receiver_commune) siiInputs.sii_receiver_commune.value = data.commune;
+
+        updateSiiWarning(data, supplierId);
+    };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('es-CL', {
         style: 'currency', currency: 'CLP', minimumFractionDigits: 0,
@@ -328,9 +387,11 @@
         recalc();
     });
 
+    supplierSelect?.addEventListener('change', applySupplierSii);
     addButton?.addEventListener('click', addRow);
     taxInput?.addEventListener('input', recalc);
     tableBody.querySelectorAll('.item-row').forEach((row) => updateClassification(row));
+    applySupplierSii();
     recalc();
 })();
 </script>
