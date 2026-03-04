@@ -78,6 +78,7 @@ class PurchasesController extends Controller
         $items = $this->collectItems($companyId);
         $hasPettyCashProductColumn = $this->purchaseItems->hasPettyCashProductColumn();
         $hasUnitMeasureColumn = $this->purchaseItems->hasUnitMeasureColumn();
+        $hasItemTypeColumn = $this->purchaseItems->hasItemTypeColumn();
 
         if (empty($items)) {
             flash('error', 'Agrega al menos un ítem (producto o servicio) a la compra.');
@@ -91,7 +92,7 @@ class PurchasesController extends Controller
         $pdo = $this->db->pdo();
         try {
             $pdo->beginTransaction();
-            $purchaseId = $this->purchases->create(array_merge([
+            $purchaseData = array_merge([
                 'company_id' => $companyId,
                 'supplier_id' => $supplierId,
                 'reference' => trim($_POST['reference'] ?? ''),
@@ -103,12 +104,14 @@ class PurchasesController extends Controller
                 'notes' => trim($_POST['notes'] ?? ''),
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ], $siiData));
+            ], $siiData);
+            $purchaseData = $this->filterExistingPurchaseColumns($purchaseData);
+
+            $purchaseId = $this->purchases->create($purchaseData);
 
             foreach ($items as $item) {
                 $itemData = [
                     'purchase_id' => $purchaseId,
-                    'item_type' => $item['item_type'],
                     'description' => $item['description'],
                     'product_id' => null,
                     'quantity' => $item['quantity'],
@@ -118,6 +121,9 @@ class PurchasesController extends Controller
                     'updated_at' => date('Y-m-d H:i:s'),
                 ];
 
+                if ($hasItemTypeColumn) {
+                    $itemData['item_type'] = $item['item_type'];
+                }
                 if ($hasPettyCashProductColumn) {
                     $itemData['petty_cash_product_id'] = $item['petty_cash_product']['id'] ?? null;
                 }
@@ -133,7 +139,7 @@ class PurchasesController extends Controller
             flash('success', 'Compra registrada correctamente.');
         } catch (Throwable $e) {
             $pdo->rollBack();
-            log_message('error', 'Error al registrar compra: ' . $e->getMessage());
+            log_message('error', 'Error al registrar compra: ' . $e->getMessage() . ' | code: ' . (string)$e->getCode());
             flash('error', 'No pudimos guardar la compra. Inténtalo nuevamente.');
         }
 
@@ -278,6 +284,19 @@ class PurchasesController extends Controller
         audit($this->db, Auth::user()['id'], 'delete', 'purchases', $id);
         flash('success', 'Compra eliminada correctamente.');
         $this->redirect('index.php?route=purchases');
+    }
+
+
+    private function filterExistingPurchaseColumns(array $data): array
+    {
+        $filtered = [];
+        foreach ($data as $column => $value) {
+            if ($this->purchases->hasColumnNamed((string)$column)) {
+                $filtered[$column] = $value;
+            }
+        }
+
+        return $filtered;
     }
 
     private function collectItems(int $companyId): array

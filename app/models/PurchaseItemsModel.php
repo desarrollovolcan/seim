@@ -13,4 +13,9 @@ class PurchaseItemsModel extends Model
     {
         return $this->hasColumn('unit_measure');
     }
+
+    public function hasItemTypeColumn(): bool
+    {
+        return $this->hasColumn('item_type');
+    }
 }
