@@ -49,8 +49,8 @@
                                 <select name="item_product_id[]" class="form-select product-select">
                                     <option value="">Seleccionar...</option>
                                     <?php foreach ($products as $product): ?>
-                                        <option value="<?php echo (int)$product['id']; ?>" data-name="<?php echo e($product['name']); ?>" data-price="<?php echo e((string)$product['suggested_price']); ?>">
-                                            <?php echo e($product['name']); ?> (<?php echo e($product['category'] ?: 'General'); ?>)
+                                        <option value="<?php echo (int)$product['id']; ?>" data-name="<?php echo e($product['name']); ?>" data-price="<?php echo e((string)$product['suggested_price']); ?>" data-unit="<?php echo e($product['unit_measure'] ?: 'Unidad'); ?>">
+                                            <?php echo e($product['name']); ?> (<?php echo e($product['category'] ?: 'General'); ?> · <?php echo e($product['unit_measure'] ?: 'Unidad'); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -92,7 +92,7 @@
                 <h5 class="modal-title">Agregar producto rápido</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="index.php?route=petty-cash/products/store">
+            <form method="post" action="index.php?route=petty-cash/products/store" id="quickProductForm">
                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -102,6 +102,18 @@
                     <div class="mb-3">
                         <label class="form-label">Categoría</label>
                         <input type="text" name="category" class="form-control" placeholder="General">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unidad de medida</label>
+                        <select name="unit_measure" class="form-select" required>
+                            <option value="Unidad" selected>Unidad</option>
+                            <option value="Kilo">Kilo</option>
+                            <option value="Litro">Litro</option>
+                            <option value="Gramo">Gramo</option>
+                            <option value="Metro">Metro</option>
+                            <option value="Mililitro">Mililitro</option>
+                            <option value="Centímetro">Centímetro</option>
+                        </select>
                     </div>
                     <div>
                         <label class="form-label">Precio sugerido</label>
@@ -175,6 +187,55 @@
         body.appendChild(clone);
         bindRow(clone);
         recalc();
+    });
+
+    const quickProductForm = document.getElementById('quickProductForm');
+    const quickProductModal = document.getElementById('quickProductModal');
+
+    quickProductForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(quickProductForm);
+        const submitButton = quickProductForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Guardando...';
+
+        try {
+            const response = await fetch(quickProductForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                throw new Error(data.message || 'No se pudo crear el producto.');
+            }
+
+            const product = data.product;
+            const optionHtml = `${product.name} (${product.category || 'General'} · ${product.unit_measure || 'Unidad'})`;
+            document.querySelectorAll('.product-select').forEach((select) => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.dataset.name = product.name;
+                option.dataset.price = product.suggested_price;
+                option.dataset.unit = product.unit_measure || 'Unidad';
+                option.textContent = optionHtml;
+                select.appendChild(option);
+            });
+
+            quickProductForm.reset();
+            const instance = bootstrap.Modal.getInstance(quickProductModal);
+            if (instance) instance.hide();
+        } catch (error) {
+            alert(error.message || 'No se pudo crear el producto.');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+        }
     });
 
     body.querySelectorAll('.item-row').forEach(bindRow);

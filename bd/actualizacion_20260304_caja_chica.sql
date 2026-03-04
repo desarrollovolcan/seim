@@ -6,11 +6,20 @@ CREATE TABLE IF NOT EXISTS petty_cash_products (
     name VARCHAR(180) NOT NULL,
     category VARCHAR(120) NULL,
     suggested_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit_measure VARCHAR(30) NOT NULL DEFAULT 'Unidad',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME NULL,
     CONSTRAINT fk_petty_cash_products_company FOREIGN KEY (company_id) REFERENCES companies(id)
 );
+
+
+SET @col_pc_products_unit := (
+    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'petty_cash_products' AND COLUMN_NAME = 'unit_measure'
+);
+SET @sql := IF(@col_pc_products_unit = 0, "ALTER TABLE petty_cash_products ADD COLUMN unit_measure VARCHAR(30) NOT NULL DEFAULT 'Unidad' AFTER suggested_price;", 'SELECT 1;');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS petty_cash_receipts (
     id INT AUTO_INCREMENT PRIMARY KEY,

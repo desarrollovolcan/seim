@@ -143,28 +143,66 @@ class PettyCashController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
+        $isAjax = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
 
         $name = trim($_POST['name'] ?? '');
         $category = trim($_POST['category'] ?? 'General');
         $price = max(0, (float)($_POST['suggested_price'] ?? 0));
+        $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
+        $allowedUnits = ['Unidad', 'Kilo', 'Litro', 'Gramo', 'Metro', 'Mililitro', 'Centímetro'];
+        if (!in_array($unitMeasure, $allowedUnits, true)) {
+            $unitMeasure = 'Unidad';
+        }
 
         if ($name === '') {
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(422);
+                echo json_encode(['ok' => false, 'message' => 'Debes indicar nombre del producto.']);
+                exit;
+            }
             flash('error', 'Debes indicar nombre del producto.');
             $this->redirect('index.php?route=petty-cash/create');
         }
 
         try {
-            $this->products->create([
+            $productId = $this->products->create([
                 'company_id' => $companyId,
                 'name' => $name,
                 'category' => $category,
                 'suggested_price' => $price,
+                'unit_measure' => $unitMeasure,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                echo json_encode([
+                    'ok' => true,
+                    'message' => 'Producto de caja chica creado correctamente.',
+                    'product' => [
+                        'id' => $productId,
+                        'name' => $name,
+                        'category' => $category,
+                        'suggested_price' => $price,
+                        'unit_measure' => $unitMeasure,
+                    ],
+                ]);
+                exit;
+            }
+
             flash('success', 'Producto de caja chica creado correctamente.');
         } catch (Throwable $e) {
             log_message('error', 'Error creando producto caja chica: ' . $e->getMessage());
+
+            if ($isAjax) {
+                header('Content-Type: application/json; charset=utf-8');
+                http_response_code(500);
+                echo json_encode(['ok' => false, 'message' => 'No se pudo crear el producto.']);
+                exit;
+            }
+
             flash('error', 'No se pudo crear el producto.');
         }
 
