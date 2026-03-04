@@ -92,7 +92,7 @@
                 <h5 class="modal-title">Agregar producto rápido</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="index.php?route=petty-cash/products/store">
+            <form method="post" action="index.php?route=petty-cash/products/store" id="quickProductForm">
                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                 <div class="modal-body">
                     <div class="mb-3">
@@ -186,6 +186,55 @@
         body.appendChild(clone);
         bindRow(clone);
         recalc();
+    });
+
+    const quickProductForm = document.getElementById('quickProductForm');
+    const quickProductModal = document.getElementById('quickProductModal');
+
+    quickProductForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const formData = new FormData(quickProductForm);
+        const submitButton = quickProductForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.textContent;
+        submitButton.disabled = true;
+        submitButton.textContent = 'Guardando...';
+
+        try {
+            const response = await fetch(quickProductForm.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+                throw new Error(data.message || 'No se pudo crear el producto.');
+            }
+
+            const product = data.product;
+            const optionHtml = `${product.name} (${product.category || 'General'} · ${product.unit_measure || 'Unidad'})`;
+            document.querySelectorAll('.product-select').forEach((select) => {
+                const option = document.createElement('option');
+                option.value = product.id;
+                option.dataset.name = product.name;
+                option.dataset.price = product.suggested_price;
+                option.dataset.unit = product.unit_measure || 'Unidad';
+                option.textContent = optionHtml;
+                select.appendChild(option);
+            });
+
+            quickProductForm.reset();
+            const instance = bootstrap.Modal.getInstance(quickProductModal);
+            if (instance) instance.hide();
+        } catch (error) {
+            alert(error.message || 'No se pudo crear el producto.');
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalText;
+        }
     });
 
     body.querySelectorAll('.item-row').forEach(bindRow);
