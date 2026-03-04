@@ -151,6 +151,7 @@ class PettyCashController extends Controller
         if (!in_array($classification, ['producto', 'servicio'], true)) {
             $classification = 'servicio';
         }
+        $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
         $price = max(0, (float)($_POST['suggested_price'] ?? 0));
         $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
         $allowedUnits = ['Unidad', 'Kilo', 'Litro', 'Gramo', 'Metro', 'Mililitro', 'Centímetro'];
@@ -170,7 +171,7 @@ class PettyCashController extends Controller
         }
 
         try {
-            $productId = $this->products->create([
+            $productData = [
                 'company_id' => $companyId,
                 'name' => $name,
                 'classification' => $classification,
@@ -179,24 +180,12 @@ class PettyCashController extends Controller
                 'unit_measure' => $unitMeasure,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-
-            if ($isAjax) {
-                header('Content-Type: application/json; charset=utf-8');
-                echo json_encode([
-                    'ok' => true,
-                    'message' => 'Producto de caja chica creado correctamente.',
-                    'product' => [
-                        'id' => $productId,
-                        'name' => $name,
-                        'category' => $category,
-                        'suggested_price' => $price,
-                        'unit_measure' => $unitMeasure,
-                    ],
-                ]);
-                exit;
+            ];
+            if ($this->products->hasUnitMeasureColumn()) {
+                $productData['unit_measure'] = $unitMeasure !== '' ? $unitMeasure : 'Unidad';
             }
 
+            $this->products->create($productData);
             flash('success', 'Producto de caja chica creado correctamente.');
         } catch (Throwable $e) {
             log_message('error', 'Error creando producto caja chica: ' . $e->getMessage());

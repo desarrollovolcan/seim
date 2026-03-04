@@ -64,6 +64,7 @@
                                             <th>Ítem catálogo</th>
                                             <th>Descripción</th>
                                             <th>Cantidad</th>
+                                            <th>Unidad de medida</th>
                                             <th>Costo unitario</th>
                                             <th class="text-end">Subtotal</th>
                                             <th></th>
@@ -80,7 +81,8 @@
                                                         <option value="<?php echo (int)$product['id']; ?>"
                                                                 data-name="<?php echo e($product['name']); ?>"
                                                                 data-type="<?php echo e($classification); ?>"
-                                                                data-price="<?php echo e((float)($product['suggested_price'] ?? 0)); ?>">
+                                                                data-price="<?php echo e((float)($product['suggested_price'] ?? 0)); ?>"
+                                                                data-unit-measure="<?php echo e($product['unit_measure'] ?? 'Unidad'); ?>">
                                                             <?php echo e($product['name']); ?> (<?php echo e(ucfirst($classification)); ?>)
                                                         </option>
                                                     <?php endforeach; ?>
@@ -88,6 +90,7 @@
                                             </td>
                                             <td><input type="text" name="description[]" class="form-control form-control-sm description-input" placeholder="Detalle del servicio o producto" required></td>
                                             <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" step="1" value="1" required></td>
+                                            <td><input type="text" name="unit_measure[]" class="form-control form-control-sm unit-measure-input" placeholder="Unidad" value="Unidad"></td>
                                             <td><input type="number" name="unit_cost[]" class="form-control form-control-sm cost-input" min="0" step="0.01" value="0" required></td>
                                             <td class="text-end item-subtotal"><?php echo e(format_currency(0)); ?></td>
                                             <td class="text-end"><button type="button" class="btn btn-link text-danger p-0 remove-row">Quitar</button></td>
@@ -155,6 +158,10 @@
                             <option value="servicio">Servicio</option>
                             <option value="producto">Producto</option>
                         </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Unidad de medida</label>
+                        <input type="text" name="unit_measure" class="form-control" placeholder="Unidad, kg, hora, litro..." value="Unidad">
                     </div>
                     <div class="mb-0">
                         <label class="form-label">Precio sugerido</label>
@@ -350,6 +357,7 @@
             const option = select?.selectedOptions?.[0];
             const descriptionInput = row.querySelector('.description-input');
             const costInput = row.querySelector('.cost-input');
+            const unitMeasureInput = row.querySelector('.unit-measure-input');
 
             if (option && option.value) {
                 if (descriptionInput && !descriptionInput.value.trim()) {
@@ -357,6 +365,9 @@
                 }
                 if (costInput && !parseFloat(costInput.value || '0')) {
                     costInput.value = option.dataset.price || '0';
+                }
+                if (unitMeasureInput && !unitMeasureInput.value.trim()) {
+                    unitMeasureInput.value = option.dataset.unitMeasure || 'Unidad';
                 }
             }
 
@@ -373,6 +384,8 @@
                     input.value = '1';
                 } else if (input.classList.contains('cost-input')) {
                     input.value = '0';
+                } else if (input.classList.contains('unit-measure-input')) {
+                    input.value = 'Unidad';
                 } else {
                     input.value = '';
                 }

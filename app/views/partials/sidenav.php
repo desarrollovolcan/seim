@@ -191,7 +191,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'production_view', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit'])): ?>
                 <li class="side-nav-title">Flujo Financiero</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarCosts" aria-expanded="false" aria-controls="sidebarCosts" class="side-nav-link">
@@ -231,15 +231,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
-                            <li class="menu-group-label">2. Gastos productivos</li>
-                            <?php if ($hasPermission('production_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production/expenses" class="side-nav-link">
-                                        <span class="menu-text">Gastos de producción</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <li class="menu-group-label">3. Caja y activos</li>
+                            <li class="menu-group-label">2. Caja y activos</li>
                             <?php if ($hasPermission('treasury_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=treasury/transactions" class="side-nav-link">

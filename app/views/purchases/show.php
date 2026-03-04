@@ -43,7 +43,6 @@
                                     ?>
                                     <?php echo e($docLabel ?: 'No informado'); ?>
                                 </p>
-                                <p class="mb-1"><strong>N° documento:</strong> <?php echo e($purchase['sii_document_number'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>RUT proveedor:</strong> <?php echo e($purchase['sii_receiver_rut'] ?? ''); ?></p>
                                 <p class="mb-1"><strong>Razón social:</strong> <?php echo e($purchase['sii_receiver_name'] ?? ''); ?></p>
                             </div>
@@ -65,6 +64,7 @@
                                 <th>Detalle</th>
                                 <th>Producto</th>
                                 <th>Cantidad</th>
+                                <th>Unidad de medida</th>
                                 <th class="text-end">Costo unitario</th>
                                 <th class="text-end">Subtotal</th>
                             </tr>
@@ -76,6 +76,7 @@
                                     <td><?php echo e($item['description'] ?? '-'); ?></td>
                                     <td><?php echo e($item['petty_cash_product_name'] ?? $item['product_name'] ?? (($item['item_type'] ?? 'producto') === 'servicio' ? 'No aplica' : 'Producto eliminado')); ?></td>
                                     <td><?php echo (int)($item['quantity'] ?? 0); ?></td>
+                                    <td><?php echo e($item['unit_measure'] ?? 'Unidad'); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['unit_cost'] ?? 0))); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>
                                 </tr>

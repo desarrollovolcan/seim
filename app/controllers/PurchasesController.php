@@ -74,13 +74,11 @@ class PurchasesController extends Controller
             $this->redirect('index.php?route=purchases/create');
         }
         $siiData = sii_document_payload($_POST, sii_receiver_payload($supplier));
-        $siiErrors = validate_sii_document_payload($siiData);
-        if ($siiErrors) {
-            flash('error', implode(' ', $siiErrors));
-            $this->redirect('index.php?route=purchases/create');
-        }
 
         $items = $this->collectItems($companyId);
+        $hasPettyCashProductColumn = $this->purchaseItems->hasPettyCashProductColumn();
+        $hasUnitMeasureColumn = $this->purchaseItems->hasUnitMeasureColumn();
+
         if (empty($items)) {
             flash('error', 'Agrega al menos un ítem (producto o servicio) a la compra.');
             $this->redirect('index.php?route=purchases/create');
@@ -108,18 +106,26 @@ class PurchasesController extends Controller
             ], $siiData));
 
             foreach ($items as $item) {
-                $this->purchaseItems->create([
+                $itemData = [
                     'purchase_id' => $purchaseId,
                     'item_type' => $item['item_type'],
                     'description' => $item['description'],
                     'product_id' => null,
-                    'petty_cash_product_id' => $item['petty_cash_product']['id'] ?? null,
                     'quantity' => $item['quantity'],
                     'unit_cost' => $item['unit_cost'],
                     'subtotal' => $item['subtotal'],
                     'created_at' => date('Y-m-d H:i:s'),
                     'updated_at' => date('Y-m-d H:i:s'),
-                ]);
+                ];
+
+                if ($hasPettyCashProductColumn) {
+                    $itemData['petty_cash_product_id'] = $item['petty_cash_product']['id'] ?? null;
+                }
+                if ($hasUnitMeasureColumn) {
+                    $itemData['unit_measure'] = $item['unit_measure'] ?? 'Unidad';
+                }
+
+                $this->purchaseItems->create($itemData);
             }
 
             audit($this->db, Auth::user()['id'], 'create', 'purchases', $purchaseId);
@@ -171,6 +177,7 @@ class PurchasesController extends Controller
         $name = trim($_POST['name'] ?? '');
         $classification = trim($_POST['classification'] ?? 'servicio');
         $category = trim($_POST['category'] ?? 'General');
+        $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
         $suggestedPrice = max(0, (float)($_POST['suggested_price'] ?? 0));
 
         if (!in_array($classification, ['producto', 'servicio'], true)) {
@@ -183,7 +190,7 @@ class PurchasesController extends Controller
         }
 
         try {
-            $this->pettyCashProducts->create([
+            $catalogData = [
                 'company_id' => $companyId,
                 'name' => $name,
                 'classification' => $classification,
@@ -191,7 +198,12 @@ class PurchasesController extends Controller
                 'suggested_price' => $suggestedPrice,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+            ];
+            if ($this->pettyCashProducts->hasUnitMeasureColumn()) {
+                $catalogData['unit_measure'] = $unitMeasure !== '' ? $unitMeasure : 'Unidad';
+            }
+
+            $this->pettyCashProducts->create($catalogData);
             flash('success', 'Ítem agregado al catálogo compartido correctamente.');
         } catch (Throwable $e) {
             log_message('error', 'Error al crear ítem para compras: ' . $e->getMessage());
@@ -274,6 +286,7 @@ class PurchasesController extends Controller
         $descriptions = $_POST['description'] ?? [];
         $quantities = $_POST['quantity'] ?? [];
         $unitCosts = $_POST['unit_cost'] ?? [];
+        $unitMeasures = $_POST['unit_measure'] ?? [];
         $items = [];
 
         foreach ($quantities as $index => $rawQuantity) {
@@ -281,6 +294,7 @@ class PurchasesController extends Controller
             $description = trim((string)($descriptions[$index] ?? ''));
             $quantity = max(0, (int)$rawQuantity);
             $unitCost = max(0.0, (float)($unitCosts[$index] ?? 0));
+            $unitMeasure = trim((string)($unitMeasures[$index] ?? 'Unidad'));
 
             if ($quantity <= 0) {
                 continue;
@@ -300,6 +314,9 @@ class PurchasesController extends Controller
                 if ($unitCost <= 0) {
                     $unitCost = (float)($catalogProduct['suggested_price'] ?? 0);
                 }
+                if ($unitMeasure === '') {
+                    $unitMeasure = (string)($catalogProduct['unit_measure'] ?? 'Unidad');
+                }
             }
 
             if ($description === '') {
@@ -312,6 +329,7 @@ class PurchasesController extends Controller
                 'petty_cash_product' => $catalogProduct,
                 'quantity' => $quantity,
                 'unit_cost' => $unitCost,
+                'unit_measure' => $unitMeasure !== '' ? $unitMeasure : 'Unidad',
                 'subtotal' => $quantity * $unitCost,
             ];
         }

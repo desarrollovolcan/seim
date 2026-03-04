@@ -49,7 +49,7 @@
                                 <select name="item_product_id[]" class="form-select product-select">
                                     <option value="">Seleccionar...</option>
                                     <?php foreach ($products as $product): ?>
-                                        <option value="<?php echo (int)$product['id']; ?>" data-name="<?php echo e($product['name']); ?>" data-price="<?php echo e((string)$product['suggested_price']); ?>">
+                                        <option value="<?php echo (int)$product['id']; ?>" data-name="<?php echo e($product['name']); ?>" data-price="<?php echo e((string)$product['suggested_price']); ?>" data-unit-measure="<?php echo e($product['unit_measure'] ?? 'Unidad'); ?>">
                                             <?php $cls = ($product['classification'] ?? $product['category'] ?? 'servicio'); ?><?php echo e($product['name']); ?> (<?php echo e(ucfirst($cls)); ?>)
                                         </option>
                                     <?php endforeach; ?>
@@ -112,15 +112,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Unidad de medida</label>
-                        <select name="unit_measure" class="form-select" required>
-                            <option value="Unidad" selected>Unidad</option>
-                            <option value="Kilo">Kilo</option>
-                            <option value="Litro">Litro</option>
-                            <option value="Gramo">Gramo</option>
-                            <option value="Metro">Metro</option>
-                            <option value="Mililitro">Mililitro</option>
-                            <option value="Centímetro">Centímetro</option>
-                        </select>
+                        <input type="text" name="unit_measure" class="form-control" placeholder="Unidad, kg, hora, litro..." value="Unidad">
                     </div>
                     <div>
                         <label class="form-label">Precio sugerido</label>
