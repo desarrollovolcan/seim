@@ -388,6 +388,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                             <?php endif; ?>
+                            <?php if ($hasPermission('treasury_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=treasury/accounts" class="side-nav-link">
+                                        <span class="menu-text">Cuentas bancarias</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
                             <?php if ($hasCompany && $hasPermission('settings_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=settings" class="side-nav-link">
