@@ -916,6 +916,13 @@ function permission_catalog(): array
             'view_key' => 'petty_cash_view',
             'edit_key' => 'petty_cash_edit',
         ],
+        'invoice_register' => [
+            'label' => 'Registro facturas',
+            'routes' => ['invoice-register'],
+            'legacy_key' => 'purchases',
+            'view_key' => 'invoice_register_view',
+            'edit_key' => 'invoice_register_edit',
+        ],
         'inventory' => [
             'label' => 'Inventario (kardex)',
             'routes' => ['inventory'],

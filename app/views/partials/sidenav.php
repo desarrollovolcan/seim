@@ -191,7 +191,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit', 'invoice_register_view', 'invoice_register_edit'])): ?>
                 <li class="side-nav-title">Flujo Financiero</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarCosts" aria-expanded="false" aria-controls="sidebarCosts" class="side-nav-link">
@@ -249,6 +249,20 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     <li class="side-nav-item">
                                         <a href="index.php?route=petty-cash/create" class="side-nav-link">
                                             <span class="menu-text">Caja chica (registrar boleta)</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+                            <?php if ($canAccessAny(['invoice_register_view', 'invoice_register_edit'])): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=invoice-register" class="side-nav-link">
+                                        <span class="menu-text">Registro facturas (listado)</span>
+                                    </a>
+                                </li>
+                                <?php if ($hasPermission('invoice_register_edit')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=invoice-register/create" class="side-nav-link">
+                                            <span class="menu-text">Registro facturas (nueva)</span>
                                         </a>
                                     </li>
                                 <?php endif; ?>
