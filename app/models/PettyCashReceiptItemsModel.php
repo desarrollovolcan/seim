@@ -7,7 +7,7 @@ class PettyCashReceiptItemsModel extends Model
     public function byReceipt(int $receiptId): array
     {
         return $this->db->fetchAll(
-            'SELECT i.*, p.name AS product_name
+            'SELECT i.*, p.name AS product_name, p.unit_measure
              FROM petty_cash_receipt_items i
              LEFT JOIN petty_cash_products p ON p.id = i.product_id
              WHERE i.receipt_id = :receipt_id
