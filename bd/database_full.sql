@@ -527,6 +527,7 @@ CREATE TABLE petty_cash_products (
     classification ENUM('producto', 'servicio') NOT NULL DEFAULT 'servicio',
     category VARCHAR(120) NULL,
     suggested_price DECIMAL(12,2) NOT NULL DEFAULT 0,
+    unit_measure VARCHAR(30) NOT NULL DEFAULT 'Unidad',
     created_at DATETIME NOT NULL,
     updated_at DATETIME NOT NULL,
     deleted_at DATETIME NULL,

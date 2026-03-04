@@ -54,7 +54,7 @@
                                 <td>
                                     <?php foreach (($receipt['items'] ?? []) as $item): ?>
                                         <div class="small text-muted">
-                                            • <?php echo e($item['description']); ?> x<?php echo e((string)$item['quantity']); ?>
+                                            • <?php echo e($item['description']); ?> x<?php echo e((string)$item['quantity']); ?> <?php echo e($item['unit_measure'] ?? 'Unidad'); ?>
                                             <?php if (!empty($item['observation'])): ?>
                                                 <em>(<?php echo e($item['observation']); ?>)</em>
                                             <?php endif; ?>
