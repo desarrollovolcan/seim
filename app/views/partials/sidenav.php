@@ -212,11 +212,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                     </a>
                                 </li>
                                 <li class="side-nav-item">
-                                    <a href="index.php?route=costs/accountant-list" class="side-nav-link">
-                                        <span class="menu-text">Listado para contador</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
                                     <a href="index.php?route=costs/cash-flow-analysis" class="side-nav-link">
                                         <span class="menu-text">Análisis entradas/salidas</span>
                                     </a>
@@ -233,11 +228,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 <li class="side-nav-item">
                                     <a href="index.php?route=purchases" class="side-nav-link">
                                         <span class="menu-text">Compras y gastos</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=purchases/create" class="side-nav-link">
-                                        <span class="menu-text">Registrar gasto</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -257,20 +247,6 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 </li>
                             <?php endif; ?>
                             <li class="menu-group-label">3. Caja y activos</li>
-                            <?php if ($hasPermission('honorarios_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=honorarios" class="side-nav-link">
-                                        <span class="menu-text">Honorarios</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('fixed_assets_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=fixed-assets" class="side-nav-link">
-                                        <span class="menu-text">Activos fijos</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
                             <?php if ($hasPermission('treasury_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=treasury/transactions" class="side-nav-link">
