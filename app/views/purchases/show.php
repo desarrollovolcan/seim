@@ -74,7 +74,7 @@
                                 <tr>
                                     <td><?php echo e(ucfirst($item['item_type'] ?? 'producto')); ?></td>
                                     <td><?php echo e($item['description'] ?? '-'); ?></td>
-                                    <td><?php echo e($item['product_name'] ?? (($item['item_type'] ?? 'producto') === 'servicio' ? 'No aplica' : 'Producto eliminado')); ?></td>
+                                    <td><?php echo e($item['petty_cash_product_name'] ?? $item['product_name'] ?? (($item['item_type'] ?? 'producto') === 'servicio' ? 'No aplica' : 'Producto eliminado')); ?></td>
                                     <td><?php echo (int)($item['quantity'] ?? 0); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['unit_cost'] ?? 0))); ?></td>
                                     <td class="text-end"><?php echo e(format_currency((float)($item['subtotal'] ?? 0))); ?></td>
