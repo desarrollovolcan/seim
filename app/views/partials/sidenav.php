@@ -227,14 +227,7 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                             <?php if ($hasPermission('purchases_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=purchases" class="side-nav-link">
-                                        <span class="menu-text">Compras y gastos</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                            <?php if ($hasPermission('suppliers_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=suppliers" class="side-nav-link">
-                                        <span class="menu-text">Proveedores</span>
+                                        <span class="menu-text">Registro facturas</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
@@ -354,6 +347,13 @@ $logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
                                 <li class="side-nav-item">
                                     <a href="index.php?route=companies" class="side-nav-link">
                                         <span class="menu-text">Empresas</span>
+                                    </a>
+                                </li>
+                            <?php endif; ?>
+                            <?php if ($hasPermission('suppliers_view')): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=suppliers" class="side-nav-link">
+                                        <span class="menu-text">Proveedores</span>
                                     </a>
                                 </li>
                             <?php endif; ?>

@@ -146,7 +146,11 @@ class PettyCashController extends Controller
         $isAjax = strtolower((string)($_SERVER['HTTP_X_REQUESTED_WITH'] ?? '')) === 'xmlhttprequest';
 
         $name = trim($_POST['name'] ?? '');
+        $classification = trim($_POST['classification'] ?? 'servicio');
         $category = trim($_POST['category'] ?? 'General');
+        if (!in_array($classification, ['producto', 'servicio'], true)) {
+            $classification = 'servicio';
+        }
         $price = max(0, (float)($_POST['suggested_price'] ?? 0));
         $unitMeasure = trim($_POST['unit_measure'] ?? 'Unidad');
         $allowedUnits = ['Unidad', 'Kilo', 'Litro', 'Gramo', 'Metro', 'Mililitro', 'Centímetro'];
@@ -169,6 +173,7 @@ class PettyCashController extends Controller
             $productId = $this->products->create([
                 'company_id' => $companyId,
                 'name' => $name,
+                'classification' => $classification,
                 'category' => $category,
                 'suggested_price' => $price,
                 'unit_measure' => $unitMeasure,

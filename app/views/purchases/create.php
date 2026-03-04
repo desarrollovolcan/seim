@@ -3,7 +3,10 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h4 class="card-title mb-0">Registro simplificado de compra con factura</h4>
-                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#catalogItemModal">Agregar producto/servicio al catálogo</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="modal" data-bs-target="#supplierModal">Agregar proveedor</button>
+                    <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#catalogItemModal">Agregar producto/servicio al catálogo</button>
+                </div>
             </div>
             <div class="card-body">
                 <form method="post" action="index.php?route=purchases/store" id="purchase-form">
@@ -43,6 +46,7 @@
                                 'sii_exempt_amount' => 0,
                             ];
                             $siiLabel = 'Proveedor';
+                            $siiShowDocumentNumber = false;
                             include __DIR__ . '/../partials/sii-document-fields.php';
                             ?>
                         </div>
@@ -72,7 +76,7 @@
                                                 <select name="catalog_product_id[]" class="form-select form-select-sm catalog-select">
                                                     <option value="">Selecciona</option>
                                                     <?php foreach ($catalogProducts as $product): ?>
-                                                        <?php $classification = ($product['category'] ?? '') === 'producto' ? 'producto' : 'servicio'; ?>
+                                                        <?php $classification = ($product['classification'] ?? $product['category'] ?? '') === 'producto' ? 'producto' : 'servicio'; ?>
                                                         <option value="<?php echo (int)$product['id']; ?>"
                                                                 data-name="<?php echo e($product['name']); ?>"
                                                                 data-type="<?php echo e($classification); ?>"
@@ -131,7 +135,7 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Agregar ítem al catálogo compartido</h5>
+                <h5 class="modal-title">Agregar ítem (catálogo compartido con caja chica)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
             </div>
             <form method="post" action="index.php?route=purchases/catalog-products/store">
@@ -140,6 +144,10 @@
                     <div class="mb-3">
                         <label class="form-label">Nombre</label>
                         <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Categoría</label>
+                        <input type="text" name="category" class="form-control" placeholder="Aseo, Transporte, Insumos...">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Clasificación</label>
@@ -156,6 +164,73 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-primary">Guardar en catálogo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="supplierModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar proveedor (mismo formulario de mantenedor)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <form method="post" action="index.php?route=purchases/suppliers/store">
+                <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Nombre</label>
+                            <input type="text" name="supplier_name" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Código</label>
+                            <input type="text" name="supplier_code" class="form-control" placeholder="PROV-001" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">RUT / ID</label>
+                            <input type="text" name="supplier_tax_id" class="form-control" placeholder="12.345.678-9">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Persona de contacto</label>
+                            <input type="text" name="supplier_contact_name" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" name="supplier_email" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono</label>
+                            <input type="text" name="supplier_phone" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Sitio web</label>
+                            <input type="url" name="supplier_website" class="form-control" placeholder="https://">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Dirección</label>
+                            <input type="text" name="supplier_address" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Giro</label>
+                            <input type="text" name="supplier_giro" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Comuna</label>
+                            <input type="text" name="supplier_commune" class="form-control">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Notas</label>
+                            <textarea name="supplier_notes" class="form-control" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar proveedor</button>
                 </div>
             </form>
         </div>

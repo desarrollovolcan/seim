@@ -170,6 +170,7 @@ class PurchasesController extends Controller
 
         $name = trim($_POST['name'] ?? '');
         $classification = trim($_POST['classification'] ?? 'servicio');
+        $category = trim($_POST['category'] ?? 'General');
         $suggestedPrice = max(0, (float)($_POST['suggested_price'] ?? 0));
 
         if (!in_array($classification, ['producto', 'servicio'], true)) {
@@ -185,7 +186,8 @@ class PurchasesController extends Controller
             $this->pettyCashProducts->create([
                 'company_id' => $companyId,
                 'name' => $name,
-                'category' => $classification,
+                'classification' => $classification,
+                'category' => $category,
                 'suggested_price' => $suggestedPrice,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
@@ -194,6 +196,56 @@ class PurchasesController extends Controller
         } catch (Throwable $e) {
             log_message('error', 'Error al crear ítem para compras: ' . $e->getMessage());
             flash('error', 'No se pudo guardar el ítem en el catálogo.');
+        }
+
+        $this->redirect('index.php?route=purchases/create');
+    }
+
+    public function storeQuickSupplier(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+
+        $name = trim($_POST['supplier_name'] ?? '');
+        $code = trim($_POST['supplier_code'] ?? '');
+        $email = trim($_POST['supplier_email'] ?? '');
+        $website = trim($_POST['supplier_website'] ?? '');
+
+        if (!Validator::required($name) || !Validator::required($code)) {
+            flash('error', 'Nombre y código del proveedor son obligatorios.');
+            $this->redirect('index.php?route=purchases/create');
+        }
+        if (!Validator::optionalEmail($email)) {
+            flash('error', 'El email del proveedor no es válido.');
+            $this->redirect('index.php?route=purchases/create');
+        }
+        if (!Validator::url($website)) {
+            flash('error', 'El sitio web del proveedor no es válido.');
+            $this->redirect('index.php?route=purchases/create');
+        }
+
+        try {
+            $this->suppliers->create([
+                'company_id' => $companyId,
+                'name' => $name,
+                'code' => $code,
+                'contact_name' => trim($_POST['supplier_contact_name'] ?? ''),
+                'tax_id' => trim($_POST['supplier_tax_id'] ?? ''),
+                'email' => $email,
+                'phone' => trim($_POST['supplier_phone'] ?? ''),
+                'address' => trim($_POST['supplier_address'] ?? ''),
+                'giro' => trim($_POST['supplier_giro'] ?? ''),
+                'commune' => trim($_POST['supplier_commune'] ?? ''),
+                'website' => $website,
+                'notes' => trim($_POST['supplier_notes'] ?? ''),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            flash('success', 'Proveedor creado correctamente. Ya puedes seleccionarlo en la compra.');
+        } catch (Throwable $e) {
+            log_message('error', 'Error creando proveedor rápido en compras: ' . $e->getMessage());
+            flash('error', 'No se pudo crear el proveedor.');
         }
 
         $this->redirect('index.php?route=purchases/create');
@@ -241,7 +293,7 @@ class PurchasesController extends Controller
                 if (!$catalogProduct) {
                     continue;
                 }
-                $itemType = ($catalogProduct['category'] ?? '') === 'producto' ? 'producto' : 'servicio';
+                $itemType = ($catalogProduct['classification'] ?? $catalogProduct['category'] ?? '') === 'producto' ? 'producto' : 'servicio';
                 if ($description === '') {
                     $description = (string)($catalogProduct['name'] ?? 'Ítem');
                 }
