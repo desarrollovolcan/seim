@@ -49,8 +49,16 @@
                                                 <input type="text" class="form-control" id="proposalSubject" name="proposal_subject" placeholder="Enter proposal subject" required>
                                             </div>
                                             <div class="col-md-6">
+                                                <label for="quoteType" class="form-label">Tipo de cotización</label>
+                                                <select class="form-select" id="quoteType" name="quote_type">
+                                                    <option value="standard" selected>Cotización normal (con cliente)</option>
+                                                    <option value="quick">Cotización rápida (sin cliente)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label for="clientName" class="form-label">Send To (Client)</label>
-                                                <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name" required>
+                                                <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name">
+                                                <small class="text-muted d-block mt-1">Si eliges <strong>Cotización rápida</strong>, este campo puede quedar vacío.</small>
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="proposalValue" class="form-label">Value (USD)</label>
@@ -640,6 +648,25 @@
     <!-- Custom table -->
     <script src="assets/js/pages/custom-table.js"></script>
     <script src="assets/js/pages/crm-forms.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var quoteType = document.getElementById('quoteType');
+            var clientName = document.getElementById('clientName');
+
+            if (!quoteType || !clientName) {
+                return;
+            }
+
+            var syncClientField = function () {
+                var isQuickQuote = quoteType.value === 'quick';
+                clientName.required = !isQuickQuote;
+                clientName.placeholder = isQuickQuote ? 'Opcional para cotización rápida' : 'Enter client name';
+            };
+
+            quoteType.addEventListener('change', syncClientField);
+            syncClientField();
+        });
+    </script>
 
 </body>
 
