@@ -28,6 +28,10 @@ $defaultIssueDate = date('Y-m-d');
                 </div>
                 <div class="col-md-8 mb-3">
                     <label class="form-label">Cliente</label>
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="quick-quote-toggle" name="quick_quote" value="1">
+                        <label class="form-check-label" for="quick-quote-toggle">Cotización rápida (sin cliente)</label>
+                    </div>
                     <select name="client_id" class="form-select" data-client-select required>
                         <option value="">Selecciona un cliente</option>
                         <?php foreach ($clients as $client): ?>
@@ -36,6 +40,7 @@ $defaultIssueDate = date('Y-m-d');
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <small class="text-muted d-block mt-1" data-quick-quote-help>Selecciona un cliente para cotización normal.</small>
                 </div>
             </div>
             <?php
@@ -184,6 +189,8 @@ $defaultIssueDate = date('Y-m-d');
 </div>
 
 <script>
+    const quickQuoteToggle = document.getElementById('quick-quote-toggle');
+    const quickQuoteHelp = document.querySelector('[data-quick-quote-help]');
     const clientSelect = document.querySelector('[data-client-select]');
     const subtotalInput = document.querySelector('[data-subtotal]');
     const discountTotalInput = document.querySelector('[data-discount-total]');
@@ -225,6 +232,24 @@ $defaultIssueDate = date('Y-m-d');
         { key: 'address', label: 'Dirección' },
         { key: 'commune', label: 'Comuna' },
     ];
+
+    const toggleQuickQuote = (forceState = null) => {
+        if (!quickQuoteToggle || !clientSelect) {
+            return;
+        }
+        const enabled = forceState ?? quickQuoteToggle.checked;
+        clientSelect.required = !enabled;
+        clientSelect.disabled = enabled;
+        if (enabled) {
+            clientSelect.value = '';
+            applyClientSii(0, true);
+        }
+        if (quickQuoteHelp) {
+            quickQuoteHelp.textContent = enabled
+                ? 'Cotización rápida activa: no se selecciona cliente.'
+                : 'Selecciona un cliente para cotización normal.';
+        }
+    };
 
     const updateSiiWarning = (data, clientId) => {
         if (!siiWarning || !siiWarningText || !siiWarningLink) {
@@ -419,6 +444,7 @@ $defaultIssueDate = date('Y-m-d');
     clientSelect?.addEventListener('change', () => {
         applyClientSii(Number(clientSelect?.value || 0));
     });
+    quickQuoteToggle?.addEventListener('change', () => toggleQuickQuote());
 
     document.addEventListener('click', (event) => {
         if (!event.target?.matches('[data-remove-row]')) {
@@ -448,6 +474,7 @@ $defaultIssueDate = date('Y-m-d');
         updateFromItems();
     });
 
+    toggleQuickQuote();
     applyClientSii(Number(clientSelect?.value || 0));
     updateFromItems();
 </script>

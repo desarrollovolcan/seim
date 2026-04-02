@@ -74,6 +74,7 @@ class QuotesController extends Controller
         $serviceId = trim($_POST['system_service_id'] ?? '');
         $projectId = trim($_POST['project_id'] ?? '');
         $issueDate = trim($_POST['fecha_emision'] ?? '');
+        $quickQuote = !empty($_POST['quick_quote']);
         $discountTotal = (float)($_POST['discount_total'] ?? 0);
         $discountTotalType = $_POST['discount_total_type'] ?? 'amount';
         $numero = trim($_POST['numero'] ?? '');
@@ -81,19 +82,27 @@ class QuotesController extends Controller
             $numero = $this->quotes->nextNumber('COT-', $companyId);
         }
         $clientId = (int)($_POST['client_id'] ?? 0);
-        $client = $this->db->fetch(
-            'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
-            ['id' => $clientId, 'company_id' => $companyId]
-        );
-        if (!$client) {
-            flash('error', 'Cliente no encontrado para esta empresa.');
-            $this->redirect('index.php?route=quotes/create');
+        $client = null;
+        if ($quickQuote) {
+            $clientId = 0;
         }
-        $siiData = sii_document_payload($_POST, sii_receiver_payload($client));
-        $siiErrors = validate_sii_document_payload($siiData);
-        if ($siiErrors) {
-            flash('error', implode(' ', $siiErrors));
-            $this->redirect('index.php?route=quotes/create');
+        if ($clientId > 0) {
+            $client = $this->db->fetch(
+                'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
+                ['id' => $clientId, 'company_id' => $companyId]
+            );
+            if (!$client) {
+                flash('error', 'Cliente no encontrado para esta empresa.');
+                $this->redirect('index.php?route=quotes/create');
+            }
+        }
+        $siiData = sii_document_payload($_POST, $client ? sii_receiver_payload($client) : []);
+        if (!$quickQuote || $clientId > 0) {
+            $siiErrors = validate_sii_document_payload($siiData);
+            if ($siiErrors) {
+                flash('error', implode(' ', $siiErrors));
+                $this->redirect('index.php?route=quotes/create');
+            }
         }
         if ($serviceId !== '') {
             $service = $this->db->fetch(
@@ -152,7 +161,7 @@ class QuotesController extends Controller
 
         $quoteId = $this->quotes->create(array_merge([
             'company_id' => $companyId,
-            'client_id' => $clientId,
+            'client_id' => $clientId > 0 ? $clientId : null,
             'system_service_id' => $serviceId !== '' ? $serviceId : null,
             'project_id' => $projectId !== '' ? $projectId : null,
             'numero' => $numero,
