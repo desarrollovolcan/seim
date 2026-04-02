@@ -57,8 +57,9 @@
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="clientName" class="form-label">Send To (Client)</label>
-                                                <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name">
-                                                <small class="text-muted d-block mt-1">Si eliges <strong>Cotización rápida</strong>, este campo puede quedar vacío.</small>
+                                                <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name" required>
+                                                <small class="text-muted d-block mt-1" id="quickQuoteHelp">Requerido para cotización normal.</small>
+                                                <input type="hidden" id="quoteType" name="quote_type" value="standard">
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="proposalValue" class="form-label">Value (USD)</label>
@@ -90,6 +91,9 @@
                                         </div>
                                     </div>
                                     <div class="card-footer d-flex flex-column flex-sm-row gap-2">
+                                        <button type="button" class="btn btn-outline-primary w-100 w-sm-auto" id="quickQuoteToggle">
+                                            <i class="ti ti-bolt me-1"></i> Cotización rápida (sin cliente)
+                                        </button>
                                         <button type="button" class="btn btn-light w-100 w-sm-auto" data-bs-toggle="collapse" data-bs-target="#createProposalForm" aria-controls="createProposalForm" aria-expanded="true">Cancel</button>
                                         <button type="submit" class="btn btn-primary w-100 w-sm-auto">Save Proposal</button>
                                     </div>
@@ -650,21 +654,39 @@
     <script src="assets/js/pages/crm-forms.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            var quickQuoteToggle = document.getElementById('quickQuoteToggle');
             var quoteType = document.getElementById('quoteType');
             var clientName = document.getElementById('clientName');
+            var quickQuoteHelp = document.getElementById('quickQuoteHelp');
 
-            if (!quoteType || !clientName) {
+            if (!quickQuoteToggle || !quoteType || !clientName || !quickQuoteHelp) {
                 return;
             }
 
-            var syncClientField = function () {
+            var syncQuickQuoteState = function () {
                 var isQuickQuote = quoteType.value === 'quick';
                 clientName.required = !isQuickQuote;
                 clientName.placeholder = isQuickQuote ? 'Opcional para cotización rápida' : 'Enter client name';
+                quickQuoteHelp.textContent = isQuickQuote
+                    ? 'Modo rápido activo: puedes guardar sin cliente.'
+                    : 'Requerido para cotización normal.';
+                quickQuoteToggle.classList.toggle('btn-primary', isQuickQuote);
+                quickQuoteToggle.classList.toggle('btn-outline-primary', !isQuickQuote);
+                quickQuoteToggle.innerHTML = isQuickQuote
+                    ? '<i class="ti ti-user-x me-1"></i> Salir de cotización rápida'
+                    : '<i class="ti ti-bolt me-1"></i> Cotización rápida (sin cliente)';
+
+                if (isQuickQuote) {
+                    clientName.value = '';
+                }
             };
 
-            quoteType.addEventListener('change', syncClientField);
-            syncClientField();
+            quickQuoteToggle.addEventListener('click', function () {
+                quoteType.value = quoteType.value === 'quick' ? 'standard' : 'quick';
+                syncQuickQuoteState();
+            });
+
+            syncQuickQuoteState();
         });
     </script>
 
