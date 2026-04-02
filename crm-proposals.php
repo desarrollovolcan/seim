@@ -49,6 +49,13 @@
                                                 <input type="text" class="form-control" id="proposalSubject" name="proposal_subject" placeholder="Enter proposal subject" required>
                                             </div>
                                             <div class="col-md-6">
+                                                <label for="quoteType" class="form-label">Tipo de cotización</label>
+                                                <select class="form-select" id="quoteType" name="quote_type">
+                                                    <option value="standard" selected>Cotización normal (con cliente)</option>
+                                                    <option value="quick">Cotización rápida (sin cliente)</option>
+                                                </select>
+                                            </div>
+                                            <div class="col-md-6">
                                                 <label for="clientName" class="form-label">Send To (Client)</label>
                                                 <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name" required>
                                                 <small class="text-muted d-block mt-1" id="quickQuoteHelp">Requerido para cotización normal.</small>
