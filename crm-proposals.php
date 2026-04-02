@@ -49,8 +49,16 @@
                                                 <input type="text" class="form-control" id="proposalSubject" name="proposal_subject" placeholder="Enter proposal subject" required>
                                             </div>
                                             <div class="col-md-6">
-                                                <label for="clientName" class="form-label">Send To (Client)</label>
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <label for="clientName" class="form-label mb-0">Send To (Client)</label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" role="switch" id="quickQuoteSwitch">
+                                                        <label class="form-check-label small" for="quickQuoteSwitch">Cotización rápida</label>
+                                                    </div>
+                                                </div>
                                                 <input type="text" class="form-control" id="clientName" name="client_name" placeholder="Enter client name" autocomplete="name" data-crm-key="contact_name" required>
+                                                <small class="text-muted d-block mt-1" id="quickQuoteHelp">Requerido para cotización normal.</small>
+                                                <input type="hidden" id="quoteType" name="quote_type" value="standard">
                                             </div>
                                             <div class="col-md-6">
                                                 <label for="proposalValue" class="form-label">Value (USD)</label>
@@ -82,6 +90,9 @@
                                         </div>
                                     </div>
                                     <div class="card-footer d-flex flex-column flex-sm-row gap-2">
+                                        <button type="button" class="btn btn-outline-dark w-100 w-sm-auto" id="printAccountingQuote">
+                                            <i class="ti ti-printer me-1"></i> Imprimir cotización contable
+                                        </button>
                                         <button type="button" class="btn btn-light w-100 w-sm-auto" data-bs-toggle="collapse" data-bs-target="#createProposalForm" aria-controls="createProposalForm" aria-expanded="true">Cancel</button>
                                         <button type="submit" class="btn btn-primary w-100 w-sm-auto">Save Proposal</button>
                                     </div>
@@ -640,6 +651,117 @@
     <!-- Custom table -->
     <script src="assets/js/pages/custom-table.js"></script>
     <script src="assets/js/pages/crm-forms.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var quickQuoteSwitch = document.getElementById('quickQuoteSwitch');
+            var printAccountingQuote = document.getElementById('printAccountingQuote');
+            var quoteType = document.getElementById('quoteType');
+            var clientName = document.getElementById('clientName');
+            var quickQuoteHelp = document.getElementById('quickQuoteHelp');
+
+            if (!quickQuoteSwitch || !printAccountingQuote || !quoteType || !clientName || !quickQuoteHelp) {
+                return;
+            }
+
+            var syncQuickQuoteState = function () {
+                var isQuickQuote = quickQuoteSwitch.checked;
+                quoteType.value = isQuickQuote ? 'quick' : 'standard';
+                clientName.required = !isQuickQuote;
+                clientName.readOnly = isQuickQuote;
+                clientName.placeholder = isQuickQuote ? 'Opcional para cotización rápida' : 'Enter client name';
+                quickQuoteHelp.textContent = isQuickQuote
+                    ? 'Modo rápido activo: no se selecciona cliente.'
+                    : 'Requerido para cotización normal.';
+
+                if (isQuickQuote) {
+                    clientName.value = '';
+                }
+            };
+
+            quickQuoteSwitch.addEventListener('change', function () {
+                syncQuickQuoteState();
+            });
+
+            printAccountingQuote.addEventListener('click', function () {
+                var proposalId = (document.getElementById('proposalID') || {}).value || 'BORRADOR';
+                var subject = (document.getElementById('proposalSubject') || {}).value || 'Sin concepto';
+                var status = (document.getElementById('proposalStatus') || {}).value || 'Pendiente';
+                var createdDate = (document.getElementById('createdDate') || {}).value || '';
+                var openTill = (document.getElementById('openTill') || {}).value || '';
+                var rawValue = (document.getElementById('proposalValue') || {}).value || '0';
+                var quoteValue = Number(rawValue || 0).toLocaleString('es-MX', { style: 'currency', currency: 'USD' });
+                var quoteClient = clientName.value && clientName.value.trim() !== ''
+                    ? clientName.value.trim()
+                    : 'Consumidor final / Cotización rápida';
+                var quoteMode = quoteType.value === 'quick' ? 'Rápida (sin cliente)' : 'Normal (con cliente)';
+                var issueDate = new Date().toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+                var printWindow = window.open('', '_blank', 'width=900,height=700');
+                if (!printWindow) {
+                    return;
+                }
+
+                printWindow.document.write(
+                    '<html><head><title>Cotización ' + proposalId + '</title>' +
+                    '<style>' +
+                    'body{font-family:Arial,sans-serif;color:#111;margin:32px;}' +
+                    '.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:14px;margin-bottom:16px;}' +
+                    '.company h1{margin:0;font-size:22px;letter-spacing:.5px;}' +
+                    '.company p{margin:3px 0;font-size:12px;color:#444;}' +
+                    '.doc h2{margin:0;font-size:20px;text-transform:uppercase;}' +
+                    '.doc p{margin:4px 0 0;font-size:12px;text-align:right;}' +
+                    'table{width:100%;border-collapse:collapse;margin-top:14px;}' +
+                    'th,td{border:1px solid #ddd;padding:10px;font-size:13px;vertical-align:top;}' +
+                    'th{background:#f3f4f6;text-align:left;}' +
+                    '.summary{margin-top:18px;display:flex;justify-content:flex-end;}' +
+                    '.total{width:280px;border:1px solid #111;padding:10px;}' +
+                    '.total-row{display:flex;justify-content:space-between;margin:6px 0;font-size:13px;}' +
+                    '.grand{font-size:17px;font-weight:700;border-top:1px solid #111;padding-top:8px;}' +
+                    '.footer{margin-top:26px;font-size:12px;color:#555;line-height:1.5;border-top:1px dashed #bbb;padding-top:10px;}' +
+                    '</style></head><body>' +
+                    '<div class=\"header\">' +
+                        '<div class=\"company\">' +
+                            '<h1>EMPRESA DEMO S.A. DE C.V.</h1>' +
+                            '<p>RFC: DEM010101AAA</p>' +
+                            '<p>Av. Principal 123, Ciudad de México, México</p>' +
+                            '<p>Tel: +52 55 0000 0000 | ventas@empresademo.com</p>' +
+                        '</div>' +
+                        '<div class=\"doc\">' +
+                            '<h2>Cotización</h2>' +
+                            '<p><strong>Folio:</strong> ' + proposalId + '</p>' +
+                            '<p><strong>Fecha emisión:</strong> ' + issueDate + '</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<table>' +
+                        '<tr><th style=\"width:28%\">Cliente</th><td>' + quoteClient + '</td></tr>' +
+                        '<tr><th>Concepto</th><td>' + subject + '</td></tr>' +
+                        '<tr><th>Estatus</th><td>' + status + '</td></tr>' +
+                        '<tr><th>Tipo</th><td>' + quoteMode + '</td></tr>' +
+                        '<tr><th>Vigencia</th><td>Desde ' + (createdDate || '-') + ' hasta ' + (openTill || '-') + '</td></tr>' +
+                    '</table>' +
+                    '<table>' +
+                        '<thead><tr><th>Descripción</th><th style=\"width:18%\">Subtotal</th></tr></thead>' +
+                        '<tbody><tr><td>' + subject + '</td><td>' + quoteValue + '</td></tr></tbody>' +
+                    '</table>' +
+                    '<div class=\"summary\"><div class=\"total\">' +
+                        '<div class=\"total-row\"><span>Subtotal</span><span>' + quoteValue + '</span></div>' +
+                        '<div class=\"total-row\"><span>IVA (0%)</span><span>$0.00</span></div>' +
+                        '<div class=\"total-row grand\"><span>Total</span><span>' + quoteValue + '</span></div>' +
+                    '</div></div>' +
+                    '<div class=\"footer\">' +
+                        '<p><strong>Condiciones:</strong> Esta cotización está sujeta a disponibilidad y cambios sin previo aviso.</p>' +
+                        '<p><strong>Forma de pago:</strong> Transferencia bancaria / depósito.</p>' +
+                    '</div>' +
+                    '</body></html>'
+                );
+                printWindow.document.close();
+                printWindow.focus();
+                printWindow.print();
+            });
+
+            syncQuickQuoteState();
+        });
+    </script>
 
 </body>
 
