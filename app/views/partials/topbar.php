@@ -1,8 +1,8 @@
 <?php
-$logoColor = $companySettings['logo_color'] ?? 'assets/images/logo.png';
-$logoBlack = $companySettings['logo_black'] ?? 'assets/images/logo-black.png';
-$logoSmallColor = $companySettings['logo_color'] ?? 'assets/images/logo-sm.png';
-$logoSmallBlack = $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
+$logoColor = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? 'assets/images/logo.png';
+$logoBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'] ?? 'assets/images/logo-black.png';
+$logoSmallColor = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? 'assets/images/logo-sm.png';
+$logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
 $companyName = $currentCompany['name'] ?? ($companySettings['name'] ?? '');
 $userAvatar = $currentUser['avatar_path'] ?? '';
 $userInitials = trim((string)($currentUser['name'] ?? 'U'));
