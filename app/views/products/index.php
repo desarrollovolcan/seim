@@ -1,7 +1,10 @@
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <h4 class="card-title mb-0">Inventario de productos</h4>
-        <a href="index.php?route=products/create" class="btn btn-primary">Nuevo producto</a>
+        <div class="d-flex gap-2">
+            <a href="index.php?route=products/bulk" class="btn btn-success">Carga masiva</a>
+            <a href="index.php?route=products/create" class="btn btn-primary">Nuevo producto</a>
+        </div>
     </div>
     <div class="card-body">
         <div class="table-responsive">
