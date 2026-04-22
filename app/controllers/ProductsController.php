@@ -128,6 +128,11 @@ class ProductsController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
+        }
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '512M');
         $selectedCompanyId = (int)($_POST['default_competitor_company_id'] ?? 0);
         $defaultCompetitor = $this->resolveDefaultCompetitorCompany($companyId, $selectedCompanyId);
         if (!$defaultCompetitor) {
@@ -224,111 +229,124 @@ class ProductsController extends Controller
         $rowNumber = 1;
         $created = 0;
         $errors = [];
-        while (($row = fgetcsv($handle, 0, $detectedDelimiter)) !== false) {
-            $rowNumber++;
-            if (count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
-                continue;
-            }
-            $data = [];
-            foreach ($header as $index => $column) {
-                $data[$column] = trim((string)($row[$index] ?? ''));
-            }
-
-            $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
-            $sku = trim((string)($data['sku'] ?? $data['codigo_sku'] ?? $data['codigo'] ?? ''));
-            if ($name === '') {
-                $errors[] = "Fila {$rowNumber}: el nombre es obligatorio.";
-                continue;
-            }
-            if ($sku === '') {
-                $errors[] = "Fila {$rowNumber}: el SKU es obligatorio.";
-                continue;
-            }
-
-            $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
-            $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
-            $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
-            $familyName = trim((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
-            $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
-            $subfamilyName = trim((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
-
-            $supplier = null;
-            if ($supplierCode !== '' || $supplierName !== '') {
-                $supplier = $supplierByCode[$supplierCode] ?? null;
-                if (!$supplier && $supplierName !== '') {
-                    $supplier = $supplierByName[$supplierName] ?? null;
+        $pdo = $this->db->pdo();
+        $pdo->beginTransaction();
+        try {
+            while (($row = fgetcsv($handle, 0, $detectedDelimiter)) !== false) {
+                $rowNumber++;
+                if (count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
+                    continue;
                 }
-            }
+                $data = [];
+                foreach ($header as $index => $column) {
+                    $data[$column] = trim((string)($row[$index] ?? ''));
+                }
 
-            $family = null;
-            $familyLookupName = strtoupper($familyName);
-            if ($familyCode !== '' || $familyLookupName !== '') {
-                $family = $this->resolveOrCreateFamily(
-                    $companyId,
-                    $familyCode,
-                    $familyName,
-                    $familyByCode,
-                    $familyByName
-                );
-            }
+                $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
+                $sku = trim((string)($data['sku'] ?? $data['codigo_sku'] ?? $data['codigo'] ?? ''));
+                if ($name === '') {
+                    $errors[] = "Fila {$rowNumber}: el nombre es obligatorio.";
+                    continue;
+                }
+                if ($sku === '') {
+                    $errors[] = "Fila {$rowNumber}: el SKU es obligatorio.";
+                    continue;
+                }
 
-            $subfamily = null;
-            $subfamilyLookupName = strtoupper($subfamilyName);
-            if ($subfamilyCode !== '' || $subfamilyLookupName !== '') {
-                if (!$family) {
-                    $familyFallbackName = $familyName !== '' ? $familyName : ('Familia ' . ($subfamilyName !== '' ? $subfamilyName : $subfamilyCode));
+                $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
+                $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
+                $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
+                $familyName = trim((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+                $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
+                $subfamilyName = trim((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
+
+                $supplier = null;
+                if ($supplierCode !== '' || $supplierName !== '') {
+                    $supplier = $supplierByCode[$supplierCode] ?? null;
+                    if (!$supplier && $supplierName !== '') {
+                        $supplier = $supplierByName[$supplierName] ?? null;
+                    }
+                }
+
+                $family = null;
+                $familyLookupName = strtoupper($familyName);
+                if ($familyCode !== '' || $familyLookupName !== '') {
                     $family = $this->resolveOrCreateFamily(
                         $companyId,
                         $familyCode,
-                        $familyFallbackName,
+                        $familyName,
                         $familyByCode,
                         $familyByName
                     );
                 }
-                if ($family) {
-                    $subfamily = $this->resolveOrCreateSubfamily(
-                        $companyId,
-                        (int)$family['id'],
-                        $subfamilyCode,
-                        $subfamilyName,
-                        $subfamilyByCode,
-                        $subfamilyByName
-                    );
+
+                $subfamily = null;
+                $subfamilyLookupName = strtoupper($subfamilyName);
+                if ($subfamilyCode !== '' || $subfamilyLookupName !== '') {
+                    if (!$family) {
+                        $familyFallbackName = $familyName !== '' ? $familyName : ('Familia ' . ($subfamilyName !== '' ? $subfamilyName : $subfamilyCode));
+                        $family = $this->resolveOrCreateFamily(
+                            $companyId,
+                            $familyCode,
+                            $familyFallbackName,
+                            $familyByCode,
+                            $familyByName
+                        );
+                    }
+                    if ($family) {
+                        $subfamily = $this->resolveOrCreateSubfamily(
+                            $companyId,
+                            (int)$family['id'],
+                            $subfamilyCode,
+                            $subfamilyName,
+                            $subfamilyByCode,
+                            $subfamilyByName
+                        );
+                    }
                 }
-            }
 
-            $competitionCode = null;
-            if ($family && $subfamily) {
-                $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
-            }
-            $supplierCodeGenerated = null;
-            if ($supplier && $family && $subfamily) {
-                $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
-            }
-            $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
+                $competitionCode = null;
+                if ($family && $subfamily) {
+                    $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
+                }
+                $supplierCodeGenerated = null;
+                if ($supplier && $family && $subfamily) {
+                    $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+                }
+                $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
 
-            $this->products->create([
-                'company_id' => $companyId,
-                'supplier_id' => $supplier ? (int)$supplier['id'] : null,
-                'competitor_company_id' => (int)$defaultCompetitor['id'],
-                'family_id' => $family ? (int)$family['id'] : null,
-                'subfamily_id' => $subfamily ? (int)$subfamily['id'] : null,
-                'competition_code' => $competitionCode,
-                'supplier_code' => $supplierCodeGenerated,
-                'supplier_price' => (float)($data['supplier_price'] ?? 0),
-                'competition_price' => (float)($data['competition_price'] ?? 0),
-                'name' => $name,
-                'sku' => $sku,
-                'description' => trim((string)($data['description'] ?? '')),
-                'price' => (float)($data['price'] ?? 0),
-                'cost' => (float)($data['cost'] ?? 0),
-                'stock' => max(0, (int)($data['stock'] ?? 0)),
-                'stock_min' => max(0, (int)($data['stock_min'] ?? 0)),
-                'status' => $status,
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-            $created++;
+                $this->products->create([
+                    'company_id' => $companyId,
+                    'supplier_id' => $supplier ? (int)$supplier['id'] : null,
+                    'competitor_company_id' => (int)$defaultCompetitor['id'],
+                    'family_id' => $family ? (int)$family['id'] : null,
+                    'subfamily_id' => $subfamily ? (int)$subfamily['id'] : null,
+                    'competition_code' => $competitionCode,
+                    'supplier_code' => $supplierCodeGenerated,
+                    'supplier_price' => (float)($data['supplier_price'] ?? 0),
+                    'competition_price' => (float)($data['competition_price'] ?? 0),
+                    'name' => $name,
+                    'sku' => $sku,
+                    'description' => trim((string)($data['description'] ?? '')),
+                    'price' => (float)($data['price'] ?? 0),
+                    'cost' => (float)($data['cost'] ?? 0),
+                    'stock' => max(0, (int)($data['stock'] ?? 0)),
+                    'stock_min' => max(0, (int)($data['stock_min'] ?? 0)),
+                    'status' => $status,
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+                $created++;
+            }
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            fclose($handle);
+            log_message('error', 'Error en carga masiva de productos: ' . $exception->getMessage());
+            flash('error', 'La carga masiva no pudo completarse por tiempo o volumen. Divide el archivo en bloques más pequeños (ej. 500 filas).');
+            $this->redirect('index.php?route=products/bulk');
         }
 
         fclose($handle);

@@ -24,7 +24,7 @@
             <div class="col-md-8">
                 <label class="form-label">Archivo CSV</label>
                 <input type="file" name="bulk_file" class="form-control" accept=".csv,text/csv" required>
-                <div class="form-text">Usa la plantilla y guarda en formato CSV UTF-8 desde Excel.</div>
+                <div class="form-text">Usa la plantilla y guarda en formato CSV UTF-8 desde Excel. Para evitar timeouts, recomendamos bloques de hasta 500 filas.</div>
             </div>
             <div class="col-md-12 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">Procesar carga masiva</button>
