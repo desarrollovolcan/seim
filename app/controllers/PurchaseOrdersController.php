@@ -75,6 +75,10 @@ class PurchaseOrdersController extends Controller
 
         $terms = trim((string)($_POST['terms'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
+        $quoteReference = trim((string)($_POST['quote_reference'] ?? ''));
+        if ($quoteReference !== '') {
+            $notes .= ($notes !== '' ? "\n\n" : '') . "Referencia cotización: " . $quoteReference;
+        }
         if ($terms !== '') {
             $notes .= ($notes !== '' ? "\n\n" : '') . "Condiciones de la orden:" . "\n" . $terms;
         }
@@ -151,6 +155,34 @@ class PurchaseOrdersController extends Controller
             'order' => $order,
             'items' => $items,
         ]);
+    }
+
+    public function edit(): void
+    {
+        $this->show();
+    }
+
+    public function delete(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $id = (int)($_POST['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            flash('error', 'Orden de compra no encontrada.');
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $deleted = $this->orders->softDelete($id);
+        if ($deleted) {
+            audit($this->db, Auth::user()['id'], 'delete', 'purchase_orders', $id);
+            flash('success', 'Orden de compra eliminada correctamente.');
+        } else {
+            flash('error', 'No se pudo eliminar la orden de compra.');
+        }
+
+        $this->redirect('index.php?route=purchase-orders');
     }
 
 
