@@ -161,6 +161,8 @@ CREATE TABLE products (
     name VARCHAR(150) NOT NULL,
     sku VARCHAR(100) NULL,
     description TEXT NULL,
+    photo_1 VARCHAR(255) NULL,
+    photo_2 VARCHAR(255) NULL,
     price DECIMAL(12,2) NOT NULL DEFAULT 0,
     cost DECIMAL(12,2) NOT NULL DEFAULT 0,
     stock INT NOT NULL DEFAULT 0,
