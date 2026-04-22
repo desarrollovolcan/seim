@@ -7,17 +7,17 @@
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
 
             <div class="col-md-6">
-                <label class="form-label">Seleccionar cotización creada</label>
+                <label class="form-label">Seleccionar cotización</label>
                 <select name="id" class="form-select" required onchange="window.location='index.php?route=quotes/management&quote_id=' + this.value;">
                     <option value="">Selecciona una cotización...</option>
                     <?php foreach (($createdQuotes ?? []) as $quoteOption): ?>
                         <option value="<?php echo (int)$quoteOption['id']; ?>" <?php echo (int)($selectedQuote['id'] ?? 0) === (int)$quoteOption['id'] ? 'selected' : ''; ?>>
-                            <?php echo e($quoteOption['numero'] ?? ('#' . (int)$quoteOption['id'])); ?>
+                            <?php echo e(($quoteOption['numero'] ?? ('#' . (int)$quoteOption['id'])) . ' · ' . ucfirst(str_replace('_', ' ', (string)($quoteOption['estado'] ?? '')))); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
                 <?php if (empty($createdQuotes)): ?>
-                    <div class="form-text text-muted">No hay cotizaciones en estado creada para gestionar.</div>
+                    <div class="form-text text-muted">No hay cotizaciones para gestionar.</div>
                 <?php endif; ?>
             </div>
 
@@ -51,6 +51,11 @@
 
             <div class="col-md-6 text-md-end">
                 <button type="submit" class="btn btn-primary" <?php echo empty($selectedQuote) ? 'disabled' : ''; ?>>Guardar gestión</button>
+                <?php if (!empty($selectedQuote) && empty($selectedQuote['is_closed'])): ?>
+                    <a href="index.php?route=quotes/edit&id=<?php echo (int)$selectedQuote['id']; ?>" class="btn btn-outline-secondary ms-2">Editar formulario completo</a>
+                <?php elseif (!empty($selectedQuote) && !empty($selectedQuote['is_closed'])): ?>
+                    <button type="button" class="btn btn-outline-secondary ms-2" disabled>Edición bloqueada (cerrada)</button>
+                <?php endif; ?>
             </div>
         </form>
     </div>
@@ -91,6 +96,11 @@
                             <td><?php echo e($quote['next_action_note'] ?? '-'); ?></td>
                             <td class="text-end">
                                 <a href="index.php?route=quotes/management&quote_id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-soft-primary">Gestionar</a>
+                                <?php if (empty($quote['is_closed'])): ?>
+                                    <a href="index.php?route=quotes/edit&id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-outline-secondary">Editar formulario</a>
+                                <?php else: ?>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Cerrada</button>
+                                <?php endif; ?>
                                 <a href="index.php?route=quotes/show&id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-light">Revisar</a>
                             </td>
                         </tr>

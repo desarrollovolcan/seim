@@ -43,8 +43,8 @@ class QuotesController extends Controller
         }
         $quotes = $this->quotes->allWithClient($companyId);
         $createdQuotes = $this->db->fetchAll(
-            'SELECT id, numero FROM quotes WHERE company_id = :company_id AND estado = :estado ORDER BY id DESC',
-            ['company_id' => $companyId, 'estado' => 'creada']
+            'SELECT id, numero, estado FROM quotes WHERE company_id = :company_id ORDER BY id DESC',
+            ['company_id' => $companyId]
         );
         $selectedQuoteId = (int)($_GET['quote_id'] ?? 0);
         if ($selectedQuoteId === 0 && !empty($createdQuotes)) {
