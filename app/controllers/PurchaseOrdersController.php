@@ -75,6 +75,10 @@ class PurchaseOrdersController extends Controller
 
         $terms = trim((string)($_POST['terms'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
+        $quoteReference = trim((string)($_POST['quote_reference'] ?? ''));
+        if ($quoteReference !== '') {
+            $notes .= ($notes !== '' ? "\n\n" : '') . "Referencia cotización: " . $quoteReference;
+        }
         if ($terms !== '') {
             $notes .= ($notes !== '' ? "\n\n" : '') . "Condiciones de la orden:" . "\n" . $terms;
         }
