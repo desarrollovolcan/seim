@@ -7,17 +7,17 @@
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
 
             <div class="col-md-6">
-                <label class="form-label">Seleccionar cotización creada</label>
+                <label class="form-label">Seleccionar cotización</label>
                 <select name="id" class="form-select" required onchange="window.location='index.php?route=quotes/management&quote_id=' + this.value;">
                     <option value="">Selecciona una cotización...</option>
                     <?php foreach (($createdQuotes ?? []) as $quoteOption): ?>
                         <option value="<?php echo (int)$quoteOption['id']; ?>" <?php echo (int)($selectedQuote['id'] ?? 0) === (int)$quoteOption['id'] ? 'selected' : ''; ?>>
-                            <?php echo e($quoteOption['numero'] ?? ('#' . (int)$quoteOption['id'])); ?>
+                            <?php echo e(($quoteOption['numero'] ?? ('#' . (int)$quoteOption['id'])) . ' · ' . ucfirst(str_replace('_', ' ', (string)($quoteOption['estado'] ?? '')))); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
                 <?php if (empty($createdQuotes)): ?>
-                    <div class="form-text text-muted">No hay cotizaciones en estado creada para gestionar.</div>
+                    <div class="form-text text-muted">No hay cotizaciones para gestionar.</div>
                 <?php endif; ?>
             </div>
 
