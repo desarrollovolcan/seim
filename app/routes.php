@@ -88,6 +88,7 @@ return [
     'purchase-orders/create' => ['PurchaseOrdersController', 'create'],
     'purchase-orders/store' => ['PurchaseOrdersController', 'store'],
     'purchase-orders/edit' => ['PurchaseOrdersController', 'edit'],
+    'purchase-orders/update' => ['PurchaseOrdersController', 'update'],
     'purchase-orders/show' => ['PurchaseOrdersController', 'show'],
     'purchase-orders/delete' => ['PurchaseOrdersController', 'delete'],
     'purchase-orders/print' => ['PurchaseOrdersController', 'print'],
