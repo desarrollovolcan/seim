@@ -13,9 +13,9 @@
                 <label class="form-label">Empresa competencia (de la sesión activa)</label>
                 <select name="default_competitor_company_id" class="form-select" required>
                     <option value="">Seleccionar</option>
-                    <?php foreach ($competitors as $competitor): ?>
-                        <option value="<?php echo (int)$competitor['id']; ?>">
-                            <?php echo e($competitor['name'] ?? ''); ?><?php echo !empty($competitor['code']) ? ' (' . e($competitor['code']) . ')' : ''; ?>
+                    <?php foreach ($companies as $company): ?>
+                        <option value="<?php echo (int)$company['id']; ?>">
+                            <?php echo e($company['name'] ?? ''); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>

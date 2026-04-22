@@ -4,6 +4,7 @@ class ProductsController extends Controller
 {
     private ProductsModel $products;
     private SuppliersModel $suppliers;
+    private CompaniesModel $companies;
     private ProductFamiliesModel $families;
     private ProductSubfamiliesModel $subfamilies;
     private CompetitorCompaniesModel $competitors;
@@ -13,6 +14,7 @@ class ProductsController extends Controller
         parent::__construct($config, $db);
         $this->products = new ProductsModel($db);
         $this->suppliers = new SuppliersModel($db);
+        $this->companies = new CompaniesModel($db);
         $this->families = new ProductFamiliesModel($db);
         $this->subfamilies = new ProductSubfamiliesModel($db);
         $this->competitors = new CompetitorCompaniesModel($db);
@@ -69,9 +71,9 @@ class ProductsController extends Controller
             'title' => 'Carga masiva de productos',
             'pageTitle' => 'Carga masiva de productos',
             'suppliers' => $this->suppliers->active($companyId),
+            'companies' => $this->companies->active(),
             'families' => $this->families->active($companyId),
             'subfamilies' => $this->subfamilies->active($companyId),
-            'competitors' => $this->competitors->active($companyId),
         ]);
     }
 
@@ -126,14 +128,10 @@ class ProductsController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
-        $competitors = $this->competitors->active($companyId);
-        $defaultCompetitorId = (int)($_POST['default_competitor_company_id'] ?? 0);
-        if ($defaultCompetitorId <= 0 && count($competitors) === 1) {
-            $defaultCompetitorId = (int)($competitors[0]['id'] ?? 0);
-        }
-        $defaultCompetitor = $defaultCompetitorId > 0 ? $this->competitors->findForCompany($defaultCompetitorId, $companyId) : null;
+        $selectedCompanyId = (int)($_POST['default_competitor_company_id'] ?? 0);
+        $defaultCompetitor = $this->resolveDefaultCompetitorCompany($companyId, $selectedCompanyId);
         if (!$defaultCompetitor) {
-            flash('error', 'Selecciona la empresa competencia para la carga masiva.');
+            flash('error', 'Selecciona una empresa para usarla como competencia en la carga masiva.');
             $this->redirect('index.php?route=products/bulk');
         }
 
@@ -326,6 +324,68 @@ class ProductsController extends Controller
         }
 
         $this->redirect('index.php?route=products/bulk');
+    }
+
+    private function resolveDefaultCompetitorCompany(int $companyId, int $selectedCompanyId): ?array
+    {
+        if ($selectedCompanyId <= 0) {
+            return null;
+        }
+
+        $selectedCompany = $this->db->fetch(
+            'SELECT * FROM companies WHERE id = :id LIMIT 1',
+            ['id' => $selectedCompanyId]
+        );
+        if (!$selectedCompany) {
+            return null;
+        }
+
+        $competitor = $this->db->fetch(
+            'SELECT * FROM competitor_companies WHERE company_id = :company_id AND name = :name LIMIT 1',
+            [
+                'company_id' => $companyId,
+                'name' => trim((string)($selectedCompany['name'] ?? '')),
+            ]
+        );
+        if ($competitor) {
+            return $competitor;
+        }
+
+        $name = trim((string)($selectedCompany['name'] ?? ''));
+        if ($name === '') {
+            return null;
+        }
+
+        $normalizedName = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+        if ($normalizedName === false) {
+            $normalizedName = $name;
+        }
+        $codeBase = strtoupper(preg_replace('/[^A-Z0-9]/', '', $normalizedName) ?? '');
+        if ($codeBase === '') {
+            $codeBase = 'EMP';
+        }
+        $code = substr($codeBase, 0, 4);
+        $index = 1;
+        while ($this->db->fetch(
+            'SELECT id FROM competitor_companies WHERE company_id = :company_id AND code = :code LIMIT 1',
+            ['company_id' => $companyId, 'code' => $code]
+        )) {
+            $index++;
+            $code = substr($codeBase, 0, 3) . $index;
+        }
+
+        $competitorId = $this->competitors->create([
+            'company_id' => $companyId,
+            'name' => $name,
+            'code' => $code,
+            'rut' => $selectedCompany['rut'] ?? null,
+            'email' => $selectedCompany['email'] ?? null,
+            'address' => $selectedCompany['address'] ?? null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->competitors->findForCompany((int)$competitorId, $companyId);
     }
 
     public function store(): void
