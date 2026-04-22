@@ -25,9 +25,22 @@
                             <td><?php echo e($quote['client_name']); ?></td>
                             <td><?php echo e($quote['fecha_emision']); ?></td>
                             <td>
-                                <span class="badge bg-<?php echo $quote['estado'] === 'aceptada' ? 'success' : ($quote['estado'] === 'rechazada' ? 'danger' : 'warning'); ?>-subtle text-<?php echo $quote['estado'] === 'aceptada' ? 'success' : ($quote['estado'] === 'rechazada' ? 'danger' : 'warning'); ?>">
-                                    <?php echo e($quote['estado']); ?>
+                                <?php
+                                $estado = (string)($quote['estado'] ?? 'creada');
+                                $estadoClass = match ($estado) {
+                                    'aprobada' => 'success',
+                                    'rechazada' => 'danger',
+                                    'enviada' => 'info',
+                                    'en_curso' => 'primary',
+                                    default => 'warning',
+                                };
+                                ?>
+                                <span class="badge bg-<?php echo $estadoClass; ?>-subtle text-<?php echo $estadoClass; ?>">
+                                    <?php echo e(ucfirst(str_replace('_', ' ', $estado))); ?>
                                 </span>
+                                <?php if (!empty($quote['is_closed'])): ?>
+                                    <span class="badge bg-dark-subtle text-dark ms-1">Cerrada</span>
+                                <?php endif; ?>
                             </td>
                             <td class="text-end"><?php echo e(format_currency((float)($quote['total'] ?? 0))); ?></td>
                             <td class="text-end">
@@ -37,7 +50,11 @@
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
                                         <li><a href="index.php?route=quotes/show&id=<?php echo $quote['id']; ?>" class="dropdown-item">Ver</a></li>
-                                        <li><a href="index.php?route=quotes/edit&id=<?php echo $quote['id']; ?>" class="dropdown-item">Editar</a></li>
+                                        <?php if (empty($quote['is_closed'])): ?>
+                                            <li><a href="index.php?route=quotes/edit&id=<?php echo $quote['id']; ?>" class="dropdown-item">Editar</a></li>
+                                        <?php else: ?>
+                                            <li><span class="dropdown-item text-muted">Edición bloqueada (cerrada)</span></li>
+                                        <?php endif; ?>
                                         <li><a href="index.php?route=quotes/print&id=<?php echo $quote['id']; ?>" class="dropdown-item" target="_blank">Imprimir</a></li>
                                         <li>
                                             <form method="post" action="index.php?route=quotes/send">

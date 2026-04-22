@@ -5,7 +5,7 @@
                 <h4 class="card-title mb-0">Datos del producto</h4>
             </div>
             <div class="card-body">
-                <form method="post" action="index.php?route=products/store">
+                <form method="post" action="index.php?route=products/store" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                     <div class="row g-3">
                         <div class="col-md-8">
@@ -128,6 +128,16 @@
                         <div class="col-12">
                             <label class="form-label">Descripción</label>
                             <textarea name="description" class="form-control" rows="3" placeholder="Notas internas o ficha corta del producto"></textarea>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Foto 1</label>
+                            <input type="file" name="photo_1" class="form-control" accept="image/png,image/jpeg,image/webp">
+                            <div class="form-text">Opcional. Formatos permitidos: JPG, PNG, WEBP (máx. 2MB).</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Foto 2</label>
+                            <input type="file" name="photo_2" class="form-control" accept="image/png,image/jpeg,image/webp">
+                            <div class="form-text">Opcional. Formatos permitidos: JPG, PNG, WEBP (máx. 2MB).</div>
                         </div>
                         <div class="col-12">
                             <button type="submit" class="btn btn-primary">Guardar producto</button>
