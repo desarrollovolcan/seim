@@ -42,10 +42,27 @@ class QuotesController extends Controller
             $this->redirect('index.php?route=auth/switch-company');
         }
         $quotes = $this->quotes->allWithClient($companyId);
+        $createdQuotes = $this->db->fetchAll(
+            'SELECT id, numero FROM quotes WHERE company_id = :company_id AND estado = :estado ORDER BY id DESC',
+            ['company_id' => $companyId, 'estado' => 'creada']
+        );
+        $selectedQuoteId = (int)($_GET['quote_id'] ?? 0);
+        if ($selectedQuoteId === 0 && !empty($createdQuotes)) {
+            $selectedQuoteId = (int)$createdQuotes[0]['id'];
+        }
+        $selectedQuote = null;
+        if ($selectedQuoteId > 0) {
+            $selectedQuote = $this->db->fetch(
+                'SELECT * FROM quotes WHERE id = :id AND company_id = :company_id',
+                ['id' => $selectedQuoteId, 'company_id' => $companyId]
+            );
+        }
         $this->render('quotes/management', [
             'title' => 'Gestión de cotizaciones',
             'pageTitle' => 'Gestión de cotizaciones',
             'quotes' => $quotes,
+            'createdQuotes' => $createdQuotes,
+            'selectedQuote' => $selectedQuote,
             'statusOptions' => self::MANAGEMENT_STATUSES,
         ]);
     }
@@ -545,6 +562,7 @@ class QuotesController extends Controller
         $payload = [
             'estado' => $estado,
             'next_action_date' => $nextActionDate,
+            'next_action_note' => trim($_POST['next_action_note'] ?? ''),
             'is_closed' => $isClosed,
             'closed_at' => $isClosed === 1 ? ($quote['closed_at'] ?? date('Y-m-d H:i:s')) : null,
             'updated_at' => date('Y-m-d H:i:s'),
@@ -559,7 +577,7 @@ class QuotesController extends Controller
         $this->quotes->update($id, $payload);
         audit($this->db, Auth::user()['id'], 'update', 'quotes', $id);
         flash('success', 'Gestión de cotización actualizada.');
-        $this->redirect('index.php?route=quotes/management');
+        $this->redirect('index.php?route=quotes/management&quote_id=' . $id);
     }
 
     public function print(): void

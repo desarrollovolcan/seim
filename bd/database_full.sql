@@ -333,6 +333,7 @@ CREATE TABLE quotes (
     fecha_emision DATE NOT NULL,
     estado VARCHAR(20) NOT NULL DEFAULT 'creada',
     next_action_date DATE NULL,
+    next_action_note TEXT NULL,
     is_closed TINYINT(1) NOT NULL DEFAULT 0,
     closed_at DATETIME NULL,
     subtotal DECIMAL(12,2) NOT NULL,

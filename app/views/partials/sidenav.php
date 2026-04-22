@@ -85,7 +85,7 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                                     <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
                                 <?php endif; ?>
                                 <?php if ($canAccessAny(['quotes_view', 'quotes_edit'])): ?>
-                                    <li class="side-nav-item"><a href="index.php?route=quotes/management" class="side-nav-link"><span class="menu-text">Gestión de cotizaciones</span></a></li>
+                                    <li class="side-nav-item"><a href="index.php?route=quotes/management" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
                                 <?php endif; ?>
                                 <?php if ($hasPermission('services_view')): ?>
                                     <li class="side-nav-item"><a href="index.php?route=services" class="side-nav-link"><span class="menu-text">Servicios</span></a></li>
