@@ -52,7 +52,7 @@
             <div class="col-md-6 text-md-end">
                 <button type="submit" class="btn btn-primary" <?php echo empty($selectedQuote) ? 'disabled' : ''; ?>>Guardar gestión</button>
                 <?php if (!empty($selectedQuote) && empty($selectedQuote['is_closed'])): ?>
-                    <a href="index.php?route=quotes/edit&id=<?php echo (int)$selectedQuote['id']; ?>" class="btn btn-outline-secondary ms-2">Editar formulario completo</a>
+                    <a href="index.php?route=quotes/edit&id=<?php echo (int)$selectedQuote['id']; ?>" class="btn btn-outline-secondary ms-2">Editar cotización</a>
                 <?php elseif (!empty($selectedQuote) && !empty($selectedQuote['is_closed'])): ?>
                     <button type="button" class="btn btn-outline-secondary ms-2" disabled>Edición bloqueada (cerrada)</button>
                 <?php endif; ?>
@@ -95,13 +95,20 @@
                             <td><?php echo e($quote['next_action_date'] ?? '-'); ?></td>
                             <td><?php echo e($quote['next_action_note'] ?? '-'); ?></td>
                             <td class="text-end">
-                                <a href="index.php?route=quotes/management&quote_id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-soft-primary">Gestionar</a>
-                                <?php if (empty($quote['is_closed'])): ?>
-                                    <a href="index.php?route=quotes/edit&id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-outline-secondary">Editar formulario</a>
-                                <?php else: ?>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled>Cerrada</button>
-                                <?php endif; ?>
-                                <a href="index.php?route=quotes/show&id=<?php echo (int)$quote['id']; ?>" class="btn btn-sm btn-light">Revisar</a>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-soft-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Acciones
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end">
+                                        <li><a class="dropdown-item" href="index.php?route=quotes/management&quote_id=<?php echo (int)$quote['id']; ?>">Gestionar</a></li>
+                                        <?php if (empty($quote['is_closed'])): ?>
+                                            <li><a class="dropdown-item" href="index.php?route=quotes/edit&id=<?php echo (int)$quote['id']; ?>">Editar cotización</a></li>
+                                        <?php else: ?>
+                                            <li><span class="dropdown-item text-muted">Edición bloqueada (cerrada)</span></li>
+                                        <?php endif; ?>
+                                        <li><a class="dropdown-item" href="index.php?route=quotes/show&id=<?php echo (int)$quote['id']; ?>">Revisar</a></li>
+                                    </ul>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>
