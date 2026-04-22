@@ -38,7 +38,6 @@ return [
     'products/bulk' => ['ProductsController', 'bulk'],
     'products/bulk-template' => ['ProductsController', 'bulkTemplate'],
     'products/bulk-store' => ['ProductsController', 'bulkStore'],
-    'products/export' => ['ProductsController', 'export'],
     'products/edit' => ['ProductsController', 'edit'],
     'products/update' => ['ProductsController', 'update'],
     'products/delete' => ['ProductsController', 'delete'],
