@@ -6,6 +6,7 @@ class QuotesController extends Controller
     private ClientsModel $clients;
     private SystemServicesModel $services;
     private ProducedProductsModel $producedProducts;
+    private const MANAGEMENT_STATUSES = ['creada', 'enviada', 'en_curso', 'aprobada', 'rechazada'];
 
     public function __construct(array $config, Database $db)
     {
@@ -29,6 +30,40 @@ class QuotesController extends Controller
             'title' => 'Cotizaciones',
             'pageTitle' => 'Cotizaciones',
             'quotes' => $quotes,
+        ]);
+    }
+
+    public function management(): void
+    {
+        $this->requireLogin();
+        $companyId = current_company_id();
+        if (!$companyId) {
+            flash('error', 'Selecciona una empresa.');
+            $this->redirect('index.php?route=auth/switch-company');
+        }
+        $quotes = $this->quotes->allWithClient($companyId);
+        $createdQuotes = $this->db->fetchAll(
+            'SELECT id, numero, estado FROM quotes WHERE company_id = :company_id ORDER BY id DESC',
+            ['company_id' => $companyId]
+        );
+        $selectedQuoteId = (int)($_GET['quote_id'] ?? 0);
+        if ($selectedQuoteId === 0 && !empty($createdQuotes)) {
+            $selectedQuoteId = (int)$createdQuotes[0]['id'];
+        }
+        $selectedQuote = null;
+        if ($selectedQuoteId > 0) {
+            $selectedQuote = $this->db->fetch(
+                'SELECT * FROM quotes WHERE id = :id AND company_id = :company_id',
+                ['id' => $selectedQuoteId, 'company_id' => $companyId]
+            );
+        }
+        $this->render('quotes/management', [
+            'title' => 'Gestión de cotizaciones',
+            'pageTitle' => 'Gestión de cotizaciones',
+            'quotes' => $quotes,
+            'createdQuotes' => $createdQuotes,
+            'selectedQuote' => $selectedQuote,
+            'statusOptions' => self::MANAGEMENT_STATUSES,
         ]);
     }
 
@@ -166,7 +201,7 @@ class QuotesController extends Controller
             'project_id' => $projectId !== '' ? $projectId : null,
             'numero' => $numero,
             'fecha_emision' => $issueDate !== '' ? $issueDate : date('Y-m-d'),
-            'estado' => $_POST['estado'] ?? 'pendiente',
+            'estado' => $this->normalizeStatus($_POST['estado'] ?? 'creada'),
             'subtotal' => $subtotal,
             'discount_total' => $discountTotal,
             'discount_total_type' => $discountTotalType,
@@ -250,6 +285,10 @@ class QuotesController extends Controller
         if (!$quote) {
             $this->redirect('index.php?route=quotes');
         }
+        if ((int)($quote['is_closed'] ?? 0) === 1) {
+            flash('error', 'La cotización está cerrada y no se puede editar.');
+            $this->redirect('index.php?route=quotes/show&id=' . $id);
+        }
         $items = (new QuoteItemsModel($this->db))->byQuote($id);
         $clients = $this->clients->active($companyId);
         $services = $this->services->allWithType($companyId);
@@ -295,10 +334,15 @@ class QuotesController extends Controller
         if (!$quote) {
             $this->redirect('index.php?route=quotes');
         }
+        if ((int)($quote['is_closed'] ?? 0) === 1) {
+            flash('error', 'La cotización está cerrada y no se puede editar.');
+            $this->redirect('index.php?route=quotes/show&id=' . $id);
+        }
         $serviceId = trim($_POST['system_service_id'] ?? '');
         $projectId = trim($_POST['project_id'] ?? '');
         $issueDate = trim($_POST['fecha_emision'] ?? '');
         $discountTotal = (float)($_POST['discount_total'] ?? 0);
+        $discountTotalType = $_POST['discount_total_type'] ?? 'amount';
 
         if ($serviceId !== '') {
             $service = $this->db->fetch(
@@ -375,7 +419,7 @@ class QuotesController extends Controller
             'project_id' => $projectId !== '' ? $projectId : null,
             'numero' => trim($_POST['numero'] ?? ''),
             'fecha_emision' => $issueDate !== '' ? $issueDate : $quote['fecha_emision'],
-            'estado' => $_POST['estado'] ?? 'pendiente',
+            'estado' => $this->normalizeStatus($_POST['estado'] ?? ($quote['estado'] ?? 'creada')),
             'subtotal' => $subtotal,
             'discount_total' => $discountTotal,
             'discount_total_type' => $discountTotalType,
@@ -480,8 +524,60 @@ class QuotesController extends Controller
             'message' => $sent ? 'La cotización fue enviada correctamente.' : 'No se pudo enviar la cotización.',
             'type' => $sent ? 'success' : 'danger',
         ]);
+        if ($sent) {
+            $this->quotes->update($id, [
+                'estado' => 'enviada',
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
         flash($sent ? 'success' : 'error', $sent ? 'Cotización enviada correctamente.' : 'No se pudo enviar la cotización.');
         $this->redirect('index.php?route=quotes');
+    }
+
+    public function updateManagement(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = current_company_id();
+        if (!$companyId) {
+            flash('error', 'Selecciona una empresa.');
+            $this->redirect('index.php?route=auth/switch-company');
+        }
+
+        $id = (int)($_POST['id'] ?? 0);
+        $quote = $this->db->fetch(
+            'SELECT * FROM quotes WHERE id = :id AND company_id = :company_id',
+            ['id' => $id, 'company_id' => $companyId]
+        );
+        if (!$quote) {
+            flash('error', 'Cotización no encontrada.');
+            $this->redirect('index.php?route=quotes/management');
+        }
+
+        $isClosed = !empty($_POST['is_closed']) ? 1 : 0;
+        $nextActionDate = trim($_POST['next_action_date'] ?? '');
+        $nextActionDate = $nextActionDate !== '' ? $nextActionDate : null;
+        $estado = $this->normalizeStatus($_POST['estado'] ?? ($quote['estado'] ?? 'creada'));
+
+        $payload = [
+            'estado' => $estado,
+            'next_action_date' => $nextActionDate,
+            'next_action_note' => trim($_POST['next_action_note'] ?? ''),
+            'is_closed' => $isClosed,
+            'closed_at' => $isClosed === 1 ? ($quote['closed_at'] ?? date('Y-m-d H:i:s')) : null,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+        if ($isClosed === 1 && empty($quote['closed_at'])) {
+            $payload['closed_at'] = date('Y-m-d H:i:s');
+        }
+        if ($isClosed === 0) {
+            $payload['closed_at'] = null;
+        }
+
+        $this->quotes->update($id, $payload);
+        audit($this->db, Auth::user()['id'], 'update', 'quotes', $id);
+        flash('success', 'Gestión de cotización actualizada.');
+        $this->redirect('index.php?route=quotes/management&quote_id=' . $id);
     }
 
     public function print(): void
@@ -515,5 +611,18 @@ class QuotesController extends Controller
             return;
         }
         echo 'Vista no encontrada.';
+    }
+
+    private function normalizeStatus(string $status): string
+    {
+        $normalized = strtolower(trim($status));
+        if ($normalized === 'aceptada') {
+            $normalized = 'aprobada';
+        } elseif ($normalized === 'pendiente') {
+            $normalized = 'creada';
+        } elseif ($normalized === 'en curzo' || $normalized === 'en curso') {
+            $normalized = 'en_curso';
+        }
+        return in_array($normalized, self::MANAGEMENT_STATUSES, true) ? $normalized : 'creada';
     }
 }

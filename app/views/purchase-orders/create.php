@@ -57,6 +57,10 @@ $selectedReference = (string)($order['reference'] ?? '');
                             <label class="form-label">Referencia / N° Cotización</label>
                             <input type="text" name="quote_reference" class="form-control" placeholder="Ej: COT-2026-001" value="<?php echo e($quoteReference); ?>">
                         </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Referencia / N° Cotización</label>
+                            <input type="text" name="quote_reference" class="form-control" placeholder="Ej: COT-2026-001">
+                        </div>
                         <div class="col-12">
                             <label class="form-label">Productos</label>
                             <div class="table-responsive">
