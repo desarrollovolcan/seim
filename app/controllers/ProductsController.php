@@ -259,36 +259,51 @@ class ProductsController extends Controller
             $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string)$header[0]) ?? (string)$header[0];
         }
         $header = array_map(static fn($value): string => strtolower(trim((string)$value)), $header);
-        $requiredColumns = [
-            'name',
-            'supplier_code',
-            'competitor_code',
-            'family_code',
-            'subfamily_code',
+        $requiredColumnGroups = [
+            'name' => ['name', 'nombre'],
+            'supplier' => ['supplier_code', 'supplier', 'supplier_name', 'proveedor_codigo', 'proveedor'],
+            'competitor' => ['competitor_code', 'competitor_company_code', 'competitor', 'competitor_name', 'empresa_competencia_codigo', 'empresa_competencia'],
+            'family' => ['family_code', 'family', 'family_name', 'familia_codigo', 'familia'],
+            'subfamily' => ['subfamily_code', 'subfamily', 'subfamily_name', 'subfamilia_codigo', 'subfamilia'],
         ];
-        foreach ($requiredColumns as $requiredColumn) {
-            if (!in_array($requiredColumn, $header, true)) {
+        foreach ($requiredColumnGroups as $group => $aliases) {
+            $hasOne = false;
+            foreach ($aliases as $alias) {
+                if (in_array($alias, $header, true)) {
+                    $hasOne = true;
+                    break;
+                }
+            }
+            if (!$hasOne) {
                 fclose($handle);
-                flash('error', 'Falta la columna obligatoria: ' . $requiredColumn . '.');
+                flash('error', 'Falta una columna obligatoria para ' . $group . '. Aceptadas: ' . implode(', ', $aliases) . '.');
                 $this->redirect('index.php?route=products/bulk');
             }
         }
 
         $supplierByCode = [];
+        $supplierByName = [];
         foreach ($this->suppliers->active($companyId) as $supplier) {
             $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
+            $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
         }
         $competitorByCode = [];
+        $competitorByName = [];
         foreach ($this->competitors->active($companyId) as $competitor) {
             $competitorByCode[strtoupper(trim((string)($competitor['code'] ?? '')))] = $competitor;
+            $competitorByName[strtoupper(trim((string)($competitor['name'] ?? '')))] = $competitor;
         }
         $familyByCode = [];
+        $familyByName = [];
         foreach ($this->families->active($companyId) as $family) {
             $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
+            $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
         }
         $subfamilyByCode = [];
+        $subfamilyByName = [];
         foreach ($this->subfamilies->active($companyId) as $subfamily) {
             $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
+            $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
         }
 
         $rowNumber = 1;
@@ -304,35 +319,51 @@ class ProductsController extends Controller
                 $data[$column] = trim((string)($row[$index] ?? ''));
             }
 
-            $name = trim((string)($data['name'] ?? ''));
+            $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
             if ($name === '') {
                 $errors[] = "Fila {$rowNumber}: el nombre es obligatorio.";
                 continue;
             }
 
-            $supplierCode = strtoupper((string)($data['supplier_code'] ?? ''));
-            $competitorCode = strtoupper((string)($data['competitor_code'] ?? ''));
-            $familyCode = strtoupper((string)($data['family_code'] ?? ''));
-            $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? ''));
+            $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
+            $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
+            $competitorCode = strtoupper((string)($data['competitor_code'] ?? $data['competitor_company_code'] ?? $data['empresa_competencia_codigo'] ?? ''));
+            $competitorName = strtoupper((string)($data['competitor'] ?? $data['competitor_name'] ?? $data['empresa_competencia'] ?? ''));
+            $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
+            $familyName = strtoupper((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+            $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
+            $subfamilyName = strtoupper((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
 
             $supplier = $supplierByCode[$supplierCode] ?? null;
+            if (!$supplier && $supplierName !== '') {
+                $supplier = $supplierByName[$supplierName] ?? null;
+            }
             if (!$supplier) {
-                $errors[] = "Fila {$rowNumber}: proveedor no encontrado para código {$supplierCode}.";
+                $errors[] = "Fila {$rowNumber}: proveedor no encontrado (código: {$supplierCode}, nombre: {$supplierName}).";
                 continue;
             }
             $competitor = $competitorByCode[$competitorCode] ?? null;
+            if (!$competitor && $competitorName !== '') {
+                $competitor = $competitorByName[$competitorName] ?? null;
+            }
             if (!$competitor) {
-                $errors[] = "Fila {$rowNumber}: empresa competencia no encontrada para código {$competitorCode}.";
+                $errors[] = "Fila {$rowNumber}: empresa competencia no encontrada (código: {$competitorCode}, nombre: {$competitorName}).";
                 continue;
             }
             $family = $familyByCode[$familyCode] ?? null;
+            if (!$family && $familyName !== '') {
+                $family = $familyByName[$familyName] ?? null;
+            }
             if (!$family) {
-                $errors[] = "Fila {$rowNumber}: familia no encontrada para código {$familyCode}.";
+                $errors[] = "Fila {$rowNumber}: familia no encontrada (código: {$familyCode}, nombre: {$familyName}).";
                 continue;
             }
             $subfamily = $subfamilyByCode[$subfamilyCode] ?? null;
+            if (!$subfamily && $subfamilyName !== '') {
+                $subfamily = $subfamilyByName[$subfamilyName] ?? null;
+            }
             if (!$subfamily) {
-                $errors[] = "Fila {$rowNumber}: subfamilia no encontrada para código {$subfamilyCode}.";
+                $errors[] = "Fila {$rowNumber}: subfamilia no encontrada (código: {$subfamilyCode}, nombre: {$subfamilyName}).";
                 continue;
             }
             if ((int)($subfamily['family_id'] ?? 0) !== (int)$family['id']) {

@@ -44,5 +44,9 @@
         <div class="alert alert-info mt-3 mb-0">
             Los códigos <strong>competition_code</strong> y <strong>supplier_code</strong> se generan automáticamente con el mismo criterio de la creación manual.
         </div>
+        <div class="alert alert-secondary mt-3 mb-0">
+            También puedes cargar <strong>proveedor/competencia/familia/subfamilia por nombre</strong> usando columnas alternativas como
+            <code>supplier_name</code>, <code>competitor_name</code>, <code>family_name</code> y <code>subfamily_name</code>.
+        </div>
     </div>
 </div>
