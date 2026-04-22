@@ -159,29 +159,143 @@ class ProductsController extends Controller
         }
         $header = array_map(static fn($value): string => strtolower(trim((string)$value)), $header);
 
-        $fileObject = new SplFileObject($destination, 'r');
-        $fileObject->seek(PHP_INT_MAX);
-        $totalRows = max(0, (int)$fileObject->key());
-
-        $jobId = 'job_' . bin2hex(random_bytes(8));
-        if (!isset($_SESSION['products_bulk_jobs']) || !is_array($_SESSION['products_bulk_jobs'])) {
-            $_SESSION['products_bulk_jobs'] = [];
+        if (function_exists('set_time_limit')) {
+            @set_time_limit(0);
         }
-        $_SESSION['products_bulk_jobs'][$jobId] = [
-            'company_id' => $companyId,
-            'competitor_company_id' => (int)$defaultCompetitor['id'],
-            'path' => $destination,
-            'delimiter' => $detectedDelimiter,
-            'header' => $header,
-            'next_line' => 1,
-            'total_rows' => $totalRows,
-            'processed_rows' => 0,
-            'created_rows' => 0,
-            'errors' => [],
-            'done' => false,
-        ];
+        @ini_set('max_execution_time', '0');
+        @ini_set('memory_limit', '512M');
 
-        $this->redirect('index.php?route=products/bulk&job_id=' . urlencode($jobId));
+        $supplierByCode = [];
+        $supplierByName = [];
+        foreach ($this->suppliers->active($companyId) as $supplier) {
+            $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
+            $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
+        }
+        $familyByCode = [];
+        $familyByName = [];
+        foreach ($this->families->active($companyId) as $family) {
+            $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
+            $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
+        }
+        $subfamilyByCode = [];
+        $subfamilyByName = [];
+        foreach ($this->subfamilies->active($companyId) as $subfamily) {
+            $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
+            $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
+        }
+
+        $handle = fopen($destination, 'r');
+        if ($handle === false) {
+            flash('error', 'No fue posible abrir el archivo para importar.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+        // descartar header
+        fgetcsv($handle, 0, $detectedDelimiter);
+
+        $created = 0;
+        $errors = [];
+        $pdo = $this->db->pdo();
+        $pdo->beginTransaction();
+        try {
+            $rowNumber = 1;
+            while (($row = fgetcsv($handle, 0, $detectedDelimiter)) !== false) {
+                $rowNumber++;
+                if (count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
+                    continue;
+                }
+
+                $data = [];
+                foreach ($header as $index => $column) {
+                    $data[$column] = trim((string)($row[$index] ?? ''));
+                }
+                $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
+                $sku = trim((string)($data['sku'] ?? $data['codigo_sku'] ?? $data['codigo'] ?? ''));
+                if ($name === '' || $sku === '') {
+                    $errors[] = "Fila {$rowNumber}: nombre o SKU faltante.";
+                    continue;
+                }
+
+                $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
+                $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
+                $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
+                $familyName = trim((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+                $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
+                $subfamilyName = trim((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
+
+                $supplier = null;
+                if ($supplierCode !== '' || $supplierName !== '') {
+                    $supplier = $supplierByCode[$supplierCode] ?? $supplierByName[$supplierCode] ?? $supplierByName[$supplierName] ?? null;
+                }
+
+                if ($familyName === '' && ($familyCode !== '' && (strlen($familyCode) > 3 || str_contains($familyCode, ' ')))) {
+                    $familyName = $familyCode;
+                    $familyCode = '';
+                }
+                if ($subfamilyName === '' && ($subfamilyCode !== '' && (strlen($subfamilyCode) > 3 || str_contains($subfamilyCode, ' ')))) {
+                    $subfamilyName = $subfamilyCode;
+                    $subfamilyCode = '';
+                }
+
+                $family = null;
+                if ($familyCode !== '' || strtoupper($familyName) !== '') {
+                    $family = $this->resolveOrCreateFamily($companyId, $familyCode, $familyName, $familyByCode, $familyByName);
+                }
+                $subfamily = null;
+                if ($subfamilyCode !== '' || strtoupper($subfamilyName) !== '') {
+                    if (!$family) {
+                        $familyFallbackName = $familyName !== '' ? $familyName : ('Familia ' . ($subfamilyName !== '' ? $subfamilyName : $subfamilyCode));
+                        $family = $this->resolveOrCreateFamily($companyId, $familyCode, $familyFallbackName, $familyByCode, $familyByName);
+                    }
+                    if ($family) {
+                        $subfamily = $this->resolveOrCreateSubfamily($companyId, (int)$family['id'], $subfamilyCode, $subfamilyName, $subfamilyByCode, $subfamilyByName);
+                    }
+                }
+
+                $this->products->create([
+                    'company_id' => $companyId,
+                    'supplier_id' => $supplier ? (int)$supplier['id'] : null,
+                    'competitor_company_id' => (int)$defaultCompetitor['id'],
+                    'family_id' => $family ? (int)$family['id'] : null,
+                    'subfamily_id' => $subfamily ? (int)$subfamily['id'] : null,
+                    'competition_code' => ($family && $subfamily) ? $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily) : null,
+                    'supplier_code' => ($supplier && $family && $subfamily) ? $this->buildSupplierCode($companyId, $supplier, $family, $subfamily) : null,
+                    'supplier_price' => (float)($data['supplier_price'] ?? 0),
+                    'competition_price' => (float)($data['competition_price'] ?? 0),
+                    'name' => $name,
+                    'sku' => $sku,
+                    'description' => trim((string)($data['description'] ?? '')),
+                    'price' => (float)($data['price'] ?? 0),
+                    'cost' => (float)($data['cost'] ?? 0),
+                    'stock' => max(0, (int)($data['stock'] ?? 0)),
+                    'stock_min' => max(0, (int)($data['stock_min'] ?? 0)),
+                    'status' => strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo',
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+                $created++;
+            }
+            $pdo->commit();
+        } catch (Throwable $exception) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            fclose($handle);
+            @unlink($destination);
+            log_message('error', 'Error carga masiva directa: ' . $exception->getMessage());
+            flash('error', 'No se pudo completar la carga masiva: ' . $exception->getMessage());
+            $this->redirect('index.php?route=products/bulk');
+        }
+        fclose($handle);
+        @unlink($destination);
+
+        if ($created > 0) {
+            audit($this->db, Auth::user()['id'], 'create', 'products');
+            flash('success', "Carga masiva completada: {$created} producto(s) creados.");
+        }
+        if (!empty($errors)) {
+            flash('error', 'Filas con observaciones: ' . implode(' | ', array_slice($errors, 0, 8)) . (count($errors) > 8 ? ' | ...' : ''));
+        }
+        $this->redirect('index.php?route=products/bulk');
     }
 
     public function bulkProcess(): void
