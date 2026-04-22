@@ -21,8 +21,10 @@ $defaultIssueDate = date('Y-m-d');
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Estado</label>
                     <select name="estado" class="form-select">
-                        <option value="pendiente">Pendiente</option>
-                        <option value="aceptada">Aceptada</option>
+                        <option value="creada">Creada</option>
+                        <option value="enviada">Enviada</option>
+                        <option value="en_curso">En curso</option>
+                        <option value="aprobada">Aprobada</option>
                         <option value="rechazada">Rechazada</option>
                     </select>
                 </div>
