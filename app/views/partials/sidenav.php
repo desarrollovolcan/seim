@@ -131,6 +131,13 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                                         <span class="menu-text">Listado productos</span>
                                     </a>
                                 </li>
+                                <?php if ($hasPermission('products_edit')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=products/bulk" class="side-nav-link">
+                                            <span class="menu-text">Carga masiva</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
                             <?php endif; ?>
                             <?php if ($hasPermission('product_families_view')): ?>
                                 <li class="side-nav-item">
