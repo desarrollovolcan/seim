@@ -66,7 +66,7 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit', 'sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit', 'quotes_view', 'quotes_edit', 'services_view', 'services_edit', 'projects_view', 'projects_edit', 'invoices_view', 'invoices_edit', 'sales_dispatches_view', 'sales_dispatches_edit'])): ?>
                 <li class="side-nav-title">Flujo Comercial</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarSales" aria-expanded="false" aria-controls="sidebarSales" class="side-nav-link">
@@ -79,19 +79,29 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </a>
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
-                            <?php if ($hasPermission('sales_view')): ?>
+                            <?php if ($canAccessAny(['clients_view', 'quotes_view', 'quotes_edit', 'services_view', 'projects_view'])): ?>
                                 <li class="menu-group-label">1. Prospección y cartera</li>
                                 <?php if ($hasPermission('clients_view')): ?>
                                     <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
                                 <?php endif; ?>
-                                <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=services" class="side-nav-link"><span class="menu-text">Servicios</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=projects" class="side-nav-link"><span class="menu-text">Proyectos</span></a></li>
+                                <?php if ($canAccessAny(['quotes_view', 'quotes_edit'])): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=quotes/management" class="side-nav-link"><span class="menu-text">Gestión de cotizaciones</span></a></li>
+                                <?php endif; ?>
+                                <?php if ($hasPermission('services_view')): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=services" class="side-nav-link"><span class="menu-text">Servicios</span></a></li>
+                                <?php endif; ?>
+                                <?php if ($hasPermission('projects_view')): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=projects" class="side-nav-link"><span class="menu-text">Proyectos</span></a></li>
+                                <?php endif; ?>
+                            <?php endif; ?>
 
+                            <?php if ($hasPermission('sales_view')): ?>
                                 <li class="menu-group-label">2. Cierre comercial</li>
                                 <li class="side-nav-item"><a href="index.php?route=sales/create" class="side-nav-link"><span class="menu-text">Registrar venta</span></a></li>
                                 <li class="side-nav-item"><a href="index.php?route=sales" class="side-nav-link"><span class="menu-text">Listado ventas</span></a></li>
-                                <li class="side-nav-item"><a href="index.php?route=invoices" class="side-nav-link"><span class="menu-text">Facturación</span></a></li>
+                                <?php if ($hasPermission('invoices_view')): ?>
+                                    <li class="side-nav-item"><a href="index.php?route=invoices" class="side-nav-link"><span class="menu-text">Facturación</span></a></li>
+                                <?php endif; ?>
                                 <li class="side-nav-item"><a href="index.php?route=pos" class="side-nav-link"><span class="menu-text">Punto de venta</span></a></li>
 
                                 <li class="menu-group-label">3. Seguimiento</li>
