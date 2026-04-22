@@ -1151,6 +1151,16 @@ class ProductsController extends Controller
         $subfamily = $this->subfamilies->findForCompany($subfamilyId, $companyId);
         $competitionCode = $this->buildCompetitionCode($companyId, $competitorCompany, $family, $subfamily);
         $supplierCode = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+        $photo1Result = upload_product_image($_FILES['photo_1'] ?? null, 'product-photo-1');
+        if (!empty($photo1Result['error'])) {
+            flash('error', (string)$photo1Result['error']);
+            $this->redirect('index.php?route=products/create');
+        }
+        $photo2Result = upload_product_image($_FILES['photo_2'] ?? null, 'product-photo-2');
+        if (!empty($photo2Result['error'])) {
+            flash('error', (string)$photo2Result['error']);
+            $this->redirect('index.php?route=products/create');
+        }
 
         $this->products->create([
             'company_id' => $companyId,
@@ -1169,6 +1179,8 @@ class ProductsController extends Controller
             'cost' => (float)($_POST['cost'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
+            'photo_1' => $photo1Result['path'],
+            'photo_2' => $photo2Result['path'],
             'status' => $_POST['status'] ?? 'activo',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -1284,6 +1296,16 @@ class ProductsController extends Controller
             $product['supplier_code'] ?? null,
             (int)$product['id']
         );
+        $photo1Result = upload_product_image($_FILES['photo_1'] ?? null, 'product-photo-1');
+        if (!empty($photo1Result['error'])) {
+            flash('error', (string)$photo1Result['error']);
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
+        $photo2Result = upload_product_image($_FILES['photo_2'] ?? null, 'product-photo-2');
+        if (!empty($photo2Result['error'])) {
+            flash('error', (string)$photo2Result['error']);
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
 
         $this->products->update($id, [
             'supplier_id' => $supplierId,
@@ -1301,6 +1323,8 @@ class ProductsController extends Controller
             'cost' => (float)($_POST['cost'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
+            'photo_1' => $photo1Result['path'] ?: ($product['photo_1'] ?? null),
+            'photo_2' => $photo2Result['path'] ?: ($product['photo_2'] ?? null),
             'status' => $_POST['status'] ?? 'activo',
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
