@@ -60,6 +60,274 @@ class ProductsController extends Controller
         ]);
     }
 
+    public function bulk(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+
+        $this->render('products/bulk', [
+            'title' => 'Carga masiva de productos',
+            'pageTitle' => 'Carga masiva de productos',
+            'suppliers' => $this->suppliers->active($companyId),
+            'families' => $this->families->active($companyId),
+            'subfamilies' => $this->subfamilies->active($companyId),
+            'competitors' => $this->competitors->active($companyId),
+        ]);
+    }
+
+    public function bulkTemplate(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $supplier = $this->suppliers->active($companyId)[0] ?? null;
+        $family = $this->families->active($companyId)[0] ?? null;
+        $subfamily = $this->subfamilies->active($companyId)[0] ?? null;
+
+        $output = fopen('php://output', 'w');
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename="plantilla_carga_productos.csv"');
+        echo "\xEF\xBB\xBF";
+        fputcsv($output, [
+            'name',
+            'sku',
+            'description',
+            'supplier_code',
+            'family_code',
+            'subfamily_code',
+            'supplier_price',
+            'competition_price',
+            'price',
+            'cost',
+            'stock',
+            'stock_min',
+            'status',
+        ]);
+        fputcsv($output, [
+            'Producto de ejemplo',
+            'SKU-001',
+            'Descripción opcional',
+            strtoupper(trim((string)($supplier['code'] ?? 'PRO'))),
+            strtoupper(trim((string)($family['code'] ?? 'FAM'))),
+            strtoupper(trim((string)($subfamily['code'] ?? 'SUB'))),
+            '1000',
+            '1200',
+            '1500',
+            '800',
+            '10',
+            '2',
+            'activo',
+        ]);
+        fclose($output);
+        exit;
+    }
+
+    public function bulkStore(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $competitors = $this->competitors->active($companyId);
+        $defaultCompetitorId = (int)($_POST['default_competitor_company_id'] ?? 0);
+        if ($defaultCompetitorId <= 0 && count($competitors) === 1) {
+            $defaultCompetitorId = (int)($competitors[0]['id'] ?? 0);
+        }
+        $defaultCompetitor = $defaultCompetitorId > 0 ? $this->competitors->findForCompany($defaultCompetitorId, $companyId) : null;
+        if (!$defaultCompetitor) {
+            flash('error', 'Selecciona la empresa competencia para la carga masiva.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $file = $_FILES['bulk_file'] ?? null;
+        if (!$file || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            flash('error', 'Debes seleccionar un archivo CSV válido.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $tmpPath = (string)($file['tmp_name'] ?? '');
+        if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+            flash('error', 'No fue posible leer el archivo subido.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $handle = fopen($tmpPath, 'r');
+        if ($handle === false) {
+            flash('error', 'No fue posible abrir el archivo.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $firstLine = fgets($handle);
+        if ($firstLine === false) {
+            fclose($handle);
+            flash('error', 'El archivo está vacío.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
+        $delimiterCandidates = [',', ';', "\t"];
+        $detectedDelimiter = ',';
+        $bestCount = -1;
+        foreach ($delimiterCandidates as $candidate) {
+            $count = substr_count($firstLine, $candidate);
+            if ($count > $bestCount) {
+                $bestCount = $count;
+                $detectedDelimiter = $candidate;
+            }
+        }
+
+        rewind($handle);
+        $header = fgetcsv($handle, 0, $detectedDelimiter);
+        if (!$header) {
+            fclose($handle);
+            flash('error', 'El archivo está vacío.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+        if (isset($header[0])) {
+            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string)$header[0]) ?? (string)$header[0];
+        }
+        $header = array_map(static fn($value): string => strtolower(trim((string)$value)), $header);
+        $requiredColumnGroups = [
+            'name' => ['name', 'nombre'],
+            'supplier' => ['supplier_code', 'supplier', 'supplier_name', 'proveedor_codigo', 'proveedor'],
+            'family' => ['family_code', 'family', 'family_name', 'familia_codigo', 'familia'],
+            'subfamily' => ['subfamily_code', 'subfamily', 'subfamily_name', 'subfamilia_codigo', 'subfamilia'],
+        ];
+        foreach ($requiredColumnGroups as $group => $aliases) {
+            $hasOne = false;
+            foreach ($aliases as $alias) {
+                if (in_array($alias, $header, true)) {
+                    $hasOne = true;
+                    break;
+                }
+            }
+            if (!$hasOne) {
+                fclose($handle);
+                flash('error', 'Falta una columna obligatoria para ' . $group . '. Aceptadas: ' . implode(', ', $aliases) . '.');
+                $this->redirect('index.php?route=products/bulk');
+            }
+        }
+
+        $supplierByCode = [];
+        $supplierByName = [];
+        foreach ($this->suppliers->active($companyId) as $supplier) {
+            $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
+            $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
+        }
+        $familyByCode = [];
+        $familyByName = [];
+        foreach ($this->families->active($companyId) as $family) {
+            $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
+            $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
+        }
+        $subfamilyByCode = [];
+        $subfamilyByName = [];
+        foreach ($this->subfamilies->active($companyId) as $subfamily) {
+            $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
+            $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
+        }
+
+        $rowNumber = 1;
+        $created = 0;
+        $errors = [];
+        while (($row = fgetcsv($handle, 0, $detectedDelimiter)) !== false) {
+            $rowNumber++;
+            if (count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
+                continue;
+            }
+            $data = [];
+            foreach ($header as $index => $column) {
+                $data[$column] = trim((string)($row[$index] ?? ''));
+            }
+
+            $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
+            if ($name === '') {
+                $errors[] = "Fila {$rowNumber}: el nombre es obligatorio.";
+                continue;
+            }
+
+            $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
+            $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
+            $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
+            $familyName = strtoupper((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+            $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
+            $subfamilyName = strtoupper((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
+
+            $supplier = $supplierByCode[$supplierCode] ?? null;
+            if (!$supplier && $supplierName !== '') {
+                $supplier = $supplierByName[$supplierName] ?? null;
+            }
+            if (!$supplier) {
+                $errors[] = "Fila {$rowNumber}: proveedor no encontrado (código: {$supplierCode}, nombre: {$supplierName}).";
+                continue;
+            }
+            $family = $familyByCode[$familyCode] ?? null;
+            if (!$family && $familyName !== '') {
+                $family = $familyByName[$familyName] ?? null;
+            }
+            if (!$family) {
+                $errors[] = "Fila {$rowNumber}: familia no encontrada (código: {$familyCode}, nombre: {$familyName}).";
+                continue;
+            }
+            $subfamily = $subfamilyByCode[$subfamilyCode] ?? null;
+            if (!$subfamily && $subfamilyName !== '') {
+                $subfamily = $subfamilyByName[$subfamilyName] ?? null;
+            }
+            if (!$subfamily) {
+                $errors[] = "Fila {$rowNumber}: subfamilia no encontrada (código: {$subfamilyCode}, nombre: {$subfamilyName}).";
+                continue;
+            }
+            if ((int)($subfamily['family_id'] ?? 0) !== (int)$family['id']) {
+                $errors[] = "Fila {$rowNumber}: la subfamilia {$subfamilyCode} no pertenece a la familia {$familyCode}.";
+                continue;
+            }
+
+            $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
+            $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+            $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
+
+            $this->products->create([
+                'company_id' => $companyId,
+                'supplier_id' => (int)$supplier['id'],
+                'competitor_company_id' => (int)$defaultCompetitor['id'],
+                'family_id' => (int)$family['id'],
+                'subfamily_id' => (int)$subfamily['id'],
+                'competition_code' => $competitionCode,
+                'supplier_code' => $supplierCodeGenerated,
+                'supplier_price' => (float)($data['supplier_price'] ?? 0),
+                'competition_price' => (float)($data['competition_price'] ?? 0),
+                'name' => $name,
+                'sku' => trim((string)($data['sku'] ?? '')),
+                'description' => trim((string)($data['description'] ?? '')),
+                'price' => (float)($data['price'] ?? 0),
+                'cost' => (float)($data['cost'] ?? 0),
+                'stock' => max(0, (int)($data['stock'] ?? 0)),
+                'stock_min' => max(0, (int)($data['stock_min'] ?? 0)),
+                'status' => $status,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            $created++;
+        }
+
+        fclose($handle);
+
+        if ($created > 0) {
+            audit($this->db, Auth::user()['id'], 'create', 'products');
+            flash('success', "Carga masiva finalizada: {$created} producto(s) creado(s).");
+        }
+        if (!empty($errors)) {
+            $errorSummary = implode(' | ', array_slice($errors, 0, 8));
+            if (count($errors) > 8) {
+                $errorSummary .= ' | ...';
+            }
+            flash('error', 'Se detectaron filas con error: ' . $errorSummary);
+        }
+        if ($created === 0 && empty($errors)) {
+            flash('error', 'No se encontraron filas para procesar.');
+        }
+
+        $this->redirect('index.php?route=products/bulk');
+    }
+
     public function store(): void
     {
         $this->requireLogin();
