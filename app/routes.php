@@ -238,6 +238,8 @@ return [
     'services/delete' => ['ServicesController', 'delete'],
     'services/generate-invoice' => ['ServicesController', 'generateInvoice'],
     'quotes' => ['QuotesController', 'index'],
+    'quotes/management' => ['QuotesController', 'management'],
+    'quotes/management/update' => ['QuotesController', 'updateManagement'],
     'quotes/create' => ['QuotesController', 'create'],
     'quotes/store' => ['QuotesController', 'store'],
     'quotes/show' => ['QuotesController', 'show'],
