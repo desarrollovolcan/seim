@@ -289,17 +289,30 @@ $companyAddress = $company['address'] ?? '';
 $companyGiro = $company['giro'] ?? '';
 $companyLogoColor = $company['logo_color'] ?? 'assets/images/logo.png';
 $companyLogoDataUri = '';
+$companyLogoSrc = '';
 if ($companyLogoColor !== '') {
-    $logoFilePath = __DIR__ . '/../../../' . ltrim($companyLogoColor, '/');
-    if (is_file($logoFilePath)) {
-        $logoContents = @file_get_contents($logoFilePath);
-        if ($logoContents !== false) {
-            $mimeType = function_exists('mime_content_type')
-                ? (mime_content_type($logoFilePath) ?: 'image/png')
-                : 'image/png';
-            $companyLogoDataUri = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+    if (preg_match('#^https?://#i', $companyLogoColor)) {
+        $companyLogoSrc = $companyLogoColor;
+    } else {
+        $logoFilePath = __DIR__ . '/../../../' . ltrim($companyLogoColor, '/');
+        if (is_file($logoFilePath)) {
+            $logoContents = @file_get_contents($logoFilePath);
+            if ($logoContents !== false) {
+                $mimeType = function_exists('mime_content_type')
+                    ? (mime_content_type($logoFilePath) ?: 'image/png')
+                    : 'image/png';
+                $companyLogoDataUri = 'data:' . $mimeType . ';base64,' . base64_encode($logoContents);
+            }
+        } else {
+            $companyLogoSrc = $companyLogoColor;
         }
     }
+}
+if ($companyLogoDataUri === '' && $companyLogoSrc === '') {
+    $companyLogoSrc = 'assets/images/logo.png';
+}
+if ($companyLogoDataUri === '' && $companyLogoSrc !== '' && !preg_match('#^https?://#i', $companyLogoSrc)) {
+    $companyLogoSrc = '/' . ltrim($companyLogoSrc, '/');
 }
 $clientRut = $client['rut'] ?? '';
 $clientContact = $client['contact_name'] ?? '';
@@ -317,8 +330,8 @@ $validUntil = $quote['valid_until'] ?? '';
     <div class="header">
         <div class="left">
             <div class="logo">
-                <?php if ($companyLogoDataUri !== ''): ?>
-                    <img src="<?php echo e($companyLogoDataUri); ?>" alt="Logo">
+                <?php if ($companyLogoDataUri !== '' || $companyLogoSrc !== ''): ?>
+                    <img src="<?php echo e($companyLogoDataUri !== '' ? $companyLogoDataUri : $companyLogoSrc); ?>" alt="Logo">
                 <?php endif; ?>
                 <span><?php echo e($companyName); ?></span>
             </div>

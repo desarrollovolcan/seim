@@ -500,7 +500,7 @@ class QuotesController extends Controller
             'SELECT * FROM clients WHERE id = :id AND company_id = :company_id',
             ['id' => $quote['client_id'], 'company_id' => current_company_id()]
         );
-        $company = (new SettingsModel($this->db))->get('company', []);
+        $company = (new SettingsModel($this->db))->get('company', [], (int)($quote['company_id'] ?? current_company_id()));
         $currentUser = Auth::user();
         $sellerUser = null;
         if (!empty($currentUser['id'])) {
