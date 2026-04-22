@@ -52,6 +52,11 @@ class PurchaseOrdersController extends Controller
             'suppliers' => $suppliers,
             'products' => $products,
             'today' => date('Y-m-d'),
+            'isEdit' => false,
+            'order' => null,
+            'orderItems' => [],
+            'notesValue' => '',
+            'termsValue' => "Pago a 30 días contra factura.\nEntrega sujeta a confirmación de stock.\nValidez de precios: 7 días corridos.",
         ]);
     }
 
@@ -75,9 +80,7 @@ class PurchaseOrdersController extends Controller
 
         $terms = trim((string)($_POST['terms'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
-        if ($terms !== '') {
-            $notes .= ($notes !== '' ? "\n\n" : '') . "Condiciones de la orden:" . "\n" . $terms;
-        }
+        $composedNotes = $this->composeNotes($notes, $terms);
 
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
         $total = $subtotal;
@@ -93,7 +96,7 @@ class PurchaseOrdersController extends Controller
                 'status' => $_POST['status'] ?? 'pendiente',
                 'subtotal' => $subtotal,
                 'total' => $total,
-                'notes' => $notes,
+                'notes' => $composedNotes,
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
@@ -151,6 +154,146 @@ class PurchaseOrdersController extends Controller
             'order' => $order,
             'items' => $items,
         ]);
+    }
+
+    public function edit(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $id = (int)($_GET['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            flash('error', 'Orden de compra no encontrada.');
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $items = $this->db->fetchAll(
+            'SELECT poi.*
+             FROM purchase_order_items poi
+             WHERE poi.purchase_order_id = :order_id
+             ORDER BY poi.id ASC',
+            ['order_id' => $id]
+        );
+
+        $parsedNotes = $this->parseOrderNotes((string)($order['notes'] ?? ''));
+        $suppliers = $this->suppliers->active($companyId);
+        $products = $this->products->active($companyId);
+
+        $this->render('purchase-orders/create', [
+            'title' => 'Editar orden de compra',
+            'pageTitle' => 'Editar orden de compra',
+            'suppliers' => $suppliers,
+            'products' => $products,
+            'today' => date('Y-m-d'),
+            'isEdit' => true,
+            'order' => $order,
+            'orderItems' => $items,
+            'notesValue' => $parsedNotes['notes'],
+            'termsValue' => $parsedNotes['terms'],
+        ]);
+    }
+
+    public function update(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $id = (int)($_POST['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            flash('error', 'Orden de compra no encontrada.');
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $supplierId = (int)($_POST['supplier_id'] ?? 0);
+        $supplier = $this->suppliers->findForCompany($supplierId, $companyId);
+        if (!$supplier) {
+            flash('error', 'Proveedor no válido.');
+            $this->redirect('index.php?route=purchase-orders/edit&id=' . $id);
+        }
+
+        $items = $this->collectItems($companyId);
+        if (empty($items)) {
+            flash('error', 'Agrega al menos un producto a la orden de compra.');
+            $this->redirect('index.php?route=purchase-orders/edit&id=' . $id);
+        }
+
+        $terms = trim((string)($_POST['terms'] ?? ''));
+        $notes = trim((string)($_POST['notes'] ?? ''));
+        $composedNotes = $this->composeNotes($notes, $terms);
+
+        $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
+        $total = $subtotal;
+
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+            $this->orders->update($id, [
+                'supplier_id' => $supplierId,
+                'reference' => trim((string)($_POST['reference'] ?? '')),
+                'order_date' => trim((string)($_POST['order_date'] ?? date('Y-m-d'))),
+                'status' => trim((string)($_POST['status'] ?? 'pendiente')),
+                'subtotal' => $subtotal,
+                'total' => $total,
+                'notes' => $composedNotes,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+
+            $this->db->execute(
+                'DELETE FROM purchase_order_items WHERE purchase_order_id = :order_id',
+                ['order_id' => $id]
+            );
+
+            foreach ($items as $item) {
+                $this->items->create([
+                    'purchase_order_id' => $id,
+                    'product_id' => $item['product']['id'],
+                    'quantity' => $item['quantity'],
+                    'unit_cost' => $item['unit_cost'],
+                    'subtotal' => $item['subtotal'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            audit($this->db, Auth::user()['id'], 'update', 'purchase_orders', $id);
+            $pdo->commit();
+            flash('success', 'Orden de compra actualizada correctamente.');
+
+            if ((int)($_POST['print_after_save'] ?? 0) === 1) {
+                $this->redirect('index.php?route=purchase-orders/print&id=' . $id);
+            }
+        } catch (Throwable $e) {
+            $pdo->rollBack();
+            log_message('error', 'Error al actualizar orden de compra: ' . $e->getMessage());
+            flash('error', 'No pudimos actualizar la orden de compra. Inténtalo nuevamente.');
+            $this->redirect('index.php?route=purchase-orders/edit&id=' . $id);
+        }
+
+        $this->redirect('index.php?route=purchase-orders');
+    }
+
+    public function delete(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $id = (int)($_POST['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            flash('error', 'Orden de compra no encontrada.');
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $deleted = $this->orders->softDelete($id);
+        if ($deleted) {
+            audit($this->db, Auth::user()['id'], 'delete', 'purchase_orders', $id);
+            flash('success', 'Orden de compra eliminada correctamente.');
+        } else {
+            flash('error', 'No se pudo eliminar la orden de compra.');
+        }
+
+        $this->redirect('index.php?route=purchase-orders');
     }
 
 
@@ -216,5 +359,33 @@ class PurchaseOrdersController extends Controller
         }
 
         return $items;
+    }
+
+    private function composeNotes(string $notes, string $terms): string
+    {
+        $segments = [];
+        if ($notes !== '') {
+            $segments[] = $notes;
+        }
+        if ($terms !== '') {
+            $segments[] = "Condiciones de la orden:\n" . $terms;
+        }
+        return implode("\n\n", $segments);
+    }
+
+    private function parseOrderNotes(string $rawNotes): array
+    {
+        $terms = '';
+        $notes = trim($rawNotes);
+
+        if (preg_match('/(?:^|\n\n)Condiciones de la orden:\n([\s\S]*)$/u', $notes, $matches)) {
+            $terms = trim((string)($matches[1] ?? ''));
+            $notes = trim((string)preg_replace('/(?:^|\n\n)Condiciones de la orden:\n[\s\S]*$/u', '', $notes, 1));
+        }
+
+        return [
+            'notes' => $notes,
+            'terms' => $terms,
+        ];
     }
 }

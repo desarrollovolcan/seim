@@ -34,8 +34,10 @@ $applyTaxDefault = (float)($quote['impuestos'] ?? 0) > 0 ? '1' : '0';
                 <div class="col-md-4 mb-3">
                     <label class="form-label">Estado</label>
                     <select name="estado" class="form-select">
-                        <option value="pendiente" <?php echo ($quote['estado'] ?? '') === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
-                        <option value="aceptada" <?php echo ($quote['estado'] ?? '') === 'aceptada' ? 'selected' : ''; ?>>Aceptada</option>
+                        <option value="creada" <?php echo ($quote['estado'] ?? '') === 'creada' ? 'selected' : ''; ?>>Creada</option>
+                        <option value="enviada" <?php echo ($quote['estado'] ?? '') === 'enviada' ? 'selected' : ''; ?>>Enviada</option>
+                        <option value="en_curso" <?php echo ($quote['estado'] ?? '') === 'en_curso' ? 'selected' : ''; ?>>En curso</option>
+                        <option value="aprobada" <?php echo ($quote['estado'] ?? '') === 'aprobada' ? 'selected' : ''; ?>>Aprobada</option>
                         <option value="rechazada" <?php echo ($quote['estado'] ?? '') === 'rechazada' ? 'selected' : ''; ?>>Rechazada</option>
                     </select>
                 </div>
