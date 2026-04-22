@@ -185,9 +185,7 @@ class ProductsController extends Controller
         $header = array_map(static fn($value): string => strtolower(trim((string)$value)), $header);
         $requiredColumnGroups = [
             'name' => ['name', 'nombre'],
-            'supplier' => ['supplier_code', 'supplier', 'supplier_name', 'proveedor_codigo', 'proveedor'],
-            'family' => ['family_code', 'family', 'family_name', 'familia_codigo', 'familia'],
-            'subfamily' => ['subfamily_code', 'subfamily', 'subfamily_name', 'subfamilia_codigo', 'subfamilia'],
+            'sku' => ['sku', 'codigo_sku', 'codigo'],
         ];
         foreach ($requiredColumnGroups as $group => $aliases) {
             $hasOne = false;
@@ -237,63 +235,90 @@ class ProductsController extends Controller
             }
 
             $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
+            $sku = trim((string)($data['sku'] ?? $data['codigo_sku'] ?? $data['codigo'] ?? ''));
             if ($name === '') {
                 $errors[] = "Fila {$rowNumber}: el nombre es obligatorio.";
+                continue;
+            }
+            if ($sku === '') {
+                $errors[] = "Fila {$rowNumber}: el SKU es obligatorio.";
                 continue;
             }
 
             $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
             $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
             $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
-            $familyName = strtoupper((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+            $familyName = trim((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
             $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
-            $subfamilyName = strtoupper((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
+            $subfamilyName = trim((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
 
-            $supplier = $supplierByCode[$supplierCode] ?? null;
-            if (!$supplier && $supplierName !== '') {
-                $supplier = $supplierByName[$supplierName] ?? null;
-            }
-            if (!$supplier) {
-                $errors[] = "Fila {$rowNumber}: proveedor no encontrado (código: {$supplierCode}, nombre: {$supplierName}).";
-                continue;
-            }
-            $family = $familyByCode[$familyCode] ?? null;
-            if (!$family && $familyName !== '') {
-                $family = $familyByName[$familyName] ?? null;
-            }
-            if (!$family) {
-                $errors[] = "Fila {$rowNumber}: familia no encontrada (código: {$familyCode}, nombre: {$familyName}).";
-                continue;
-            }
-            $subfamily = $subfamilyByCode[$subfamilyCode] ?? null;
-            if (!$subfamily && $subfamilyName !== '') {
-                $subfamily = $subfamilyByName[$subfamilyName] ?? null;
-            }
-            if (!$subfamily) {
-                $errors[] = "Fila {$rowNumber}: subfamilia no encontrada (código: {$subfamilyCode}, nombre: {$subfamilyName}).";
-                continue;
-            }
-            if ((int)($subfamily['family_id'] ?? 0) !== (int)$family['id']) {
-                $errors[] = "Fila {$rowNumber}: la subfamilia {$subfamilyCode} no pertenece a la familia {$familyCode}.";
-                continue;
+            $supplier = null;
+            if ($supplierCode !== '' || $supplierName !== '') {
+                $supplier = $supplierByCode[$supplierCode] ?? null;
+                if (!$supplier && $supplierName !== '') {
+                    $supplier = $supplierByName[$supplierName] ?? null;
+                }
             }
 
-            $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
-            $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+            $family = null;
+            $familyLookupName = strtoupper($familyName);
+            if ($familyCode !== '' || $familyLookupName !== '') {
+                $family = $this->resolveOrCreateFamily(
+                    $companyId,
+                    $familyCode,
+                    $familyName,
+                    $familyByCode,
+                    $familyByName
+                );
+            }
+
+            $subfamily = null;
+            $subfamilyLookupName = strtoupper($subfamilyName);
+            if ($subfamilyCode !== '' || $subfamilyLookupName !== '') {
+                if (!$family) {
+                    $familyFallbackName = $familyName !== '' ? $familyName : ('Familia ' . ($subfamilyName !== '' ? $subfamilyName : $subfamilyCode));
+                    $family = $this->resolveOrCreateFamily(
+                        $companyId,
+                        $familyCode,
+                        $familyFallbackName,
+                        $familyByCode,
+                        $familyByName
+                    );
+                }
+                if ($family) {
+                    $subfamily = $this->resolveOrCreateSubfamily(
+                        $companyId,
+                        (int)$family['id'],
+                        $subfamilyCode,
+                        $subfamilyName,
+                        $subfamilyByCode,
+                        $subfamilyByName
+                    );
+                }
+            }
+
+            $competitionCode = null;
+            if ($family && $subfamily) {
+                $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
+            }
+            $supplierCodeGenerated = null;
+            if ($supplier && $family && $subfamily) {
+                $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+            }
             $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
 
             $this->products->create([
                 'company_id' => $companyId,
-                'supplier_id' => (int)$supplier['id'],
+                'supplier_id' => $supplier ? (int)$supplier['id'] : null,
                 'competitor_company_id' => (int)$defaultCompetitor['id'],
-                'family_id' => (int)$family['id'],
-                'subfamily_id' => (int)$subfamily['id'],
+                'family_id' => $family ? (int)$family['id'] : null,
+                'subfamily_id' => $subfamily ? (int)$subfamily['id'] : null,
                 'competition_code' => $competitionCode,
                 'supplier_code' => $supplierCodeGenerated,
                 'supplier_price' => (float)($data['supplier_price'] ?? 0),
                 'competition_price' => (float)($data['competition_price'] ?? 0),
                 'name' => $name,
-                'sku' => trim((string)($data['sku'] ?? '')),
+                'sku' => $sku,
                 'description' => trim((string)($data['description'] ?? '')),
                 'price' => (float)($data['price'] ?? 0),
                 'cost' => (float)($data['cost'] ?? 0),
@@ -386,6 +411,120 @@ class ProductsController extends Controller
         ]);
 
         return $this->competitors->findForCompany((int)$competitorId, $companyId);
+    }
+
+    private function resolveOrCreateFamily(
+        int $companyId,
+        string $familyCode,
+        string $familyName,
+        array &$familyByCode,
+        array &$familyByName
+    ): ?array {
+        $familyName = trim($familyName);
+        $familyCode = strtoupper(trim($familyCode));
+        $familyLookupName = strtoupper($familyName);
+
+        $family = $familyCode !== '' ? ($familyByCode[$familyCode] ?? null) : null;
+        if (!$family && $familyLookupName !== '') {
+            $family = $familyByName[$familyLookupName] ?? null;
+        }
+        if ($family) {
+            return $family;
+        }
+
+        if ($familyName === '' && $familyCode === '') {
+            return null;
+        }
+        if ($familyName === '') {
+            $familyName = 'Familia ' . $familyCode;
+            $familyLookupName = strtoupper($familyName);
+        }
+
+        $code = $familyCode !== '' ? substr(preg_replace('/[^A-Z0-9]/', '', $familyCode) ?: '', 0, 3) : '';
+        if ($code === '') {
+            $code = generate_three_letter_code($familyName);
+        }
+        while ($this->db->fetch(
+            'SELECT id FROM product_families WHERE company_id = :company_id AND code = :code LIMIT 1',
+            ['company_id' => $companyId, 'code' => $code]
+        )) {
+            $code = generate_three_letter_code($familyName . rand(1, 9));
+        }
+
+        $familyId = $this->families->create([
+            'company_id' => $companyId,
+            'name' => $familyName,
+            'code' => $code,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $family = $this->families->findForCompany((int)$familyId, $companyId);
+        if ($family) {
+            $familyByCode[strtoupper((string)$family['code'])] = $family;
+            $familyByName[strtoupper((string)$family['name'])] = $family;
+        }
+        return $family;
+    }
+
+    private function resolveOrCreateSubfamily(
+        int $companyId,
+        int $familyId,
+        string $subfamilyCode,
+        string $subfamilyName,
+        array &$subfamilyByCode,
+        array &$subfamilyByName
+    ): ?array {
+        $subfamilyCode = strtoupper(trim($subfamilyCode));
+        $subfamilyName = trim($subfamilyName);
+        $subfamilyLookupName = strtoupper($subfamilyName);
+
+        $subfamily = $subfamilyCode !== '' ? ($subfamilyByCode[$subfamilyCode] ?? null) : null;
+        if ($subfamily && (int)$subfamily['family_id'] !== $familyId) {
+            $subfamily = null;
+        }
+        if (!$subfamily && $subfamilyLookupName !== '') {
+            $candidate = $subfamilyByName[$subfamilyLookupName] ?? null;
+            if ($candidate && (int)$candidate['family_id'] === $familyId) {
+                $subfamily = $candidate;
+            }
+        }
+        if ($subfamily) {
+            return $subfamily;
+        }
+
+        if ($subfamilyName === '' && $subfamilyCode === '') {
+            return null;
+        }
+        if ($subfamilyName === '') {
+            $subfamilyName = 'Subfamilia ' . $subfamilyCode;
+            $subfamilyLookupName = strtoupper($subfamilyName);
+        }
+
+        $code = $subfamilyCode !== '' ? substr(preg_replace('/[^A-Z0-9]/', '', $subfamilyCode) ?: '', 0, 3) : '';
+        if ($code === '') {
+            $code = generate_three_letter_code($subfamilyName);
+        }
+        while ($this->db->fetch(
+            'SELECT id FROM product_subfamilies WHERE company_id = :company_id AND family_id = :family_id AND code = :code LIMIT 1',
+            ['company_id' => $companyId, 'family_id' => $familyId, 'code' => $code]
+        )) {
+            $code = generate_three_letter_code($subfamilyName . rand(1, 9));
+        }
+
+        $subfamilyId = $this->subfamilies->create([
+            'company_id' => $companyId,
+            'family_id' => $familyId,
+            'name' => $subfamilyName,
+            'code' => $code,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+        $subfamily = $this->subfamilies->findForCompany((int)$subfamilyId, $companyId);
+        if ($subfamily) {
+            $subfamilyByCode[strtoupper((string)$subfamily['code'])] = $subfamily;
+            $subfamilyByName[strtoupper((string)$subfamily['name'])] = $subfamily;
+        }
+        return $subfamily;
     }
 
     public function store(): void

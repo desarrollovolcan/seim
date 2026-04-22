@@ -44,10 +44,9 @@
                 </thead>
                 <tbody>
                     <tr><td><code>name</code></td><td>Nombre del producto (obligatorio).</td></tr>
-                    <tr><td><code>supplier_code</code></td><td>Código del proveedor existente.</td></tr>
-                    <tr><td><code>family_code</code></td><td>Código de familia existente.</td></tr>
-                    <tr><td><code>subfamily_code</code></td><td>Código de subfamilia existente y asociada a la familia.</td></tr>
-                    <tr><td><code>sku</code>, <code>description</code>, <code>supplier_price</code>, <code>competition_price</code>, <code>price</code>, <code>cost</code>, <code>stock</code>, <code>stock_min</code>, <code>status</code></td><td>Campos opcionales.</td></tr>
+                    <tr><td><code>sku</code></td><td>Código SKU del producto (obligatorio).</td></tr>
+                    <tr><td><code>supplier_code</code>, <code>family_code</code>, <code>subfamily_code</code></td><td>Opcionales. Si familia/subfamilia no existen, se crearán automáticamente durante la importación.</td></tr>
+                    <tr><td><code>description</code>, <code>supplier_price</code>, <code>competition_price</code>, <code>price</code>, <code>cost</code>, <code>stock</code>, <code>stock_min</code>, <code>status</code></td><td>Campos opcionales.</td></tr>
                 </tbody>
             </table>
         </div>
