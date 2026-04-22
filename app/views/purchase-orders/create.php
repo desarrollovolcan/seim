@@ -1,41 +1,56 @@
+<?php
+$isEdit = (bool)($isEdit ?? false);
+$order = $order ?? null;
+$orderItems = $orderItems ?? [];
+$notesValue = (string)($notesValue ?? '');
+$termsValue = (string)($termsValue ?? "Pago a 30 días contra factura.\nEntrega sujeta a confirmación de stock.\nValidez de precios: 7 días corridos.");
+$selectedSupplierId = (int)($order['supplier_id'] ?? 0);
+$selectedDate = (string)($order['order_date'] ?? $today);
+$selectedStatus = (string)($order['status'] ?? 'pendiente');
+$selectedReference = (string)($order['reference'] ?? '');
+?>
+
 <div class="row">
     <div class="col-12">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0">Nueva orden de compra</h4>
+                <h4 class="card-title mb-0"><?php echo $isEdit ? 'Editar orden de compra' : 'Nueva orden de compra'; ?></h4>
                 <div class="d-flex gap-2">
                     <a href="index.php?route=products/create" class="btn btn-soft-secondary btn-sm">Crear producto</a>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="print-order-preview">Vista previa impresión</button>
                 </div>
             </div>
             <div class="card-body">
-                <form method="post" action="index.php?route=purchase-orders/store" id="purchase-order-form">
+                <form method="post" action="index.php?route=<?php echo $isEdit ? 'purchase-orders/update' : 'purchase-orders/store'; ?>" id="purchase-order-form">
                     <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                    <?php if ($isEdit && !empty($order['id'])): ?>
+                        <input type="hidden" name="id" value="<?php echo (int)$order['id']; ?>">
+                    <?php endif; ?>
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Proveedor</label>
                             <select name="supplier_id" class="form-select" required>
                                 <option value="">Selecciona proveedor</option>
                                 <?php foreach ($suppliers as $supplier): ?>
-                                    <option value="<?php echo (int)$supplier['id']; ?>"><?php echo e($supplier['name']); ?></option>
+                                    <option value="<?php echo (int)$supplier['id']; ?>" <?php echo ((int)$supplier['id'] === $selectedSupplierId) ? 'selected' : ''; ?>><?php echo e($supplier['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Fecha</label>
-                            <input type="date" name="order_date" class="form-control" value="<?php echo e($today); ?>" required>
+                            <input type="date" name="order_date" class="form-control" value="<?php echo e($selectedDate); ?>" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">Estado</label>
                             <select name="status" class="form-select">
-                                <option value="pendiente">Pendiente</option>
-                                <option value="aprobada">Aprobada</option>
-                                <option value="cerrada">Cerrada</option>
+                                <option value="pendiente" <?php echo $selectedStatus === 'pendiente' ? 'selected' : ''; ?>>Pendiente</option>
+                                <option value="aprobada" <?php echo $selectedStatus === 'aprobada' ? 'selected' : ''; ?>>Aprobada</option>
+                                <option value="cerrada" <?php echo $selectedStatus === 'cerrada' ? 'selected' : ''; ?>>Cerrada</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label">Referencia / N° OC</label>
-                            <input type="text" name="reference" class="form-control" placeholder="Orden de compra">
+                            <label class="form-label">Referencia / N° Cotización</label>
+                            <input type="text" name="reference" class="form-control" placeholder="Orden de compra" value="<?php echo e($selectedReference); ?>">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Productos</label>
@@ -51,22 +66,34 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr class="item-row">
-                                            <td>
-                                                <select name="product_id[]" class="form-select form-select-sm product-select">
-                                                    <option value="">Selecciona</option>
-                                                    <?php foreach ($products as $product): ?>
-                                                        <option value="<?php echo (int)$product['id']; ?>" data-cost="<?php echo e((float)($product['cost'] ?? $product['price'] ?? 0)); ?>">
-                                                            <?php echo e($product['name']); ?> (Stock: <?php echo (int)($product['stock'] ?? 0); ?>)
-                                                        </option>
-                                                    <?php endforeach; ?>
-                                                </select>
-                                            </td>
-                                            <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="1"></td>
-                                            <td><input type="number" name="unit_cost[]" class="form-control form-control-sm cost-input" step="0.01" min="0" value="0"></td>
-                                            <td class="text-end item-subtotal fw-semibold">0</td>
-                                            <td><button type="button" class="btn btn-link text-danger p-0 remove-row">✕</button></td>
-                                        </tr>
+                                        <?php
+                                        $rows = !empty($orderItems) ? $orderItems : [['product_id' => 0, 'quantity' => 1, 'unit_cost' => 0]];
+                                        foreach ($rows as $row):
+                                            $rowProductId = (int)($row['product_id'] ?? 0);
+                                            $rowQuantity = (int)($row['quantity'] ?? 1);
+                                            $rowUnitCost = (float)($row['unit_cost'] ?? 0);
+                                            ?>
+                                            <tr class="item-row">
+                                                <td>
+                                                    <select name="product_id[]" class="form-select form-select-sm product-select">
+                                                        <option value="">Selecciona</option>
+                                                        <?php foreach ($products as $product): ?>
+                                                            <option
+                                                                value="<?php echo (int)$product['id']; ?>"
+                                                                data-cost="<?php echo e((float)($product['cost'] ?? $product['price'] ?? 0)); ?>"
+                                                                <?php echo ((int)$product['id'] === $rowProductId) ? 'selected' : ''; ?>
+                                                            >
+                                                                <?php echo e($product['name']); ?> (Stock: <?php echo (int)($product['stock'] ?? 0); ?>)
+                                                            </option>
+                                                        <?php endforeach; ?>
+                                                    </select>
+                                                </td>
+                                                <td><input type="number" name="quantity[]" class="form-control form-control-sm quantity-input" min="1" value="<?php echo (int)max(1, $rowQuantity); ?>"></td>
+                                                <td><input type="number" name="unit_cost[]" class="form-control form-control-sm cost-input" step="0.01" min="0" value="<?php echo e($rowUnitCost); ?>"></td>
+                                                <td class="text-end item-subtotal fw-semibold">0</td>
+                                                <td><button type="button" class="btn btn-link text-danger p-0 remove-row">✕</button></td>
+                                            </tr>
+                                        <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
@@ -74,13 +101,11 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Notas internas</label>
-                            <textarea name="notes" class="form-control" rows="3" placeholder="Observaciones de la orden"></textarea>
+                            <textarea name="notes" class="form-control" rows="3" placeholder="Observaciones de la orden"><?php echo e($notesValue); ?></textarea>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Condiciones de la orden de compra</label>
-                            <textarea name="terms" class="form-control" rows="3" placeholder="Ej: Plazo de entrega, forma de pago, garantía, validez de precios.">Pago a 30 días contra factura.
-Entrega sujeta a confirmación de stock.
-Validez de precios: 7 días corridos.</textarea>
+                            <textarea name="terms" class="form-control" rows="3" placeholder="Ej: Plazo de entrega, forma de pago, garantía, validez de precios."><?php echo e($termsValue); ?></textarea>
                         </div>
                         <div class="col-md-6">
                             <div class="d-flex flex-column align-items-end gap-2">
@@ -93,8 +118,8 @@ Validez de precios: 7 días corridos.</textarea>
                         <div class="col-12">
                             <div class="form-actions">
                                 <a href="index.php?route=purchase-orders" class="btn btn-light">Cancelar</a>
-                                <button type="submit" class="btn btn-primary">Guardar orden</button>
-                                <button type="submit" class="btn btn-outline-primary" name="print_after_save" value="1">Guardar e imprimir</button>
+                                <button type="submit" class="btn btn-primary"><?php echo $isEdit ? 'Actualizar orden' : 'Guardar orden'; ?></button>
+                                <button type="submit" class="btn btn-outline-primary" name="print_after_save" value="1"><?php echo $isEdit ? 'Actualizar e imprimir' : 'Guardar e imprimir'; ?></button>
                             </div>
                         </div>
                     </div>
@@ -168,6 +193,7 @@ Validez de precios: 7 días corridos.</textarea>
             const supplierText = document.querySelector('select[name="supplier_id"] option:checked')?.textContent?.trim() || 'Sin proveedor';
             const orderDate = document.querySelector('input[name="order_date"]')?.value || '';
             const reference = document.querySelector('input[name="reference"]')?.value || 'Sin referencia';
+            const quoteReference = document.querySelector('input[name="quote_reference"]')?.value || 'Sin cotización';
             const notes = document.querySelector('textarea[name="notes"]')?.value || '';
             const terms = document.querySelector('textarea[name="terms"]')?.value || '';
             const rows = [...tableBody.querySelectorAll('.item-row')]
@@ -188,7 +214,7 @@ Validez de precios: 7 días corridos.</textarea>
             printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Vista previa orden de compra</title><style>
                 body{font-family:Arial,sans-serif;color:#1f2937;padding:24px} h1{margin:0 0 6px;font-size:24px} .muted{color:#6b7280} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{border:1px solid #d1d5db;padding:8px;font-size:12px} th{background:#eff6ff} .top{display:flex;justify-content:space-between;gap:16px;margin-bottom:12px}.box{border:1px solid #d1d5db;border-radius:8px;padding:10px;flex:1} .footer{margin-top:40px;display:flex;justify-content:space-between;gap:24px}.sign{flex:1;text-align:center}.line{border-top:1px solid #374151;margin-top:42px;padding-top:8px} .total{margin-top:10px;text-align:right;font-weight:bold}
             </style></head><body>
-            <h1>Orden de compra</h1><div class="muted">Referencia: ${reference}</div>
+            <h1>Orden de compra</h1><div class="muted">Referencia OC: ${reference}</div><div class="muted">Referencia cotización: ${quoteReference}</div>
             <div class="top"><div class="box"><strong>Proveedor</strong><div>${supplierText}</div></div><div class="box"><strong>Fecha</strong><div>${orderDate}</div></div></div>
             <table><thead><tr><th>#</th><th>Producto</th><th>Cantidad</th><th>Costo unitario</th><th>Subtotal</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center">Sin productos</td></tr>'}</tbody></table>
             <div class="total">Total: ${total}</div>

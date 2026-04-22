@@ -1,0 +1,3 @@
+ALTER TABLE products
+    ADD COLUMN photo_1 VARCHAR(255) NULL AFTER description,
+    ADD COLUMN photo_2 VARCHAR(255) NULL AFTER photo_1;
