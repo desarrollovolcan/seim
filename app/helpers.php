@@ -232,10 +232,17 @@ function ensure_upload_directory(string $directory): ?string
 function login_company_settings(Database $db): array
 {
     $settingsModel = new SettingsModel($db);
-    $companySettings = $settingsModel->get('company', []);
+    $activeCompanyId = current_company_id();
+
+    if ($activeCompanyId) {
+        return $settingsModel->get('company', [], $activeCompanyId);
+    }
+
+    $companySettings = $settingsModel->get('company', [], 0);
     if (!empty($companySettings['login_logo'] ?? '')) {
         return $companySettings;
     }
+
     $firstCompany = $db->fetch('SELECT id FROM companies ORDER BY id ASC LIMIT 1');
     if ($firstCompany) {
         $fallbackSettings = $settingsModel->get('company', [], (int)$firstCompany['id']);
@@ -243,6 +250,7 @@ function login_company_settings(Database $db): array
             $companySettings = array_merge($companySettings, $fallbackSettings);
         }
     }
+
     return $companySettings;
 }
 
