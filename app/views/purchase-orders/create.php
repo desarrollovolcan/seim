@@ -2,7 +2,6 @@
 $isEdit = (bool)($isEdit ?? false);
 $order = $order ?? null;
 $orderItems = $orderItems ?? [];
-$quoteReference = (string)($quoteReference ?? '');
 $notesValue = (string)($notesValue ?? '');
 $termsValue = (string)($termsValue ?? "Pago a 30 días contra factura.\nEntrega sujeta a confirmación de stock.\nValidez de precios: 7 días corridos.");
 $selectedSupplierId = (int)($order['supplier_id'] ?? 0);
@@ -49,17 +48,9 @@ $selectedReference = (string)($order['reference'] ?? '');
                                 <option value="cerrada" <?php echo $selectedStatus === 'cerrada' ? 'selected' : ''; ?>>Cerrada</option>
                             </select>
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Referencia / N° OC</label>
+                        <div class="col-md-6">
+                            <label class="form-label">Referencia / N° Cotización</label>
                             <input type="text" name="reference" class="form-control" placeholder="Orden de compra" value="<?php echo e($selectedReference); ?>">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Referencia / N° Cotización</label>
-                            <input type="text" name="quote_reference" class="form-control" placeholder="Ej: COT-2026-001" value="<?php echo e($quoteReference); ?>">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">Referencia / N° Cotización</label>
-                            <input type="text" name="quote_reference" class="form-control" placeholder="Ej: COT-2026-001">
                         </div>
                         <div class="col-12">
                             <label class="form-label">Productos</label>

@@ -55,7 +55,6 @@ class PurchaseOrdersController extends Controller
             'isEdit' => false,
             'order' => null,
             'orderItems' => [],
-            'quoteReference' => '',
             'notesValue' => '',
             'termsValue' => "Pago a 30 días contra factura.\nEntrega sujeta a confirmación de stock.\nValidez de precios: 7 días corridos.",
         ]);
@@ -81,8 +80,7 @@ class PurchaseOrdersController extends Controller
 
         $terms = trim((string)($_POST['terms'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
-        $quoteReference = trim((string)($_POST['quote_reference'] ?? ''));
-        $composedNotes = $this->composeNotes($notes, $quoteReference, $terms);
+        $composedNotes = $this->composeNotes($notes, $terms);
 
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
         $total = $subtotal;
@@ -190,7 +188,6 @@ class PurchaseOrdersController extends Controller
             'isEdit' => true,
             'order' => $order,
             'orderItems' => $items,
-            'quoteReference' => $parsedNotes['quote_reference'],
             'notesValue' => $parsedNotes['notes'],
             'termsValue' => $parsedNotes['terms'],
         ]);
@@ -223,8 +220,7 @@ class PurchaseOrdersController extends Controller
 
         $terms = trim((string)($_POST['terms'] ?? ''));
         $notes = trim((string)($_POST['notes'] ?? ''));
-        $quoteReference = trim((string)($_POST['quote_reference'] ?? ''));
-        $composedNotes = $this->composeNotes($notes, $quoteReference, $terms);
+        $composedNotes = $this->composeNotes($notes, $terms);
 
         $subtotal = array_sum(array_map(static fn(array $item) => $item['subtotal'], $items));
         $total = $subtotal;
@@ -365,14 +361,11 @@ class PurchaseOrdersController extends Controller
         return $items;
     }
 
-    private function composeNotes(string $notes, string $quoteReference, string $terms): string
+    private function composeNotes(string $notes, string $terms): string
     {
         $segments = [];
         if ($notes !== '') {
             $segments[] = $notes;
-        }
-        if ($quoteReference !== '') {
-            $segments[] = 'Referencia cotización: ' . $quoteReference;
         }
         if ($terms !== '') {
             $segments[] = "Condiciones de la orden:\n" . $terms;
@@ -382,14 +375,8 @@ class PurchaseOrdersController extends Controller
 
     private function parseOrderNotes(string $rawNotes): array
     {
-        $quoteReference = '';
         $terms = '';
         $notes = trim($rawNotes);
-
-        if (preg_match('/(?:^|\n\n)Referencia cotización:\s*(.+?)(?=\n\n|$)/u', $notes, $matches)) {
-            $quoteReference = trim((string)($matches[1] ?? ''));
-            $notes = trim((string)preg_replace('/(?:^|\n\n)Referencia cotización:\s*.+?(?=\n\n|$)/u', '', $notes, 1));
-        }
 
         if (preg_match('/(?:^|\n\n)Condiciones de la orden:\n([\s\S]*)$/u', $notes, $matches)) {
             $terms = trim((string)($matches[1] ?? ''));
@@ -398,7 +385,6 @@ class PurchaseOrdersController extends Controller
 
         return [
             'notes' => $notes,
-            'quote_reference' => $quoteReference,
             'terms' => $terms,
         ];
     }
