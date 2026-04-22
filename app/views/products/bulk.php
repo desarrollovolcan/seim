@@ -58,7 +58,18 @@
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
                             body: body.toString()
                         });
-                        const result = await response.json();
+                        const raw = await response.text();
+                        let result = null;
+                        try {
+                            result = JSON.parse(raw);
+                        } catch (error) {
+                            text.textContent = raw || 'Respuesta inválida del servidor.';
+                            return;
+                        }
+                        if (!response.ok) {
+                            text.textContent = result.message || `Error HTTP ${response.status}`;
+                            return;
+                        }
                         if (!result.ok) {
                             text.textContent = result.message || 'Error en carga masiva.';
                             return;

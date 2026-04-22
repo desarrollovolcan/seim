@@ -181,59 +181,64 @@ class ProductsController extends Controller
     public function bulkProcess(): void
     {
         $this->requireLogin();
-        verify_csrf();
+        $token = (string)($_POST['csrf_token'] ?? '');
+        if ($token === '' || !hash_equals((string)($_SESSION['csrf_token'] ?? ''), $token)) {
+            $this->jsonBulk(['ok' => false, 'message' => 'CSRF token inválido para continuar la carga. Recarga la página e inténtalo de nuevo.']);
+            return;
+        }
         $companyId = $this->requireCompany();
-        $jobId = trim((string)($_POST['job_id'] ?? ''));
-        $jobs = $_SESSION['products_bulk_jobs'] ?? [];
-        $job = $jobs[$jobId] ?? null;
-        if (!$job || (int)($job['company_id'] ?? 0) !== $companyId) {
-            $this->jsonBulk(['ok' => false, 'message' => 'Proceso de carga no válido.']);
-            return;
-        }
+        try {
+            $jobId = trim((string)($_POST['job_id'] ?? ''));
+            $jobs = $_SESSION['products_bulk_jobs'] ?? [];
+            $job = $jobs[$jobId] ?? null;
+            if (!$job || (int)($job['company_id'] ?? 0) !== $companyId) {
+                $this->jsonBulk(['ok' => false, 'message' => 'Proceso de carga no válido.']);
+                return;
+            }
 
-        $path = (string)($job['path'] ?? '');
-        if ($path === '' || !is_file($path)) {
-            $this->jsonBulk(['ok' => false, 'message' => 'El archivo temporal no existe.']);
-            return;
-        }
+            $path = (string)($job['path'] ?? '');
+            if ($path === '' || !is_file($path)) {
+                $this->jsonBulk(['ok' => false, 'message' => 'El archivo temporal no existe.']);
+                return;
+            }
 
-        $delimiter = (string)($job['delimiter'] ?? ',');
-        $header = (array)($job['header'] ?? []);
-        $nextLine = (int)($job['next_line'] ?? 1);
-        $chunkSize = 150;
+            $delimiter = (string)($job['delimiter'] ?? ',');
+            $header = (array)($job['header'] ?? []);
+            $nextLine = (int)($job['next_line'] ?? 1);
+            $chunkSize = 150;
 
-        $defaultCompetitor = $this->competitors->findForCompany((int)($job['competitor_company_id'] ?? 0), $companyId);
-        if (!$defaultCompetitor) {
-            $this->jsonBulk(['ok' => false, 'message' => 'No se encontró empresa competencia para el proceso.']);
-            return;
-        }
+            $defaultCompetitor = $this->competitors->findForCompany((int)($job['competitor_company_id'] ?? 0), $companyId);
+            if (!$defaultCompetitor) {
+                $this->jsonBulk(['ok' => false, 'message' => 'No se encontró empresa competencia para el proceso.']);
+                return;
+            }
 
-        $supplierByCode = [];
-        $supplierByName = [];
-        foreach ($this->suppliers->active($companyId) as $supplier) {
-            $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
-            $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
-        }
-        $familyByCode = [];
-        $familyByName = [];
-        foreach ($this->families->active($companyId) as $family) {
-            $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
-            $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
-        }
-        $subfamilyByCode = [];
-        $subfamilyByName = [];
-        foreach ($this->subfamilies->active($companyId) as $subfamily) {
-            $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
-            $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
-        }
+            $supplierByCode = [];
+            $supplierByName = [];
+            foreach ($this->suppliers->active($companyId) as $supplier) {
+                $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
+                $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
+            }
+            $familyByCode = [];
+            $familyByName = [];
+            foreach ($this->families->active($companyId) as $family) {
+                $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
+                $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
+            }
+            $subfamilyByCode = [];
+            $subfamilyByName = [];
+            foreach ($this->subfamilies->active($companyId) as $subfamily) {
+                $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
+                $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
+            }
 
-        $file = new SplFileObject($path, 'r');
-        $file->setFlags(SplFileObject::READ_CSV);
-        $file->setCsvControl($delimiter);
-        $file->seek($nextLine);
+            $file = new SplFileObject($path, 'r');
+            $file->setFlags(SplFileObject::READ_CSV);
+            $file->setCsvControl($delimiter);
+            $file->seek($nextLine);
 
-        $processedInChunk = 0;
-        while (!$file->eof() && $processedInChunk < $chunkSize) {
+            $processedInChunk = 0;
+            while (!$file->eof() && $processedInChunk < $chunkSize) {
             $row = $file->current();
             $file->next();
             $nextLine++;
@@ -323,33 +328,40 @@ class ProductsController extends Controller
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
             $job['created_rows'] = (int)($job['created_rows'] ?? 0) + 1;
-        }
-
-        $job['next_line'] = $nextLine;
-        if ($file->eof()) {
-            $job['done'] = true;
-            @unlink($path);
-            audit($this->db, Auth::user()['id'], 'create', 'products');
-            flash('success', 'Carga masiva finalizada: ' . (int)$job['created_rows'] . ' producto(s) creados.');
-            if (!empty($job['errors'])) {
-                flash('error', 'Se detectaron filas con error: ' . implode(' | ', array_slice((array)$job['errors'], 0, 8)));
             }
-            unset($_SESSION['products_bulk_jobs'][$jobId]);
-        } else {
-            $_SESSION['products_bulk_jobs'][$jobId] = $job;
-        }
 
-        $total = max(1, (int)($job['total_rows'] ?? 1));
-        $processed = (int)($job['processed_rows'] ?? 0);
-        $progress = min(100, (int)round(($processed / $total) * 100));
-        $this->jsonBulk([
-            'ok' => true,
-            'done' => (bool)($job['done'] ?? false),
-            'processed' => $processed,
-            'created' => (int)($job['created_rows'] ?? 0),
-            'total' => $total,
-            'progress' => $progress,
-        ]);
+            $job['next_line'] = $nextLine;
+            if ($file->eof()) {
+                $job['done'] = true;
+                @unlink($path);
+                audit($this->db, Auth::user()['id'], 'create', 'products');
+                flash('success', 'Carga masiva finalizada: ' . (int)$job['created_rows'] . ' producto(s) creados.');
+                if (!empty($job['errors'])) {
+                    flash('error', 'Se detectaron filas con error: ' . implode(' | ', array_slice((array)$job['errors'], 0, 8)));
+                }
+                unset($_SESSION['products_bulk_jobs'][$jobId]);
+            } else {
+                $_SESSION['products_bulk_jobs'][$jobId] = $job;
+            }
+
+            $total = max(1, (int)($job['total_rows'] ?? 1));
+            $processed = (int)($job['processed_rows'] ?? 0);
+            $progress = min(100, (int)round(($processed / $total) * 100));
+            $this->jsonBulk([
+                'ok' => true,
+                'done' => (bool)($job['done'] ?? false),
+                'processed' => $processed,
+                'created' => (int)($job['created_rows'] ?? 0),
+                'total' => $total,
+                'progress' => $progress,
+            ]);
+        } catch (Throwable $exception) {
+            log_message('error', 'bulkProcess error: ' . $exception->getMessage());
+            $this->jsonBulk([
+                'ok' => false,
+                'message' => 'Error interno durante la carga: ' . $exception->getMessage(),
+            ]);
+        }
     }
 
     private function jsonBulk(array $payload): void
@@ -372,18 +384,21 @@ class ProductsController extends Controller
         $sharedStrings = [];
         $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
         if ($sharedXml !== false) {
-            $shared = simplexml_load_string($sharedXml);
-            if ($shared !== false && isset($shared->si)) {
-                foreach ($shared->si as $stringItem) {
-                    $text = '';
-                    if (isset($stringItem->t)) {
-                        $text = (string)$stringItem->t;
-                    } elseif (isset($stringItem->r)) {
-                        foreach ($stringItem->r as $run) {
-                            $text .= (string)($run->t ?? '');
+            $sharedDoc = new DOMDocument();
+            if (@$sharedDoc->loadXML($sharedXml)) {
+                $sharedXpath = new DOMXPath($sharedDoc);
+                $items = $sharedXpath->query('//*[local-name()="si"]');
+                if ($items) {
+                    foreach ($items as $item) {
+                        $parts = $sharedXpath->query('.//*[local-name()="t"]', $item);
+                        $text = '';
+                        if ($parts) {
+                            foreach ($parts as $part) {
+                                $text .= $part->textContent;
+                            }
                         }
+                        $sharedStrings[] = $text;
                     }
-                    $sharedStrings[] = $text;
                 }
             }
         }
@@ -403,8 +418,13 @@ class ProductsController extends Controller
             return false;
         }
 
-        $sheet = simplexml_load_string($sheetXml);
-        if ($sheet === false || !isset($sheet->sheetData)) {
+        $sheetDoc = new DOMDocument();
+        if (!@$sheetDoc->loadXML($sheetXml)) {
+            return false;
+        }
+        $xpath = new DOMXPath($sheetDoc);
+        $rows = $xpath->query('//*[local-name()="sheetData"]/*[local-name()="row"]');
+        if (!$rows) {
             return false;
         }
 
@@ -413,21 +433,32 @@ class ProductsController extends Controller
             return false;
         }
 
-        foreach ($sheet->sheetData->row as $row) {
+        foreach ($rows as $row) {
             $rowData = [];
-            foreach ($row->c as $cell) {
-                $cellRef = (string)($cell['r'] ?? '');
+            $cells = $xpath->query('./*[local-name()="c"]', $row);
+            if (!$cells) {
+                continue;
+            }
+            foreach ($cells as $cell) {
+                $cellRef = (string)$cell->getAttribute('r');
                 $columnIndex = $this->columnIndexFromCellRef($cellRef);
-                $type = (string)($cell['t'] ?? '');
+                $type = (string)$cell->getAttribute('t');
                 $value = '';
 
                 if ($type === 's') {
-                    $sharedIndex = (int)($cell->v ?? 0);
+                    $valueNodes = $xpath->query('./*[local-name()="v"]', $cell);
+                    $sharedIndex = $valueNodes && $valueNodes->length > 0 ? (int)$valueNodes->item(0)->textContent : 0;
                     $value = (string)($sharedStrings[$sharedIndex] ?? '');
                 } elseif ($type === 'inlineStr') {
-                    $value = (string)($cell->is->t ?? '');
+                    $inlineNodes = $xpath->query('./*[local-name()="is"]//*[local-name()="t"]', $cell);
+                    if ($inlineNodes) {
+                        foreach ($inlineNodes as $inlineNode) {
+                            $value .= $inlineNode->textContent;
+                        }
+                    }
                 } else {
-                    $value = (string)($cell->v ?? '');
+                    $valueNodes = $xpath->query('./*[local-name()="v"]', $cell);
+                    $value = $valueNodes && $valueNodes->length > 0 ? (string)$valueNodes->item(0)->textContent : '';
                 }
                 if ($columnIndex >= 0) {
                     $rowData[$columnIndex] = $value;
