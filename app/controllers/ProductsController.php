@@ -66,6 +66,7 @@ class ProductsController extends Controller
     {
         $this->requireLogin();
         $companyId = $this->requireCompany();
+        $jobId = trim((string)($_GET['job_id'] ?? ''));
 
         $this->render('products/bulk', [
             'title' => 'Carga masiva de productos',
@@ -74,7 +75,392 @@ class ProductsController extends Controller
             'companies' => $this->companies->active(),
             'families' => $this->families->active($companyId),
             'subfamilies' => $this->subfamilies->active($companyId),
+            'bulkJobId' => $jobId,
         ]);
+    }
+
+    public function bulkStart(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+
+        $selectedCompanyId = (int)($_POST['default_competitor_company_id'] ?? 0);
+        $defaultCompetitor = $this->resolveDefaultCompetitorCompany($companyId, $selectedCompanyId);
+        if (!$defaultCompetitor) {
+            flash('error', 'Selecciona una empresa para usarla como competencia en la carga masiva.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $file = $_FILES['bulk_file'] ?? null;
+        if (!$file || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            flash('error', 'Debes seleccionar un archivo CSV válido.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $originalName = (string)($file['name'] ?? 'import.csv');
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $basePath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'seim_products_import_' . uniqid('', true);
+        $uploadedPath = $basePath . '.' . ($extension !== '' ? $extension : 'csv');
+        if (!move_uploaded_file((string)($file['tmp_name'] ?? ''), $uploadedPath)) {
+            flash('error', 'No fue posible preparar el archivo para la carga masiva.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $destination = $uploadedPath;
+        if ($extension === 'xlsx') {
+            $csvPath = $basePath . '.csv';
+            if (!$this->convertXlsxToCsv($uploadedPath, $csvPath)) {
+                @unlink($uploadedPath);
+                flash('error', 'No fue posible leer el archivo XLSX. Guarda el archivo en CSV UTF-8 o revisa que no esté dañado.');
+                $this->redirect('index.php?route=products/bulk');
+            }
+            @unlink($uploadedPath);
+            $destination = $csvPath;
+        }
+
+        $handle = fopen($destination, 'r');
+        if ($handle === false) {
+            flash('error', 'No fue posible abrir el archivo.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+        $firstLine = fgets($handle);
+        if ($firstLine === false) {
+            fclose($handle);
+            flash('error', 'El archivo está vacío.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
+        $delimiterCandidates = [',', ';', "\t"];
+        $detectedDelimiter = ',';
+        $bestCount = -1;
+        foreach ($delimiterCandidates as $candidate) {
+            $count = substr_count($firstLine, $candidate);
+            if ($count > $bestCount) {
+                $bestCount = $count;
+                $detectedDelimiter = $candidate;
+            }
+        }
+        rewind($handle);
+        $header = fgetcsv($handle, 0, $detectedDelimiter);
+        fclose($handle);
+        if (!$header) {
+            flash('error', 'El archivo está vacío.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+        if (isset($header[0])) {
+            $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string)$header[0]) ?? (string)$header[0];
+        }
+        $header = array_map(static fn($value): string => strtolower(trim((string)$value)), $header);
+
+        $fileObject = new SplFileObject($destination, 'r');
+        $fileObject->seek(PHP_INT_MAX);
+        $totalRows = max(0, (int)$fileObject->key());
+
+        $jobId = 'job_' . bin2hex(random_bytes(8));
+        if (!isset($_SESSION['products_bulk_jobs']) || !is_array($_SESSION['products_bulk_jobs'])) {
+            $_SESSION['products_bulk_jobs'] = [];
+        }
+        $_SESSION['products_bulk_jobs'][$jobId] = [
+            'company_id' => $companyId,
+            'competitor_company_id' => (int)$defaultCompetitor['id'],
+            'path' => $destination,
+            'delimiter' => $detectedDelimiter,
+            'header' => $header,
+            'next_line' => 1,
+            'total_rows' => $totalRows,
+            'processed_rows' => 0,
+            'created_rows' => 0,
+            'errors' => [],
+            'done' => false,
+        ];
+
+        $this->redirect('index.php?route=products/bulk&job_id=' . urlencode($jobId));
+    }
+
+    public function bulkProcess(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $jobId = trim((string)($_POST['job_id'] ?? ''));
+        $jobs = $_SESSION['products_bulk_jobs'] ?? [];
+        $job = $jobs[$jobId] ?? null;
+        if (!$job || (int)($job['company_id'] ?? 0) !== $companyId) {
+            $this->jsonBulk(['ok' => false, 'message' => 'Proceso de carga no válido.']);
+            return;
+        }
+
+        $path = (string)($job['path'] ?? '');
+        if ($path === '' || !is_file($path)) {
+            $this->jsonBulk(['ok' => false, 'message' => 'El archivo temporal no existe.']);
+            return;
+        }
+
+        $delimiter = (string)($job['delimiter'] ?? ',');
+        $header = (array)($job['header'] ?? []);
+        $nextLine = (int)($job['next_line'] ?? 1);
+        $chunkSize = 150;
+
+        $defaultCompetitor = $this->competitors->findForCompany((int)($job['competitor_company_id'] ?? 0), $companyId);
+        if (!$defaultCompetitor) {
+            $this->jsonBulk(['ok' => false, 'message' => 'No se encontró empresa competencia para el proceso.']);
+            return;
+        }
+
+        $supplierByCode = [];
+        $supplierByName = [];
+        foreach ($this->suppliers->active($companyId) as $supplier) {
+            $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
+            $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
+        }
+        $familyByCode = [];
+        $familyByName = [];
+        foreach ($this->families->active($companyId) as $family) {
+            $familyByCode[strtoupper(trim((string)($family['code'] ?? '')))] = $family;
+            $familyByName[strtoupper(trim((string)($family['name'] ?? '')))] = $family;
+        }
+        $subfamilyByCode = [];
+        $subfamilyByName = [];
+        foreach ($this->subfamilies->active($companyId) as $subfamily) {
+            $subfamilyByCode[strtoupper(trim((string)($subfamily['code'] ?? '')))] = $subfamily;
+            $subfamilyByName[strtoupper(trim((string)($subfamily['name'] ?? '')))] = $subfamily;
+        }
+
+        $file = new SplFileObject($path, 'r');
+        $file->setFlags(SplFileObject::READ_CSV);
+        $file->setCsvControl($delimiter);
+        $file->seek($nextLine);
+
+        $processedInChunk = 0;
+        while (!$file->eof() && $processedInChunk < $chunkSize) {
+            $row = $file->current();
+            $file->next();
+            $nextLine++;
+            $processedInChunk++;
+            $job['processed_rows'] = (int)($job['processed_rows'] ?? 0) + 1;
+
+            if (!is_array($row) || count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
+                continue;
+            }
+
+            $data = [];
+            foreach ($header as $index => $column) {
+                $data[$column] = trim((string)($row[$index] ?? ''));
+            }
+            $name = trim((string)($data['name'] ?? $data['nombre'] ?? ''));
+            $sku = trim((string)($data['sku'] ?? $data['codigo_sku'] ?? $data['codigo'] ?? ''));
+            if ($name === '' || $sku === '') {
+                $job['errors'][] = 'Fila ' . $nextLine . ': nombre o SKU faltante.';
+                continue;
+            }
+
+            $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
+            $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
+            $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
+            $familyName = trim((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
+            $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
+            $subfamilyName = trim((string)($data['subfamily'] ?? $data['subfamily_name'] ?? $data['subfamilia'] ?? ''));
+
+            $supplier = null;
+            if ($supplierCode !== '' || $supplierName !== '') {
+                $supplier = $supplierByCode[$supplierCode] ?? null;
+                if (!$supplier && $supplierCode !== '') {
+                    $supplier = $supplierByName[$supplierCode] ?? null;
+                }
+                if (!$supplier && $supplierName !== '') {
+                    $supplier = $supplierByName[$supplierName] ?? null;
+                }
+            }
+
+            if ($familyName === '' && ($familyCode !== '' && (strlen($familyCode) > 3 || str_contains($familyCode, ' ')))) {
+                $familyName = $familyCode;
+                $familyCode = '';
+            }
+            if ($subfamilyName === '' && ($subfamilyCode !== '' && (strlen($subfamilyCode) > 3 || str_contains($subfamilyCode, ' ')))) {
+                $subfamilyName = $subfamilyCode;
+                $subfamilyCode = '';
+            }
+
+            $family = null;
+            if ($familyCode !== '' || strtoupper($familyName) !== '') {
+                $family = $this->resolveOrCreateFamily($companyId, $familyCode, $familyName, $familyByCode, $familyByName);
+            }
+            $subfamily = null;
+            if ($subfamilyCode !== '' || strtoupper($subfamilyName) !== '') {
+                if (!$family) {
+                    $familyFallbackName = $familyName !== '' ? $familyName : ('Familia ' . ($subfamilyName !== '' ? $subfamilyName : $subfamilyCode));
+                    $family = $this->resolveOrCreateFamily($companyId, $familyCode, $familyFallbackName, $familyByCode, $familyByName);
+                }
+                if ($family) {
+                    $subfamily = $this->resolveOrCreateSubfamily($companyId, (int)$family['id'], $subfamilyCode, $subfamilyName, $subfamilyByCode, $subfamilyByName);
+                }
+            }
+
+            $competitionCode = ($family && $subfamily) ? $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily) : null;
+            $supplierCodeGenerated = ($supplier && $family && $subfamily) ? $this->buildSupplierCode($companyId, $supplier, $family, $subfamily) : null;
+            $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
+
+            $this->products->create([
+                'company_id' => $companyId,
+                'supplier_id' => $supplier ? (int)$supplier['id'] : null,
+                'competitor_company_id' => (int)$defaultCompetitor['id'],
+                'family_id' => $family ? (int)$family['id'] : null,
+                'subfamily_id' => $subfamily ? (int)$subfamily['id'] : null,
+                'competition_code' => $competitionCode,
+                'supplier_code' => $supplierCodeGenerated,
+                'supplier_price' => (float)($data['supplier_price'] ?? 0),
+                'competition_price' => (float)($data['competition_price'] ?? 0),
+                'name' => $name,
+                'sku' => $sku,
+                'description' => trim((string)($data['description'] ?? '')),
+                'price' => (float)($data['price'] ?? 0),
+                'cost' => (float)($data['cost'] ?? 0),
+                'stock' => max(0, (int)($data['stock'] ?? 0)),
+                'stock_min' => max(0, (int)($data['stock_min'] ?? 0)),
+                'status' => $status,
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            $job['created_rows'] = (int)($job['created_rows'] ?? 0) + 1;
+        }
+
+        $job['next_line'] = $nextLine;
+        if ($file->eof()) {
+            $job['done'] = true;
+            @unlink($path);
+            audit($this->db, Auth::user()['id'], 'create', 'products');
+            flash('success', 'Carga masiva finalizada: ' . (int)$job['created_rows'] . ' producto(s) creados.');
+            if (!empty($job['errors'])) {
+                flash('error', 'Se detectaron filas con error: ' . implode(' | ', array_slice((array)$job['errors'], 0, 8)));
+            }
+            unset($_SESSION['products_bulk_jobs'][$jobId]);
+        } else {
+            $_SESSION['products_bulk_jobs'][$jobId] = $job;
+        }
+
+        $total = max(1, (int)($job['total_rows'] ?? 1));
+        $processed = (int)($job['processed_rows'] ?? 0);
+        $progress = min(100, (int)round(($processed / $total) * 100));
+        $this->jsonBulk([
+            'ok' => true,
+            'done' => (bool)($job['done'] ?? false),
+            'processed' => $processed,
+            'created' => (int)($job['created_rows'] ?? 0),
+            'total' => $total,
+            'progress' => $progress,
+        ]);
+    }
+
+    private function jsonBulk(array $payload): void
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode($payload);
+        exit;
+    }
+
+    private function convertXlsxToCsv(string $xlsxPath, string $csvPath): bool
+    {
+        if (!class_exists('ZipArchive')) {
+            return false;
+        }
+        $zip = new ZipArchive();
+        if ($zip->open($xlsxPath) !== true) {
+            return false;
+        }
+
+        $sharedStrings = [];
+        $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
+        if ($sharedXml !== false) {
+            $shared = simplexml_load_string($sharedXml);
+            if ($shared !== false && isset($shared->si)) {
+                foreach ($shared->si as $stringItem) {
+                    $text = '';
+                    if (isset($stringItem->t)) {
+                        $text = (string)$stringItem->t;
+                    } elseif (isset($stringItem->r)) {
+                        foreach ($stringItem->r as $run) {
+                            $text .= (string)($run->t ?? '');
+                        }
+                    }
+                    $sharedStrings[] = $text;
+                }
+            }
+        }
+
+        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
+        if ($sheetXml === false) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $name = $zip->getNameIndex($i);
+                if (str_starts_with($name, 'xl/worksheets/sheet') && str_ends_with($name, '.xml')) {
+                    $sheetXml = $zip->getFromName($name);
+                    break;
+                }
+            }
+        }
+        $zip->close();
+        if ($sheetXml === false) {
+            return false;
+        }
+
+        $sheet = simplexml_load_string($sheetXml);
+        if ($sheet === false || !isset($sheet->sheetData)) {
+            return false;
+        }
+
+        $output = fopen($csvPath, 'w');
+        if ($output === false) {
+            return false;
+        }
+
+        foreach ($sheet->sheetData->row as $row) {
+            $rowData = [];
+            foreach ($row->c as $cell) {
+                $cellRef = (string)($cell['r'] ?? '');
+                $columnIndex = $this->columnIndexFromCellRef($cellRef);
+                $type = (string)($cell['t'] ?? '');
+                $value = '';
+
+                if ($type === 's') {
+                    $sharedIndex = (int)($cell->v ?? 0);
+                    $value = (string)($sharedStrings[$sharedIndex] ?? '');
+                } elseif ($type === 'inlineStr') {
+                    $value = (string)($cell->is->t ?? '');
+                } else {
+                    $value = (string)($cell->v ?? '');
+                }
+                if ($columnIndex >= 0) {
+                    $rowData[$columnIndex] = $value;
+                }
+            }
+            if (!empty($rowData)) {
+                ksort($rowData);
+                $lastIndex = max(array_keys($rowData));
+                $ordered = array_fill(0, $lastIndex + 1, '');
+                foreach ($rowData as $index => $value) {
+                    $ordered[$index] = $value;
+                }
+                fputcsv($output, $ordered);
+            }
+        }
+        fclose($output);
+        return true;
+    }
+
+    private function columnIndexFromCellRef(string $cellRef): int
+    {
+        if ($cellRef === '') {
+            return -1;
+        }
+        if (!preg_match('/^([A-Z]+)/', strtoupper($cellRef), $matches)) {
+            return -1;
+        }
+        $letters = $matches[1];
+        $index = 0;
+        for ($i = 0; $i < strlen($letters); $i++) {
+            $index = $index * 26 + (ord($letters[$i]) - 64);
+        }
+        return $index - 1;
     }
 
     public function bulkTemplate(): void
@@ -125,6 +511,9 @@ class ProductsController extends Controller
 
     public function bulkStore(): void
     {
+        $this->bulkStart();
+        return;
+
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
