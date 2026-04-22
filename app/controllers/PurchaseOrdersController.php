@@ -157,6 +157,34 @@ class PurchaseOrdersController extends Controller
         ]);
     }
 
+    public function edit(): void
+    {
+        $this->show();
+    }
+
+    public function delete(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $id = (int)($_POST['id'] ?? 0);
+        $order = $this->orders->findForCompany($id, $companyId);
+        if (!$order) {
+            flash('error', 'Orden de compra no encontrada.');
+            $this->redirect('index.php?route=purchase-orders');
+        }
+
+        $deleted = $this->orders->softDelete($id);
+        if ($deleted) {
+            audit($this->db, Auth::user()['id'], 'delete', 'purchase_orders', $id);
+            flash('success', 'Orden de compra eliminada correctamente.');
+        } else {
+            flash('error', 'No se pudo eliminar la orden de compra.');
+        }
+
+        $this->redirect('index.php?route=purchase-orders');
+    }
+
 
     public function print(): void
     {
