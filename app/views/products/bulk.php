@@ -24,7 +24,7 @@
             <div class="col-md-8">
                 <label class="form-label">Archivo CSV</label>
                 <input type="file" name="bulk_file" class="form-control" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
-                <div class="form-text">Puedes subir CSV o XLSX (primera hoja). Para evitar timeouts, recomendamos bloques de hasta 500 filas.</div>
+                <div class="form-text">Puedes subir CSV o XLSX (primera hoja). Para archivos grandes, usa CSV UTF-8 (XLSX grande puede provocar timeout).</div>
             </div>
             <div class="col-md-12 d-flex align-items-end">
                 <button type="submit" class="btn btn-primary w-100">Procesar carga masiva</button>
@@ -50,14 +50,19 @@
                     const text = document.getElementById('bulk-progress-text');
 
                     async function step() {
+                        text.textContent = 'Procesando lote...';
                         const body = new URLSearchParams();
                         body.set('csrf_token', csrf);
                         body.set('job_id', jobId);
+                        const controller = new AbortController();
+                        const timeoutId = setTimeout(() => controller.abort(), 20000);
                         const response = await fetch('index.php?route=products/bulk-process', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
-                            body: body.toString()
+                            body: body.toString(),
+                            signal: controller.signal
                         });
+                        clearTimeout(timeoutId);
                         const raw = await response.text();
                         let result = null;
                         try {

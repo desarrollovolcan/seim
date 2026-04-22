@@ -109,6 +109,12 @@ class ProductsController extends Controller
 
         $destination = $uploadedPath;
         if ($extension === 'xlsx') {
+            $fileSize = (int)($file['size'] ?? 0);
+            if ($fileSize > 5 * 1024 * 1024) {
+                @unlink($uploadedPath);
+                flash('error', 'El archivo XLSX es muy grande para procesarlo en web sin timeout. Guárdalo como CSV UTF-8 y vuelve a subirlo.');
+                $this->redirect('index.php?route=products/bulk');
+            }
             $csvPath = $basePath . '.csv';
             if (!$this->convertXlsxToCsv($uploadedPath, $csvPath)) {
                 @unlink($uploadedPath);
@@ -205,7 +211,8 @@ class ProductsController extends Controller
             $delimiter = (string)($job['delimiter'] ?? ',');
             $header = (array)($job['header'] ?? []);
             $nextLine = (int)($job['next_line'] ?? 1);
-            $chunkSize = 150;
+            $chunkSize = 25;
+            $chunkTimeLimit = 1.5;
 
             $defaultCompetitor = $this->competitors->findForCompany((int)($job['competitor_company_id'] ?? 0), $companyId);
             if (!$defaultCompetitor) {
@@ -238,7 +245,12 @@ class ProductsController extends Controller
             $file->seek($nextLine);
 
             $processedInChunk = 0;
-            while (!$file->eof() && $processedInChunk < $chunkSize) {
+            $startedAt = microtime(true);
+            while (
+                !$file->eof()
+                && $processedInChunk < $chunkSize
+                && (microtime(true) - $startedAt) < $chunkTimeLimit
+            ) {
             $row = $file->current();
             $file->next();
             $nextLine++;
