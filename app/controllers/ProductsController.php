@@ -147,7 +147,27 @@ class ProductsController extends Controller
             $this->redirect('index.php?route=products/bulk');
         }
 
-        $header = fgetcsv($handle);
+        $firstLine = fgets($handle);
+        if ($firstLine === false) {
+            fclose($handle);
+            flash('error', 'El archivo está vacío.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
+        $firstLine = preg_replace('/^\xEF\xBB\xBF/', '', $firstLine) ?? $firstLine;
+        $delimiterCandidates = [',', ';', "\t"];
+        $detectedDelimiter = ',';
+        $bestCount = -1;
+        foreach ($delimiterCandidates as $candidate) {
+            $count = substr_count($firstLine, $candidate);
+            if ($count > $bestCount) {
+                $bestCount = $count;
+                $detectedDelimiter = $candidate;
+            }
+        }
+
+        rewind($handle);
+        $header = fgetcsv($handle, 0, $detectedDelimiter);
         if (!$header) {
             fclose($handle);
             flash('error', 'El archivo está vacío.');
@@ -192,7 +212,7 @@ class ProductsController extends Controller
         $rowNumber = 1;
         $created = 0;
         $errors = [];
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, $detectedDelimiter)) !== false) {
             $rowNumber++;
             if (count(array_filter($row, static fn($value): bool => trim((string)$value) !== '')) === 0) {
                 continue;
