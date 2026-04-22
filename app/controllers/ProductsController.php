@@ -4,6 +4,7 @@ class ProductsController extends Controller
 {
     private ProductsModel $products;
     private SuppliersModel $suppliers;
+    private CompaniesModel $companies;
     private ProductFamiliesModel $families;
     private ProductSubfamiliesModel $subfamilies;
     private CompetitorCompaniesModel $competitors;
@@ -13,6 +14,7 @@ class ProductsController extends Controller
         parent::__construct($config, $db);
         $this->products = new ProductsModel($db);
         $this->suppliers = new SuppliersModel($db);
+        $this->companies = new CompaniesModel($db);
         $this->families = new ProductFamiliesModel($db);
         $this->subfamilies = new ProductSubfamiliesModel($db);
         $this->competitors = new CompetitorCompaniesModel($db);
@@ -60,88 +62,6 @@ class ProductsController extends Controller
         ]);
     }
 
-    public function export(): void
-    {
-        $this->requireLogin();
-        $companyId = $this->requireCompany();
-        $products = $this->products->active($companyId);
-
-        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
-        header('Content-Disposition: attachment; filename="productos_' . date('Ymd_His') . '.xls"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        echo '<html><head><meta charset="UTF-8">';
-        echo '<style>';
-        echo 'table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;width:100%;}';
-        echo 'th,td{border:1px solid #777;padding:6px 8px;vertical-align:top;}';
-        echo 'th{background:#e6e6e6;font-weight:bold;text-align:center;}';
-        echo '.text-right{text-align:right;}';
-        echo '.text-center{text-align:center;}';
-        echo '.title{font-size:16px;font-weight:bold;margin-bottom:8px;}';
-        echo '.meta{color:#555;margin-bottom:10px;}';
-        echo '</style>';
-        echo '</head><body>';
-        echo '<div class="title">Listado completo de productos</div>';
-        echo '<div class="meta">Generado: ' . e(date('d-m-Y H:i:s')) . '</div>';
-
-        echo '<table>';
-        echo '<thead><tr>';
-        echo '<th>ID</th>';
-        echo '<th>Nombre</th>';
-        echo '<th>SKU</th>';
-        echo '<th>Descripción</th>';
-        echo '<th>Estado</th>';
-        echo '<th>Proveedor</th>';
-        echo '<th>Código proveedor</th>';
-        echo '<th>Empresa competencia</th>';
-        echo '<th>Código competencia</th>';
-        echo '<th>Familia</th>';
-        echo '<th>Subfamilia</th>';
-        echo '<th>Precio proveedor</th>';
-        echo '<th>Precio competencia</th>';
-        echo '<th>Precio venta</th>';
-        echo '<th>Costo</th>';
-        echo '<th>Stock</th>';
-        echo '<th>Stock mínimo</th>';
-        echo '<th>Foto 1</th>';
-        echo '<th>Foto 2</th>';
-        echo '<th>Creado</th>';
-        echo '<th>Actualizado</th>';
-        echo '</tr></thead><tbody>';
-
-        foreach ($products as $product) {
-            $createdAt = trim((string)($product['created_at'] ?? ''));
-            $updatedAt = trim((string)($product['updated_at'] ?? ''));
-            echo '<tr>';
-            echo '<td class="text-center">' . (int)($product['id'] ?? 0) . '</td>';
-            echo '<td>' . e((string)($product['name'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['sku'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['description'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['status'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['supplier_name'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['supplier_code'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['competitor_company_name'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['competition_code'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['family_name'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['subfamily_name'] ?? '')) . '</td>';
-            echo '<td class="text-right">' . number_format((float)($product['supplier_price'] ?? 0), 2, ',', '.') . '</td>';
-            echo '<td class="text-right">' . number_format((float)($product['competition_price'] ?? 0), 2, ',', '.') . '</td>';
-            echo '<td class="text-right">' . number_format((float)($product['price'] ?? 0), 2, ',', '.') . '</td>';
-            echo '<td class="text-right">' . number_format((float)($product['cost'] ?? 0), 2, ',', '.') . '</td>';
-            echo '<td class="text-right">' . (int)($product['stock'] ?? 0) . '</td>';
-            echo '<td class="text-right">' . (int)($product['stock_min'] ?? 0) . '</td>';
-            echo '<td>' . e((string)($product['photo_1'] ?? '')) . '</td>';
-            echo '<td>' . e((string)($product['photo_2'] ?? '')) . '</td>';
-            echo '<td>' . e($createdAt !== '' ? date('d-m-Y H:i', strtotime($createdAt)) : '') . '</td>';
-            echo '<td>' . e($updatedAt !== '' ? date('d-m-Y H:i', strtotime($updatedAt)) : '') . '</td>';
-            echo '</tr>';
-        }
-
-        echo '</tbody></table></body></html>';
-        exit;
-    }
-
     public function bulk(): void
     {
         $this->requireLogin();
@@ -151,9 +71,9 @@ class ProductsController extends Controller
             'title' => 'Carga masiva de productos',
             'pageTitle' => 'Carga masiva de productos',
             'suppliers' => $this->suppliers->active($companyId),
+            'companies' => $this->companies->active(),
             'families' => $this->families->active($companyId),
             'subfamilies' => $this->subfamilies->active($companyId),
-            'competitors' => $this->competitors->active($companyId),
         ]);
     }
 
@@ -162,7 +82,6 @@ class ProductsController extends Controller
         $this->requireLogin();
         $companyId = $this->requireCompany();
         $supplier = $this->suppliers->active($companyId)[0] ?? null;
-        $competitor = $this->competitors->active($companyId)[0] ?? null;
         $family = $this->families->active($companyId)[0] ?? null;
         $subfamily = $this->subfamilies->active($companyId)[0] ?? null;
 
@@ -175,7 +94,6 @@ class ProductsController extends Controller
             'sku',
             'description',
             'supplier_code',
-            'competitor_code',
             'family_code',
             'subfamily_code',
             'supplier_price',
@@ -191,7 +109,6 @@ class ProductsController extends Controller
             'SKU-001',
             'Descripción opcional',
             strtoupper(trim((string)($supplier['code'] ?? 'PRO'))),
-            strtoupper(trim((string)($competitor['code'] ?? 'COM'))),
             strtoupper(trim((string)($family['code'] ?? 'FAM'))),
             strtoupper(trim((string)($subfamily['code'] ?? 'SUB'))),
             '1000',
@@ -211,6 +128,13 @@ class ProductsController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = $this->requireCompany();
+        $selectedCompanyId = (int)($_POST['default_competitor_company_id'] ?? 0);
+        $defaultCompetitor = $this->resolveDefaultCompetitorCompany($companyId, $selectedCompanyId);
+        if (!$defaultCompetitor) {
+            flash('error', 'Selecciona una empresa para usarla como competencia en la carga masiva.');
+            $this->redirect('index.php?route=products/bulk');
+        }
+
         $file = $_FILES['bulk_file'] ?? null;
         if (!$file || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
             flash('error', 'Debes seleccionar un archivo CSV válido.');
@@ -262,7 +186,6 @@ class ProductsController extends Controller
         $requiredColumnGroups = [
             'name' => ['name', 'nombre'],
             'supplier' => ['supplier_code', 'supplier', 'supplier_name', 'proveedor_codigo', 'proveedor'],
-            'competitor' => ['competitor_code', 'competitor_company_code', 'competitor', 'competitor_name', 'empresa_competencia_codigo', 'empresa_competencia'],
             'family' => ['family_code', 'family', 'family_name', 'familia_codigo', 'familia'],
             'subfamily' => ['subfamily_code', 'subfamily', 'subfamily_name', 'subfamilia_codigo', 'subfamilia'],
         ];
@@ -286,12 +209,6 @@ class ProductsController extends Controller
         foreach ($this->suppliers->active($companyId) as $supplier) {
             $supplierByCode[strtoupper(trim((string)($supplier['code'] ?? '')))] = $supplier;
             $supplierByName[strtoupper(trim((string)($supplier['name'] ?? '')))] = $supplier;
-        }
-        $competitorByCode = [];
-        $competitorByName = [];
-        foreach ($this->competitors->active($companyId) as $competitor) {
-            $competitorByCode[strtoupper(trim((string)($competitor['code'] ?? '')))] = $competitor;
-            $competitorByName[strtoupper(trim((string)($competitor['name'] ?? '')))] = $competitor;
         }
         $familyByCode = [];
         $familyByName = [];
@@ -327,8 +244,6 @@ class ProductsController extends Controller
 
             $supplierCode = strtoupper((string)($data['supplier_code'] ?? $data['proveedor_codigo'] ?? ''));
             $supplierName = strtoupper((string)($data['supplier'] ?? $data['supplier_name'] ?? $data['proveedor'] ?? ''));
-            $competitorCode = strtoupper((string)($data['competitor_code'] ?? $data['competitor_company_code'] ?? $data['empresa_competencia_codigo'] ?? ''));
-            $competitorName = strtoupper((string)($data['competitor'] ?? $data['competitor_name'] ?? $data['empresa_competencia'] ?? ''));
             $familyCode = strtoupper((string)($data['family_code'] ?? $data['familia_codigo'] ?? ''));
             $familyName = strtoupper((string)($data['family'] ?? $data['family_name'] ?? $data['familia'] ?? ''));
             $subfamilyCode = strtoupper((string)($data['subfamily_code'] ?? $data['subfamilia_codigo'] ?? ''));
@@ -340,14 +255,6 @@ class ProductsController extends Controller
             }
             if (!$supplier) {
                 $errors[] = "Fila {$rowNumber}: proveedor no encontrado (código: {$supplierCode}, nombre: {$supplierName}).";
-                continue;
-            }
-            $competitor = $competitorByCode[$competitorCode] ?? null;
-            if (!$competitor && $competitorName !== '') {
-                $competitor = $competitorByName[$competitorName] ?? null;
-            }
-            if (!$competitor) {
-                $errors[] = "Fila {$rowNumber}: empresa competencia no encontrada (código: {$competitorCode}, nombre: {$competitorName}).";
                 continue;
             }
             $family = $familyByCode[$familyCode] ?? null;
@@ -371,14 +278,14 @@ class ProductsController extends Controller
                 continue;
             }
 
-            $competitionCode = $this->buildCompetitionCode($companyId, $competitor, $family, $subfamily);
+            $competitionCode = $this->buildCompetitionCode($companyId, $defaultCompetitor, $family, $subfamily);
             $supplierCodeGenerated = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
             $status = strtolower((string)($data['status'] ?? 'activo')) === 'inactivo' ? 'inactivo' : 'activo';
 
             $this->products->create([
                 'company_id' => $companyId,
                 'supplier_id' => (int)$supplier['id'],
-                'competitor_company_id' => (int)$competitor['id'],
+                'competitor_company_id' => (int)$defaultCompetitor['id'],
                 'family_id' => (int)$family['id'],
                 'subfamily_id' => (int)$subfamily['id'],
                 'competition_code' => $competitionCode,
@@ -417,6 +324,68 @@ class ProductsController extends Controller
         }
 
         $this->redirect('index.php?route=products/bulk');
+    }
+
+    private function resolveDefaultCompetitorCompany(int $companyId, int $selectedCompanyId): ?array
+    {
+        if ($selectedCompanyId <= 0) {
+            return null;
+        }
+
+        $selectedCompany = $this->db->fetch(
+            'SELECT * FROM companies WHERE id = :id LIMIT 1',
+            ['id' => $selectedCompanyId]
+        );
+        if (!$selectedCompany) {
+            return null;
+        }
+
+        $competitor = $this->db->fetch(
+            'SELECT * FROM competitor_companies WHERE company_id = :company_id AND name = :name LIMIT 1',
+            [
+                'company_id' => $companyId,
+                'name' => trim((string)($selectedCompany['name'] ?? '')),
+            ]
+        );
+        if ($competitor) {
+            return $competitor;
+        }
+
+        $name = trim((string)($selectedCompany['name'] ?? ''));
+        if ($name === '') {
+            return null;
+        }
+
+        $normalizedName = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
+        if ($normalizedName === false) {
+            $normalizedName = $name;
+        }
+        $codeBase = strtoupper(preg_replace('/[^A-Z0-9]/', '', $normalizedName) ?? '');
+        if ($codeBase === '') {
+            $codeBase = 'EMP';
+        }
+        $code = substr($codeBase, 0, 4);
+        $index = 1;
+        while ($this->db->fetch(
+            'SELECT id FROM competitor_companies WHERE company_id = :company_id AND code = :code LIMIT 1',
+            ['company_id' => $companyId, 'code' => $code]
+        )) {
+            $index++;
+            $code = substr($codeBase, 0, 3) . $index;
+        }
+
+        $competitorId = $this->competitors->create([
+            'company_id' => $companyId,
+            'name' => $name,
+            'code' => $code,
+            'rut' => $selectedCompany['rut'] ?? null,
+            'email' => $selectedCompany['email'] ?? null,
+            'address' => $selectedCompany['address'] ?? null,
+            'created_at' => date('Y-m-d H:i:s'),
+            'updated_at' => date('Y-m-d H:i:s'),
+        ]);
+
+        return $this->competitors->findForCompany((int)$competitorId, $companyId);
     }
 
     public function store(): void

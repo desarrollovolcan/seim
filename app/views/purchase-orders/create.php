@@ -193,6 +193,7 @@ $selectedReference = (string)($order['reference'] ?? '');
             const supplierText = document.querySelector('select[name="supplier_id"] option:checked')?.textContent?.trim() || 'Sin proveedor';
             const orderDate = document.querySelector('input[name="order_date"]')?.value || '';
             const reference = document.querySelector('input[name="reference"]')?.value || 'Sin referencia';
+            const quoteReference = document.querySelector('input[name="quote_reference"]')?.value || 'Sin cotización';
             const notes = document.querySelector('textarea[name="notes"]')?.value || '';
             const terms = document.querySelector('textarea[name="terms"]')?.value || '';
             const rows = [...tableBody.querySelectorAll('.item-row')]
@@ -213,7 +214,7 @@ $selectedReference = (string)($order['reference'] ?? '');
             printWindow.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Vista previa orden de compra</title><style>
                 body{font-family:Arial,sans-serif;color:#1f2937;padding:24px} h1{margin:0 0 6px;font-size:24px} .muted{color:#6b7280} table{width:100%;border-collapse:collapse;margin-top:16px} th,td{border:1px solid #d1d5db;padding:8px;font-size:12px} th{background:#eff6ff} .top{display:flex;justify-content:space-between;gap:16px;margin-bottom:12px}.box{border:1px solid #d1d5db;border-radius:8px;padding:10px;flex:1} .footer{margin-top:40px;display:flex;justify-content:space-between;gap:24px}.sign{flex:1;text-align:center}.line{border-top:1px solid #374151;margin-top:42px;padding-top:8px} .total{margin-top:10px;text-align:right;font-weight:bold}
             </style></head><body>
-            <h1>Orden de compra</h1><div class="muted">Referencia: ${reference}</div>
+            <h1>Orden de compra</h1><div class="muted">Referencia OC: ${reference}</div><div class="muted">Referencia cotización: ${quoteReference}</div>
             <div class="top"><div class="box"><strong>Proveedor</strong><div>${supplierText}</div></div><div class="box"><strong>Fecha</strong><div>${orderDate}</div></div></div>
             <table><thead><tr><th>#</th><th>Producto</th><th>Cantidad</th><th>Costo unitario</th><th>Subtotal</th></tr></thead><tbody>${rows || '<tr><td colspan="5" style="text-align:center">Sin productos</td></tr>'}</tbody></table>
             <div class="total">Total: ${total}</div>

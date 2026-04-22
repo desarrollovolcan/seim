@@ -1,2 +1,2 @@
-name,sku,description,supplier_code,competitor_code,family_code,subfamily_code,supplier_price,competition_price,price,cost,stock,stock_min,status
-Producto de ejemplo,SKU-001,Descripción opcional,PRO,COM,FAM,SUB,1000,1200,1500,800,10,2,activo
+name,sku,description,supplier_code,family_code,subfamily_code,supplier_price,competition_price,price,cost,stock,stock_min,status
+Producto de ejemplo,SKU-001,Descripción opcional,PRO,FAM,SUB,1000,1200,1500,800,10,2,activo
