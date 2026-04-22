@@ -60,6 +60,88 @@ class ProductsController extends Controller
         ]);
     }
 
+    public function export(): void
+    {
+        $this->requireLogin();
+        $companyId = $this->requireCompany();
+        $products = $this->products->active($companyId);
+
+        header('Content-Type: application/vnd.ms-excel; charset=utf-8');
+        header('Content-Disposition: attachment; filename="productos_' . date('Ymd_His') . '.xls"');
+        header('Pragma: no-cache');
+        header('Expires: 0');
+
+        echo '<html><head><meta charset="UTF-8">';
+        echo '<style>';
+        echo 'table{border-collapse:collapse;font-family:Arial,sans-serif;font-size:12px;width:100%;}';
+        echo 'th,td{border:1px solid #777;padding:6px 8px;vertical-align:top;}';
+        echo 'th{background:#e6e6e6;font-weight:bold;text-align:center;}';
+        echo '.text-right{text-align:right;}';
+        echo '.text-center{text-align:center;}';
+        echo '.title{font-size:16px;font-weight:bold;margin-bottom:8px;}';
+        echo '.meta{color:#555;margin-bottom:10px;}';
+        echo '</style>';
+        echo '</head><body>';
+        echo '<div class="title">Listado completo de productos</div>';
+        echo '<div class="meta">Generado: ' . e(date('d-m-Y H:i:s')) . '</div>';
+
+        echo '<table>';
+        echo '<thead><tr>';
+        echo '<th>ID</th>';
+        echo '<th>Nombre</th>';
+        echo '<th>SKU</th>';
+        echo '<th>Descripción</th>';
+        echo '<th>Estado</th>';
+        echo '<th>Proveedor</th>';
+        echo '<th>Código proveedor</th>';
+        echo '<th>Empresa competencia</th>';
+        echo '<th>Código competencia</th>';
+        echo '<th>Familia</th>';
+        echo '<th>Subfamilia</th>';
+        echo '<th>Precio proveedor</th>';
+        echo '<th>Precio competencia</th>';
+        echo '<th>Precio venta</th>';
+        echo '<th>Costo</th>';
+        echo '<th>Stock</th>';
+        echo '<th>Stock mínimo</th>';
+        echo '<th>Foto 1</th>';
+        echo '<th>Foto 2</th>';
+        echo '<th>Creado</th>';
+        echo '<th>Actualizado</th>';
+        echo '</tr></thead><tbody>';
+
+        foreach ($products as $product) {
+            $createdAt = trim((string)($product['created_at'] ?? ''));
+            $updatedAt = trim((string)($product['updated_at'] ?? ''));
+            echo '<tr>';
+            echo '<td class="text-center">' . (int)($product['id'] ?? 0) . '</td>';
+            echo '<td>' . e((string)($product['name'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['sku'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['description'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['status'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['supplier_name'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['supplier_code'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['competitor_company_name'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['competition_code'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['family_name'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['subfamily_name'] ?? '')) . '</td>';
+            echo '<td class="text-right">' . number_format((float)($product['supplier_price'] ?? 0), 2, ',', '.') . '</td>';
+            echo '<td class="text-right">' . number_format((float)($product['competition_price'] ?? 0), 2, ',', '.') . '</td>';
+            echo '<td class="text-right">' . number_format((float)($product['price'] ?? 0), 2, ',', '.') . '</td>';
+            echo '<td class="text-right">' . number_format((float)($product['cost'] ?? 0), 2, ',', '.') . '</td>';
+            echo '<td class="text-right">' . (int)($product['stock'] ?? 0) . '</td>';
+            echo '<td class="text-right">' . (int)($product['stock_min'] ?? 0) . '</td>';
+            echo '<td>' . e((string)($product['photo_1'] ?? '')) . '</td>';
+            echo '<td>' . e((string)($product['photo_2'] ?? '')) . '</td>';
+            echo '<td>' . e($createdAt !== '' ? date('d-m-Y H:i', strtotime($createdAt)) : '') . '</td>';
+            echo '<td>' . e($updatedAt !== '' ? date('d-m-Y H:i', strtotime($updatedAt)) : '') . '</td>';
+            echo '</tr>';
+        }
+
+        echo '</tbody></table></body></html>';
+        exit;
+    }
+
     public function bulk(): void
     {
         $this->requireLogin();
@@ -366,6 +448,16 @@ class ProductsController extends Controller
         $subfamily = $this->subfamilies->findForCompany($subfamilyId, $companyId);
         $competitionCode = $this->buildCompetitionCode($companyId, $competitorCompany, $family, $subfamily);
         $supplierCode = $this->buildSupplierCode($companyId, $supplier, $family, $subfamily);
+        $photo1Result = upload_product_image($_FILES['photo_1'] ?? null, 'product-photo-1');
+        if (!empty($photo1Result['error'])) {
+            flash('error', (string)$photo1Result['error']);
+            $this->redirect('index.php?route=products/create');
+        }
+        $photo2Result = upload_product_image($_FILES['photo_2'] ?? null, 'product-photo-2');
+        if (!empty($photo2Result['error'])) {
+            flash('error', (string)$photo2Result['error']);
+            $this->redirect('index.php?route=products/create');
+        }
 
         $this->products->create([
             'company_id' => $companyId,
@@ -384,6 +476,8 @@ class ProductsController extends Controller
             'cost' => (float)($_POST['cost'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
+            'photo_1' => $photo1Result['path'],
+            'photo_2' => $photo2Result['path'],
             'status' => $_POST['status'] ?? 'activo',
             'created_at' => date('Y-m-d H:i:s'),
             'updated_at' => date('Y-m-d H:i:s'),
@@ -499,6 +593,16 @@ class ProductsController extends Controller
             $product['supplier_code'] ?? null,
             (int)$product['id']
         );
+        $photo1Result = upload_product_image($_FILES['photo_1'] ?? null, 'product-photo-1');
+        if (!empty($photo1Result['error'])) {
+            flash('error', (string)$photo1Result['error']);
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
+        $photo2Result = upload_product_image($_FILES['photo_2'] ?? null, 'product-photo-2');
+        if (!empty($photo2Result['error'])) {
+            flash('error', (string)$photo2Result['error']);
+            $this->redirect('index.php?route=products/edit&id=' . $id);
+        }
 
         $this->products->update($id, [
             'supplier_id' => $supplierId,
@@ -516,6 +620,8 @@ class ProductsController extends Controller
             'cost' => (float)($_POST['cost'] ?? 0),
             'stock' => (int)($_POST['stock'] ?? 0),
             'stock_min' => (int)($_POST['stock_min'] ?? 0),
+            'photo_1' => $photo1Result['path'] ?: ($product['photo_1'] ?? null),
+            'photo_2' => $photo2Result['path'] ?: ($product['photo_2'] ?? null),
             'status' => $_POST['status'] ?? 'activo',
             'updated_at' => date('Y-m-d H:i:s'),
         ]);

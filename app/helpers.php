@@ -511,6 +511,51 @@ function upload_company_logo(?array $file, string $prefix): array
     return ['path' => 'storage/uploads/logos/' . $filename, 'error' => null];
 }
 
+function upload_product_image(?array $file, string $prefix): array
+{
+    if ($file === null || ($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        return ['path' => null, 'error' => null];
+    }
+
+    if (($file['error'] ?? UPLOAD_ERR_OK) !== UPLOAD_ERR_OK) {
+        return ['path' => null, 'error' => 'No pudimos cargar la imagen del producto, intenta nuevamente.'];
+    }
+
+    if (($file['size'] ?? 0) > 2 * 1024 * 1024) {
+        return ['path' => null, 'error' => 'La imagen del producto supera el tamaño máximo de 2MB.'];
+    }
+
+    $info = getimagesize($file['tmp_name'] ?? '');
+    if ($info === false || empty($info['mime'])) {
+        return ['path' => null, 'error' => 'El archivo seleccionado no es una imagen válida.'];
+    }
+
+    $allowed = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+
+    $extension = $allowed[$info['mime']] ?? null;
+    if ($extension === null) {
+        return ['path' => null, 'error' => 'Solo se permiten imágenes JPG, PNG o WEBP.'];
+    }
+
+    $directory = __DIR__ . '/../storage/uploads/products';
+    $directoryError = ensure_upload_directory($directory);
+    if ($directoryError !== null) {
+        return ['path' => null, 'error' => $directoryError];
+    }
+
+    $filename = sprintf('%s-%s.%s', $prefix, bin2hex(random_bytes(8)), $extension);
+    $destination = $directory . '/' . $filename;
+    if (!move_uploaded_file($file['tmp_name'], $destination)) {
+        return ['path' => null, 'error' => 'No pudimos guardar la imagen en el servidor.'];
+    }
+
+    return ['path' => 'storage/uploads/products/' . $filename, 'error' => null];
+}
+
 function audit(Database $db, int $userId, string $action, string $entity, ?int $entityId = null): void
 {
     $companyId = current_company_id();
