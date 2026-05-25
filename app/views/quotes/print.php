@@ -200,8 +200,10 @@
 
         /* ===== TOTALES ===== */
         .totals {
-            width: 100%;
+            width: 42%;
+            margin-left: auto;
             margin-top: 10px;
+            table-layout: fixed;
         }
 
         .totals td {
@@ -211,6 +213,7 @@
         .totals .label {
             text-align: right;
             font-weight: 600;
+            width: 38%;
         }
 
         .total-final {
