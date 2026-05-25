@@ -160,6 +160,29 @@
             font-size: 11px;
         }
 
+        .table-items th.center,
+        .table-items td.center {
+            text-align: center;
+        }
+
+        .table-items .col-index {
+            width: 34px;
+        }
+
+        .table-items .col-description {
+            width: auto;
+        }
+
+        .table-items .col-qty {
+            width: 56px;
+        }
+
+        .table-items .col-price,
+        .table-items .col-discount,
+        .table-items .col-subtotal {
+            width: 82px;
+        }
+
         .table-items td {
             border-bottom: 1px solid var(--gris-claro);
             padding: 6px;
@@ -437,21 +460,21 @@ $validUntil = $quote['valid_until'] ?? '';
         <table class="table-items">
             <thead>
                 <tr>
-                    <th width="40">#</th>
-                    <th>Descripción</th>
-                    <th width="60">Cant.</th>
-                    <th width="90">Precio</th>
-                    <th width="90">Descuento</th>
-                    <th width="100">Subtotal</th>
+                    <th class="col-index center">#</th>
+                    <th class="col-description">Descripción</th>
+                    <th class="col-qty center">Cant.</th>
+                    <th class="col-price center">Precio</th>
+                    <th class="col-discount center">Descuento</th>
+                    <th class="col-subtotal center">Subtotal</th>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($items as $index => $item): ?>
                     <tr>
-                        <td><?php echo $index + 1; ?></td>
+                        <td class="center"><?php echo $index + 1; ?></td>
                         <td><?php echo e($item['descripcion']); ?></td>
-                        <td class="right"><?php echo e($item['cantidad']); ?></td>
-                        <td class="right"><?php echo e(format_currency((float)($item['precio_unitario'] ?? 0))); ?></td>
+                        <td class="center"><?php echo e($item['cantidad']); ?></td>
+                        <td class="center"><?php echo e(format_currency((float)($item['precio_unitario'] ?? 0))); ?></td>
                         <?php
                         $itemDiscountType = $item['discount_type'] ?? 'amount';
                         $itemDiscountValue = (float)($item['descuento'] ?? 0);
@@ -464,8 +487,8 @@ $validUntil = $quote['valid_until'] ?? '';
                             ? sprintf('%s%% (%s)', rtrim(rtrim(number_format($itemDiscountValue, 2), '0'), '.'), format_currency($itemDiscountAmount))
                             : format_currency($itemDiscountAmount);
                         ?>
-                        <td class="right"><?php echo e($itemDiscountLabel); ?></td>
-                        <td class="right"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
+                        <td class="center"><?php echo e($itemDiscountLabel); ?></td>
+                        <td class="center"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
                     </tr>
                 <?php endforeach; ?>
             </tbody>
