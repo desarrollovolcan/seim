@@ -1273,3 +1273,13 @@ html[data-skin] {
 .app-topbar .topbar-portal .text-white-50 {
     color: rgba(248, 250, 252, 0.72) !important;
 }
+
+/* Search input/icon in topbar forced to white */
+.app-topbar .app-search .topbar-search,
+.app-topbar .app-search .topbar-search::placeholder,
+.app-topbar .app-search .app-search-icon,
+.app-topbar .app-search .app-search-icon svg {
+    color: #ffffff !important;
+    fill: #ffffff !important;
+    stroke: #ffffff !important;
+}
