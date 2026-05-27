@@ -419,6 +419,57 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     padding: 16px 20px;
 }
 
+.dashboard-hero-modern {
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-hero-modern::after {
+    content: '';
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    right: -70px;
+    top: -80px;
+    border-radius: 999px;
+    background: radial-gradient(circle, rgba(90, 77, 225, 0.24), rgba(90, 77, 225, 0));
+}
+
+.dashboard-hero-kpis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.hero-chip {
+    border: 1px solid rgba(90, 77, 225, 0.18);
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem;
+    min-width: 130px;
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(2px);
+}
+
+.hero-chip-label {
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+}
+
+.hero-chip-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.hero-chip-alert {
+    border-color: rgba(245, 158, 11, 0.38);
+    animation: alertPulse 1.8s ease-in-out infinite;
+}
+
 .dashboard-hero-light {
     background: linear-gradient(120deg, #f4f3ff, #f8f7ff 50%, #eef1ff);
     border: 1px solid rgba(90, 77, 225, 0.12);
@@ -447,6 +498,12 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
     background: linear-gradient(140deg, rgba(90, 77, 225, 0.1), rgba(90, 77, 225, 0.02));
     border: 1px solid rgba(90, 77, 225, 0.12);
     box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+}
+
+.dashboard-metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.12);
 }
 
 .dashboard-metric-title {
@@ -487,6 +544,7 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
 
 .dashboard-chart {
     min-height: 280px;
+    animation: chartFadeIn 0.5s ease both;
 }
 
 .dashboard-chart-sm {
@@ -738,6 +796,27 @@ html[data-sidenav-size="offcanvas"] .sidenav-toggle-button {
 .card-title {
     color: var(--ins-text);
     font-weight: 600;
+}
+
+@keyframes alertPulse {
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+    }
+}
+
+@keyframes chartFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .side-nav .side-nav-link {
@@ -1282,4 +1361,54 @@ html[data-skin] {
     color: #ffffff !important;
     fill: #ffffff !important;
     stroke: #ffffff !important;
+}
+
+.seim-dashboard .seim-panel-card {
+    border: 1px solid #e7ecf4;
+    border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(23, 42, 79, 0.06);
+}
+
+.seim-kpi-title {
+    font-size: 0.76rem;
+    color: #8a94a6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.seim-kpi-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #2f3b52;
+    line-height: 1.2;
+}
+
+.seim-kpi-split {
+    font-size: 0.8rem;
+    color: #7a8497;
+    padding-top: 0.25rem;
+    border-top: 1px solid #edf1f7;
+    margin-top: 0.4rem;
+}
+
+.seim-panel-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #2f3b52;
+    margin-bottom: 0.1rem;
+}
+
+.seim-panel-subtitle {
+    font-size: 0.75rem;
+    color: #8691a6;
+    margin-bottom: 0.75rem;
+}
+
+.seim-chart-lg { height: 320px; }
+.seim-chart-sm { height: 240px; }
+
+@media (max-width: 767.98px) {
+    .seim-kpi-value { font-size: 1.25rem; }
+    .seim-chart-lg { height: 260px; }
+    .seim-chart-sm { height: 220px; }
 }

@@ -19,263 +19,38 @@ foreach (($lowStockProducts ?? []) as $item) {
         $lowStockCount++;
     }
 }
-?>
 
-<div class="dashboard-compact">
-    <div class="row g-2 mt-2 dashboard-metrics">
-        <div class="col-6 col-lg-3">
-            <div class="card h-100 dashboard-metric-card">
-                <div class="card-body">
-                    <div class="dashboard-metric-title">Unidades producidas</div>
-                    <div class="dashboard-metric-value"><?php echo (int)$totalProduced; ?></div>
-                    <div class="dashboard-metric-meta">
-                        <span class="text-muted">Productos: <?php echo (int)$totalProducts; ?></span>
-                        <a href="index.php?route=production/stock" class="dashboard-metric-link">Detalle</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card h-100 dashboard-metric-card">
-                <div class="card-body">
-                    <div class="dashboard-metric-title">Ventas totales</div>
-                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalSales)); ?></div>
-                    <div class="dashboard-metric-meta">
-                        <span class="text-muted">Promedio: <?php echo e(format_currency($totalSales / $totalProducts)); ?></span>
-                        <a href="index.php?route=sales" class="dashboard-metric-link">Detalle</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card h-100 dashboard-metric-card">
-                <div class="card-body">
-                    <div class="dashboard-metric-title">Ganancia estimada</div>
-                    <div class="dashboard-metric-value"><?php echo e(format_currency($totalProfit)); ?></div>
-                    <div class="dashboard-metric-meta">
-                        <span class="text-muted">Rentabilidad</span>
-                        <a href="index.php?route=accounting/financial-statements" class="dashboard-metric-link">Detalle</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="card h-100 dashboard-metric-card">
-                <div class="card-body">
-                    <div class="dashboard-metric-title">Stock en riesgo</div>
-                    <div class="dashboard-metric-value"><?php echo (int)$lowStockCount; ?></div>
-                    <div class="dashboard-metric-meta">
-                        <span class="text-muted">Bajo mínimo</span>
-                        <a href="index.php?route=inventory/movements" class="dashboard-metric-link">Detalle</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="row g-2 mt-2">
-        <div class="col-xl-6">
-            <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="card-title mb-0">Costos de productos</h4>
-                            <small class="text-muted">Costos unitarios y unidades producidas.</small>
-                        </div>
-                        <a href="index.php?route=production/stock" class="btn btn-outline-primary btn-sm">Ver stock producido</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-end">Unidades producidas</th>
-                                    <th class="text-end">Costo unitario</th>
-                                    <th class="text-end">Stock actual</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($producedProducts)): ?>
-                                    <tr>
-                                        <td colspan="4" class="text-muted text-center">Sin producción registrada.</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($producedProducts as $item): ?>
-                                        <tr>
-                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end" data-label="Unidades producidas"><?php echo (int)($item['produced_quantity'] ?? 0); ?></td>
-                                            <td class="text-end" data-label="Costo unitario"><?php echo e(format_currency((float)($item['cost'] ?? 0))); ?></td>
-                                            <td class="text-end" data-label="Stock actual"><?php echo (int)($item['stock'] ?? 0); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="dashboard-chart dashboard-chart-lg mt-3">
-                        <canvas id="productCostChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="card-title mb-0">Ventas por producto</h4>
-                        <small class="text-muted">Totales vendidos y unidades.</small>
-                    </div>
-                    <a href="index.php?route=sales" class="btn btn-outline-primary btn-sm">Ver ventas</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-end">Unidades</th>
-                                    <th class="text-end">Ventas</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($salesByProduct)): ?>
-                                    <tr>
-                                        <td colspan="3" class="text-muted text-center">Sin ventas registradas.</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($salesByProduct as $item): ?>
-                                        <tr>
-                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end" data-label="Unidades"><?php echo (int)($item['quantity'] ?? 0); ?></td>
-                                            <td class="text-end" data-label="Ventas"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="dashboard-chart dashboard-chart-lg mt-3">
-                        <canvas id="salesByProductChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+$marginPercent = $totalSales > 0 ? ($totalProfit / $totalSales) * 100 : 0;
+$avgSale = $totalSales / $totalProducts;
+$riskPercent = ($lowStockCount / $totalProducts) * 100;
 
-    <div class="row g-2 mt-2">
-        <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="card-title mb-0">Ganancias por producto</h4>
-                        <small class="text-muted">Margen estimado según costo y ventas.</small>
-                    </div>
-                    <a href="index.php?route=accounting/financial-statements" class="btn btn-outline-primary btn-sm">Ver resultados</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-end">Ventas</th>
-                                    <th class="text-end">Costo</th>
-                                    <th class="text-end">Ganancia</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($profitByProduct)): ?>
-                                    <tr>
-                                        <td colspan="4" class="text-muted text-center">Sin ganancias registradas.</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($profitByProduct as $item): ?>
-                                        <tr>
-                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end" data-label="Ventas"><?php echo e(format_currency((float)($item['total'] ?? 0))); ?></td>
-                                            <td class="text-end" data-label="Costo"><?php echo e(format_currency((float)($item['total_cost'] ?? 0))); ?></td>
-                                            <td class="text-end" data-label="Ganancia"><?php echo e(format_currency((float)($item['profit'] ?? 0))); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="dashboard-chart mt-3">
-                        <canvas id="profitByProductChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-xl-6">
-            <div class="card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <div>
-                        <h4 class="card-title mb-0">Stock bajo</h4>
-                        <small class="text-muted">Productos bajo su stock mínimo.</small>
-                    </div>
-                    <a href="index.php?route=inventory/movements" class="btn btn-outline-primary btn-sm">Ver inventario</a>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm align-middle dashboard-table">
-                            <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th class="text-end">Stock actual</th>
-                                    <th class="text-end">Stock mínimo</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php if (empty($lowStockProducts)): ?>
-                                    <tr>
-                                        <td colspan="3" class="text-muted text-center">Sin productos con stock bajo.</td>
-                                    </tr>
-                                <?php else: ?>
-                                    <?php foreach ($lowStockProducts as $item): ?>
-                                        <tr>
-                                            <td data-label="Producto"><?php echo e($item['name'] ?? ''); ?></td>
-                                            <td class="text-end" data-label="Stock actual"><?php echo (int)($item['stock'] ?? 0); ?></td>
-                                            <td class="text-end" data-label="Stock mínimo"><?php echo (int)($item['stock_min'] ?? 0); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                <?php endif; ?>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="dashboard-chart mt-3">
-                        <canvas id="lowStockChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<?php
-$productCostLabels = [];
-$productCostTotals = [];
-$productCostUnits = [];
-$productCostStocks = [];
+$productLabels = [];
+$productCosts = [];
+$productUnits = [];
+$productStocks = [];
 foreach (($producedProducts ?? []) as $item) {
-    $productCostLabels[] = $item['name'] ?? '';
-    $productCostTotals[] = (float)($item['cost'] ?? 0);
-    $productCostUnits[] = (int)($item['produced_quantity'] ?? 0);
-    $productCostStocks[] = (int)($item['stock'] ?? 0);
+    $productLabels[] = $item['name'] ?? '';
+    $productCosts[] = (float)($item['cost'] ?? 0);
+    $productUnits[] = (int)($item['produced_quantity'] ?? 0);
+    $productStocks[] = (int)($item['stock'] ?? 0);
 }
+
 $salesLabels = [];
 $salesTotals = [];
-$salesUnits = [];
+$salesQty = [];
 foreach (($salesByProduct ?? []) as $item) {
     $salesLabels[] = $item['name'] ?? '';
     $salesTotals[] = (float)($item['total'] ?? 0);
-    $salesUnits[] = (int)($item['quantity'] ?? 0);
+    $salesQty[] = (int)($item['quantity'] ?? 0);
 }
+
 $profitLabels = [];
 $profitTotals = [];
 foreach (($profitByProduct ?? []) as $item) {
     $profitLabels[] = $item['name'] ?? '';
     $profitTotals[] = (float)($item['profit'] ?? 0);
 }
+
 $lowStockLabels = [];
 $lowStockValues = [];
 $lowStockMinimums = [];
@@ -286,245 +61,136 @@ foreach (($lowStockProducts ?? []) as $item) {
 }
 ?>
 
+<div class="seim-dashboard mt-2">
+    <div class="card seim-panel-card mb-3">
+        <div class="card-body py-3">
+            <div class="row g-3">
+                <div class="col-6 col-xl-3">
+                    <div class="seim-kpi-title">Clientes</div>
+                    <div class="seim-kpi-value"><?php echo (int)$totalProducts; ?></div>
+                    <div class="seim-kpi-split">Producción: <strong><?php echo (int)$totalProduced; ?></strong></div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="seim-kpi-title">Ingreso promedio</div>
+                    <div class="seim-kpi-value"><?php echo e(format_currency($avgSale)); ?></div>
+                    <div class="seim-kpi-split">Ventas: <strong><?php echo e(format_currency($totalSales)); ?></strong></div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="seim-kpi-title">Ingreso de capital</div>
+                    <div class="seim-kpi-value"><?php echo e(format_currency($totalProfit)); ?></div>
+                    <div class="seim-kpi-split">Margen: <strong><?php echo e(number_format($marginPercent, 1, ',', '.')); ?>%</strong></div>
+                </div>
+                <div class="col-6 col-xl-3">
+                    <div class="seim-kpi-title">Riesgo inventario</div>
+                    <div class="seim-kpi-value"><?php echo (int)$lowStockCount; ?></div>
+                    <div class="seim-kpi-split">Impacto: <strong><?php echo e(number_format($riskPercent, 1, ',', '.')); ?>%</strong></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="card seim-panel-card h-100">
+                <div class="card-body">
+                    <h5 class="seim-panel-title">Demografía comercial anual</h5>
+                    <p class="seim-panel-subtitle">Costos vs stock por producto</p>
+                    <div class="seim-chart-lg"><canvas id="seimMainBars"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="card seim-panel-card h-100">
+                <div class="card-body">
+                    <h5 class="seim-panel-title">Canal de producción</h5>
+                    <p class="seim-panel-subtitle">Unidades y participación</p>
+                    <div class="seim-chart-sm"><canvas id="seimDonutOne"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mt-1">
+        <div class="col-xl-4">
+            <div class="card seim-panel-card h-100">
+                <div class="card-body">
+                    <h5 class="seim-panel-title">Ventas por línea</h5>
+                    <div class="seim-chart-sm"><canvas id="seimSalesBars"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="card seim-panel-card h-100">
+                <div class="card-body">
+                    <h5 class="seim-panel-title">Mix de stock bajo</h5>
+                    <div class="seim-chart-sm"><canvas id="seimDonutTwo"></canvas></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="card seim-panel-card h-100">
+                <div class="card-body">
+                    <h5 class="seim-panel-title">Ganancia por línea</h5>
+                    <div class="seim-chart-sm"><canvas id="seimProfitBars"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <script>
-    const productCostLabels = <?php echo json_encode($productCostLabels, JSON_UNESCAPED_UNICODE); ?>;
-    const productCostTotals = <?php echo json_encode($productCostTotals, JSON_UNESCAPED_UNICODE); ?>;
-    const productCostUnits = <?php echo json_encode($productCostUnits, JSON_UNESCAPED_UNICODE); ?>;
-    const productCostStocks = <?php echo json_encode($productCostStocks, JSON_UNESCAPED_UNICODE); ?>;
-    const salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
-    const salesTotals = <?php echo json_encode($salesTotals, JSON_UNESCAPED_UNICODE); ?>;
-    const salesUnits = <?php echo json_encode($salesUnits, JSON_UNESCAPED_UNICODE); ?>;
-    const profitLabels = <?php echo json_encode($profitLabels, JSON_UNESCAPED_UNICODE); ?>;
-    const profitTotals = <?php echo json_encode($profitTotals, JSON_UNESCAPED_UNICODE); ?>;
-    const lowStockLabels = <?php echo json_encode($lowStockLabels, JSON_UNESCAPED_UNICODE); ?>;
-    const lowStockValues = <?php echo json_encode($lowStockValues, JSON_UNESCAPED_UNICODE); ?>;
-    const lowStockMinimums = <?php echo json_encode($lowStockMinimums, JSON_UNESCAPED_UNICODE); ?>;
-    const totalProducts = <?php echo json_encode($totalProducts, JSON_UNESCAPED_UNICODE); ?>;
+const productLabels = <?php echo json_encode($productLabels, JSON_UNESCAPED_UNICODE); ?>;
+const productCosts = <?php echo json_encode($productCosts, JSON_UNESCAPED_UNICODE); ?>;
+const productStocks = <?php echo json_encode($productStocks, JSON_UNESCAPED_UNICODE); ?>;
+const productUnits = <?php echo json_encode($productUnits, JSON_UNESCAPED_UNICODE); ?>;
+const salesLabels = <?php echo json_encode($salesLabels, JSON_UNESCAPED_UNICODE); ?>;
+const salesTotals = <?php echo json_encode($salesTotals, JSON_UNESCAPED_UNICODE); ?>;
+const salesQty = <?php echo json_encode($salesQty, JSON_UNESCAPED_UNICODE); ?>;
+const profitLabels = <?php echo json_encode($profitLabels, JSON_UNESCAPED_UNICODE); ?>;
+const profitTotals = <?php echo json_encode($profitTotals, JSON_UNESCAPED_UNICODE); ?>;
+const lowStockLabels = <?php echo json_encode($lowStockLabels, JSON_UNESCAPED_UNICODE); ?>;
+const lowStockValues = <?php echo json_encode($lowStockValues, JSON_UNESCAPED_UNICODE); ?>;
+const lowStockMinimums = <?php echo json_encode($lowStockMinimums, JSON_UNESCAPED_UNICODE); ?>;
 
-    if (window.Chart) {
-        const isMobile = window.innerWidth <= 576;
-        const buildGradient = (ctx, start, end) => {
-            const gradient = ctx.createLinearGradient(0, 0, 0, 240);
-            gradient.addColorStop(0, start);
-            gradient.addColorStop(1, end);
-            return gradient;
-        };
-        const baseGrid = { color: 'rgba(148, 163, 184, 0.25)' };
-        const axisFont = { size: isMobile ? 9 : 12 };
-        const mobileLabelLimit = isMobile ? 6 : undefined;
-        const shortenLabel = (value) => {
-            if (!isMobile || typeof value !== 'string') return value;
-            return value.length > 12 ? `${value.slice(0, 12)}…` : value;
-        };
-        const yTickOptions = {
-            font: axisFont,
-            beginAtZero: true,
-            ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined }
-        };
-        const xTickOptions = {
-            grid: { display: false },
-            ticks: {
-                font: axisFont,
-                maxTicksLimit: isMobile ? 4 : undefined,
-                callback: shortenLabel
-            }
-        };
+if (window.Chart) {
+    const compact = window.innerWidth < 768;
+    const commonLegend = { position: 'bottom', labels: { boxWidth: 10, usePointStyle: true, font: { size: compact ? 9 : 11 } } };
 
-        const productCostCtx = document.getElementById('productCostChart');
-        if (productCostCtx) {
-            const productCostGradient = buildGradient(productCostCtx.getContext('2d'), 'rgba(90, 77, 225, 0.6)', 'rgba(90, 77, 225, 0.1)');
-            new Chart(productCostCtx, {
-                type: 'line',
-                data: {
-                    labels: productCostLabels,
-                    datasets: [
-                        {
-                            label: 'Costo unitario',
-                            data: productCostTotals,
-                            backgroundColor: productCostGradient,
-                            borderColor: '#5a4de1',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        },
-                        {
-                            label: 'Stock actual',
-                            data: productCostStocks,
-                            backgroundColor: 'rgba(34, 181, 154, 0.35)',
-                            borderColor: '#22b59a',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
-                    }
-                }
-            });
-        }
+    new Chart(document.getElementById('seimMainBars'), {
+        type: 'bar',
+        data: {
+            labels: productLabels,
+            datasets: [
+                { label: 'Costo unitario', data: productCosts, backgroundColor: '#4558d4', borderRadius: 6 },
+                { label: 'Stock', data: productStocks, backgroundColor: '#e252b2', borderRadius: 6 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: commonLegend }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
 
-        const salesCtx = document.getElementById('salesByProductChart');
-        if (salesCtx) {
-            const salesBar = buildGradient(salesCtx.getContext('2d'), 'rgba(74, 163, 255, 0.6)', 'rgba(74, 163, 255, 0.15)');
-            new Chart(salesCtx, {
-                type: 'bar',
-                data: {
-                    labels: salesLabels,
-                    datasets: [
-                        {
-                            label: 'Ventas',
-                            data: salesTotals,
-                            backgroundColor: salesBar,
-                            borderColor: '#4aa3ff',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        },
-                        {
-                            label: 'Unidades',
-                            data: salesUnits,
-                            backgroundColor: 'rgba(34, 181, 154, 0.35)',
-                            borderColor: '#22b59a',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
-                    }
-                }
-            });
-        }
+    new Chart(document.getElementById('seimDonutOne'), {
+        type: 'doughnut',
+        data: { labels: productLabels, datasets: [{ data: productUnits, backgroundColor: ['#4558d4', '#6d7df0', '#8c9bff', '#adb8ff', '#cfd5ff'] }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: commonLegend } }
+    });
 
-        const profitCtx = document.getElementById('profitByProductChart');
-        if (profitCtx) {
-            const profitBar = buildGradient(profitCtx.getContext('2d'), 'rgba(243, 162, 87, 0.6)', 'rgba(243, 162, 87, 0.15)');
-            const costBar = buildGradient(profitCtx.getContext('2d'), 'rgba(148, 163, 184, 0.5)', 'rgba(148, 163, 184, 0.15)');
-            new Chart(profitCtx, {
-                type: 'line',
-                data: {
-                    labels: profitLabels,
-                    datasets: [
-                        {
-                            label: 'Ganancia',
-                            data: profitTotals,
-                            backgroundColor: profitBar,
-                            borderColor: '#f3a257',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        },
-                        {
-                            label: 'Costo total',
-                            data: productCostTotals,
-                            backgroundColor: costBar,
-                            borderColor: '#94a3b8',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: axisFont, maxTicksLimit: mobileLabelLimit, callback: shortenLabel } },
-                        y: { grid: baseGrid, beginAtZero: true, ticks: { font: axisFont, maxTicksLimit: isMobile ? 4 : undefined } }
-                    }
-                }
-            });
-        }
+    new Chart(document.getElementById('seimSalesBars'), {
+        type: 'bar',
+        data: { labels: salesLabels, datasets: [{ label: 'Ventas', data: salesTotals, backgroundColor: '#4558d4', borderRadius: 6 }, { label: 'Unidades', data: salesQty, backgroundColor: '#e252b2', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: commonLegend }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
 
-        const lowStockCtx = document.getElementById('lowStockChart');
-        if (lowStockCtx) {
-            const lowStockCount = lowStockLabels.length;
-            const safeCount = lowStockCount > 0 ? lowStockCount : 0;
-            const totalCount = Math.max(totalProducts, safeCount);
-            const remainder = Math.max(0, totalCount - safeCount);
-            const donutPlugin = {
-                id: 'centerText',
-                afterDraw(chart) {
-                    const { ctx } = chart;
-                    const meta = chart.getDatasetMeta(0);
-                    if (!meta?.data?.length) return;
-                    ctx.save();
-                    ctx.font = `${isMobile ? 20 : 28}px Nunito, sans-serif`;
-                    ctx.fillStyle = '#f59e0b';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    const { x, y } = meta.data[0];
-                    ctx.fillText(String(safeCount), x, y);
-                    ctx.restore();
-                }
-            };
+    new Chart(document.getElementById('seimDonutTwo'), {
+        type: 'doughnut',
+        data: { labels: lowStockLabels, datasets: [{ data: lowStockMinimums.map((m, i) => Math.max(m - (lowStockValues[i] || 0), 0)), backgroundColor: ['#4558d4', '#5f71e5', '#7889f6', '#91a0ff', '#abb7ff'] }] },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: commonLegend } }
+    });
 
-            new Chart(lowStockCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Stock bajo', 'OK'],
-                    datasets: [{
-                        data: [safeCount, remainder],
-                        backgroundColor: ['#f59e0b', '#e2e8f0'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: isMobile ? '62%' : '70%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 10, boxHeight: 10, font: axisFont, usePointStyle: true }
-                        }
-                    }
-                },
-                plugins: [donutPlugin]
-            });
-        }
-    }
+    new Chart(document.getElementById('seimProfitBars'), {
+        type: 'bar',
+        data: { labels: profitLabels, datasets: [{ label: 'Ganancia', data: profitTotals, backgroundColor: '#e252b2', borderRadius: 6 }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: commonLegend }, scales: { x: { grid: { display: false } }, y: { beginAtZero: true } } }
+    });
+}
 </script>
