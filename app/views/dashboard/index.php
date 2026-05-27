@@ -22,6 +22,28 @@ foreach (($lowStockProducts ?? []) as $item) {
 ?>
 
 <div class="dashboard-compact">
+    <div class="dashboard-hero dashboard-hero-light dashboard-hero-modern mt-2">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 align-items-lg-center">
+            <div>
+                <h3 class="mb-1">Panel estratégico SEIM</h3>
+                <p class="mb-0">Visualiza producción, ventas, ganancias y riesgos de inventario en tiempo real para una toma de decisiones más rápida.</p>
+            </div>
+            <div class="dashboard-hero-kpis">
+                <div class="hero-chip">
+                    <span class="hero-chip-label">Margen</span>
+                    <span class="hero-chip-value"><?php echo $totalSales > 0 ? e(number_format(($totalProfit / $totalSales) * 100, 1, ',', '.')) . '%' : '0%'; ?></span>
+                </div>
+                <div class="hero-chip">
+                    <span class="hero-chip-label">Ticket promedio</span>
+                    <span class="hero-chip-value"><?php echo e(format_currency($totalSales / $totalProducts)); ?></span>
+                </div>
+                <div class="hero-chip hero-chip-alert">
+                    <span class="hero-chip-label">Riesgo stock</span>
+                    <span class="hero-chip-value"><?php echo (int)$lowStockCount; ?></span>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="row g-2 mt-2 dashboard-metrics">
         <div class="col-6 col-lg-3">
             <div class="card h-100 dashboard-metric-card">
@@ -344,22 +366,22 @@ foreach (($lowStockProducts ?? []) as $item) {
                             data: productCostTotals,
                             backgroundColor: productCostGradient,
                             borderColor: '#5a4de1',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
+                            borderWidth: 2,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            fill: true
                         },
                         {
                             label: 'Stock actual',
                             data: productCostStocks,
                             backgroundColor: 'rgba(34, 181, 154, 0.35)',
                             borderColor: '#22b59a',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
+                            borderWidth: 2,
+                            tension: 0.35,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            fill: true
                         }
                     ]
                 },
@@ -443,22 +465,22 @@ foreach (($lowStockProducts ?? []) as $item) {
                             data: profitTotals,
                             backgroundColor: profitBar,
                             borderColor: '#f3a257',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            fill: true
                         },
                         {
                             label: 'Costo total',
                             data: productCostTotals,
                             backgroundColor: costBar,
                             borderColor: '#94a3b8',
-                            borderWidth: 1,
-                            borderRadius: 8,
-                            maxBarThickness: isMobile ? 14 : 30,
-                            barPercentage: isMobile ? 0.65 : 0.85,
-                            categoryPercentage: isMobile ? 0.7 : 0.8
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: isMobile ? 2 : 3,
+                            pointHoverRadius: isMobile ? 4 : 6,
+                            fill: true
                         }
                     ]
                 },
