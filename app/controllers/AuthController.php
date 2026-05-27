@@ -71,7 +71,15 @@ class AuthController extends Controller
             'company_id' => $company['id'],
             'company_name' => $company['name'],
         ]);
-        $this->redirect('index.php');
+        $routes = require __DIR__ . '/../routes.php';
+        $landingRoute = first_accessible_route($this->db, $routes, Auth::user());
+        if ($landingRoute !== null) {
+            $this->redirect('index.php?route=' . urlencode($landingRoute));
+        }
+
+        $_SESSION['error'] = 'Tu usuario no tiene permisos asignados para módulos.';
+        Auth::logout();
+        $this->redirect('login.php');
     }
 
     public function logout(): void

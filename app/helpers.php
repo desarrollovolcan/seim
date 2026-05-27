@@ -1181,6 +1181,40 @@ function can_access_route(Database $db, string $route, ?array $user): bool
     return $legacyKey ? in_array($legacyKey, $permissions, true) : false;
 }
 
+
+function first_accessible_route(Database $db, array $routes, ?array $user, ?string $excludeRoute = null): ?string
+{
+    $catalog = permission_catalog();
+
+    foreach ($catalog as $section) {
+        foreach (($section['routes'] ?? []) as $baseRoute) {
+            if (!isset($routes[$baseRoute])) {
+                continue;
+            }
+            if ($excludeRoute !== null && $baseRoute === $excludeRoute) {
+                continue;
+            }
+            if (can_access_route($db, $baseRoute, $user)) {
+                return $baseRoute;
+            }
+        }
+    }
+
+    foreach (array_keys($routes) as $candidateRoute) {
+        if ($excludeRoute !== null && $candidateRoute === $excludeRoute) {
+            continue;
+        }
+        if (permission_is_edit_route($candidateRoute)) {
+            continue;
+        }
+        if (can_access_route($db, $candidateRoute, $user)) {
+            return $candidateRoute;
+        }
+    }
+
+    return null;
+}
+
 function create_notification(Database $db, ?int $companyId, string $title, string $message, string $type = 'info'): void
 {
     if (!$companyId) {
