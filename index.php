@@ -18,7 +18,26 @@ if (Auth::check() && !can_access_route($db, $route, Auth::user())) {
     }
 
     $_SESSION['error'] = 'No tienes permisos para acceder a esta sección.';
-    header('Location: index.php?route=dashboard');
+
+    $user = Auth::user();
+    $fallbackRoute = null;
+    foreach (array_keys($routes) as $candidateRoute) {
+        if ($candidateRoute === $route) {
+            continue;
+        }
+        if (can_access_route($db, $candidateRoute, $user)) {
+            $fallbackRoute = $candidateRoute;
+            break;
+        }
+    }
+
+    if ($fallbackRoute !== null) {
+        header('Location: index.php?route=' . urlencode($fallbackRoute));
+        exit;
+    }
+
+    http_response_code(403);
+    echo 'No tienes permisos para acceder a esta cuenta. Contacta al administrador.';
     exit;
 }
 
