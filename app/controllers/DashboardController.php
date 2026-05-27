@@ -68,7 +68,7 @@ class DashboardController extends Controller
                  LIMIT 8',
                 $companyParams
             );
-        } catch (PDOException $e) {
+        } catch (Throwable $e) {
             log_message('error', 'Failed to load dashboard metrics: ' . $e->getMessage());
             $producedProducts = [];
             $salesByProduct = [];
