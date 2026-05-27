@@ -34,13 +34,56 @@ class ProductsController extends Controller
     {
         $this->requireLogin();
         $companyId = $this->requireCompany();
-        $products = $this->products->active($companyId);
+        $filters = [
+            'search' => trim((string)($_GET['search'] ?? '')),
+            'family_id' => (int)($_GET['family_id'] ?? 0),
+            'subfamily_id' => (int)($_GET['subfamily_id'] ?? 0),
+            'supplier_id' => (int)($_GET['supplier_id'] ?? 0),
+        ];
+        $products = $this->products->filtered($companyId, $filters);
 
         $this->render('products/index', [
             'title' => 'Productos',
             'pageTitle' => 'Inventario de productos',
             'products' => $products,
+            'filters' => $filters,
+            'families' => $this->families->active($companyId),
+            'subfamilies' => $this->subfamilies->active($companyId),
+            'suppliers' => $this->suppliers->active($companyId),
         ]);
+    }
+
+    public function bulkAssign(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+
+        $rawIds = $_POST['product_ids'] ?? [];
+        $productIds = array_values(array_filter(array_map('intval', is_array($rawIds) ? $rawIds : []), static fn(int $id): bool => $id > 0));
+        if ($productIds === []) {
+            flash('error', 'Debes seleccionar al menos un producto.');
+            $this->redirect('index.php?route=products');
+        }
+
+        $familyId = (int)($_POST['bulk_family_id'] ?? 0);
+        $subfamilyId = (int)($_POST['bulk_subfamily_id'] ?? 0);
+        $supplierId = (int)($_POST['bulk_supplier_id'] ?? 0);
+        if ($familyId <= 0 && $subfamilyId <= 0 && $supplierId <= 0) {
+            flash('error', 'Selecciona al menos un dato para asignación masiva.');
+            $this->redirect('index.php?route=products');
+        }
+
+        $updated = $this->products->bulkAssign(
+            $companyId,
+            $productIds,
+            $familyId > 0 ? $familyId : null,
+            $subfamilyId > 0 ? $subfamilyId : null,
+            $supplierId > 0 ? $supplierId : null
+        );
+
+        flash('success', 'Asignación masiva aplicada a ' . (int)$updated . ' productos.');
+        $this->redirect('index.php?route=products');
     }
 
     public function create(): void
