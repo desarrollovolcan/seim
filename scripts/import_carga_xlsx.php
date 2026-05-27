@@ -1,0 +1,177 @@
+<?php
+require __DIR__ . '/../app/bootstrap.php';
+
+$companyId = 1;
+$file = __DIR__ . '/../carga.xlsx';
+if (!file_exists($file)) {
+    fwrite(STDERR, "No existe carga.xlsx\n");
+    exit(1);
+}
+
+function xlsx_rows(string $file, string $sheetName): array
+{
+    $zip = new ZipArchive();
+    if ($zip->open($file) !== true) {
+        throw new RuntimeException('No se pudo abrir xlsx');
+    }
+
+    $nsMain = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+    $nsRel = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+    $nsPkg = 'http://schemas.openxmlformats.org/package/2006/relationships';
+
+    $shared = [];
+    $sharedXml = $zip->getFromName('xl/sharedStrings.xml');
+    if ($sharedXml !== false) {
+        $sx = simplexml_load_string($sharedXml);
+        $sx->registerXPathNamespace('a', $nsMain);
+        foreach ($sx->xpath('//a:si') as $si) {
+            $txt = '';
+            foreach ($si->xpath('.//a:t') as $part) {
+                $txt .= (string)$part;
+            }
+            $shared[] = $txt;
+        }
+    }
+
+    $wb = simplexml_load_string($zip->getFromName('xl/workbook.xml'));
+    $wb->registerXPathNamespace('a', $nsMain);
+    $wb->registerXPathNamespace('r', $nsRel);
+
+    $rels = simplexml_load_string($zip->getFromName('xl/_rels/workbook.xml.rels'));
+    $rels->registerXPathNamespace('pr', $nsPkg);
+    $relMap = [];
+    foreach ($rels->xpath('//pr:Relationship') as $rel) {
+        $relMap[(string)$rel['Id']] = (string)$rel['Target'];
+    }
+
+    $target = null;
+    foreach ($wb->xpath('//a:sheets/a:sheet') as $sheet) {
+        if ((string)$sheet['name'] === $sheetName) {
+            $rid = (string)$sheet->attributes($nsRel, true)['id'];
+            $target = $relMap[$rid] ?? null;
+            break;
+        }
+    }
+    if ($target === null) {
+        throw new RuntimeException('Hoja no encontrada: ' . $sheetName);
+    }
+
+    $target = ltrim($target, '/');
+    if (strpos($target, 'xl/') !== 0) {
+        $target = 'xl/' . $target;
+    }
+
+    $ws = simplexml_load_string($zip->getFromName($target));
+    $ws->registerXPathNamespace('a', $nsMain);
+
+    $rows = [];
+    foreach ($ws->xpath('//a:sheetData/a:row') as $row) {
+        $vals = [];
+        foreach ($row->xpath('a:c') as $c) {
+            $type = (string)$c['t'];
+            $value = (string)($c->v ?? '');
+            if ($type === 's' && $value !== '') {
+                $value = $shared[(int)$value] ?? '';
+            }
+            $vals[] = trim($value);
+        }
+        $rows[] = $vals;
+    }
+
+    $zip->close();
+    return $rows;
+}
+
+$rows = xlsx_rows($file, 'Carga productos');
+$headers = array_map('trim', array_shift($rows));
+
+$pdo = $db->pdo();
+$pdo->beginTransaction();
+
+$inserted = 0;
+$updated = 0;
+$errors = 0;
+$now = date('Y-m-d H:i:s');
+
+$qFindFamily = $pdo->prepare('SELECT id FROM product_families WHERE company_id=:company_id AND UPPER(code)=UPPER(:code) LIMIT 1');
+$qInsFamily = $pdo->prepare('INSERT INTO product_families (company_id, name, code, created_at, updated_at) VALUES (:company_id, :name, :code, :created_at, :updated_at)');
+$qFindSubfamily = $pdo->prepare('SELECT id FROM product_subfamilies WHERE company_id=:company_id AND family_id=:family_id AND UPPER(code)=UPPER(:code) LIMIT 1');
+$qInsSubfamily = $pdo->prepare('INSERT INTO product_subfamilies (company_id, family_id, name, code, created_at, updated_at) VALUES (:company_id, :family_id, :name, :code, :created_at, :updated_at)');
+
+$qFindProduct = $pdo->prepare('SELECT id FROM products WHERE company_id=:company_id AND sku=:sku LIMIT 1');
+$qInsProduct = $pdo->prepare('INSERT INTO products (company_id, supplier_id, competitor_company_id, family_id, subfamily_id, competition_code, supplier_code, supplier_price, competition_price, name, sku, description, price, cost, stock, stock_min, status, created_at, updated_at) VALUES (:company_id, NULL, NULL, :family_id, :subfamily_id, NULL, :supplier_code, :supplier_price, :competition_price, :name, :sku, :description, :price, :cost, :stock, :stock_min, :status, :created_at, :updated_at)');
+$qUpdProduct = $pdo->prepare('UPDATE products SET family_id=:family_id, subfamily_id=:subfamily_id, supplier_code=:supplier_code, supplier_price=:supplier_price, competition_price=:competition_price, name=:name, description=:description, price=:price, cost=:cost, stock=:stock, stock_min=:stock_min, status=:status, updated_at=:updated_at, deleted_at=NULL WHERE id=:id');
+
+foreach ($rows as $vals) {
+    $data = [];
+    foreach ($headers as $idx => $h) {
+        $data[$h] = $vals[$idx] ?? '';
+    }
+
+    $sku = trim((string)($data['sku'] ?? ''));
+    $name = trim((string)($data['name'] ?? ''));
+    if ($sku === '' || $name === '') {
+        $errors++;
+        continue;
+    }
+
+    $familyCode = strtoupper(trim((string)($data['family_code'] ?? '')));
+    $subfamilyCode = strtoupper(trim((string)($data['subfamily_code'] ?? '')));
+
+    $familyId = null;
+    if ($familyCode !== '') {
+        $qFindFamily->execute([':company_id' => $companyId, ':code' => $familyCode]);
+        $family = $qFindFamily->fetch();
+        if (!$family) {
+            $qInsFamily->execute([':company_id' => $companyId, ':name' => $familyCode, ':code' => substr($familyCode, 0, 3), ':created_at' => $now, ':updated_at' => $now]);
+            $familyId = (int)$pdo->lastInsertId();
+        } else {
+            $familyId = (int)$family['id'];
+        }
+    }
+
+    $subfamilyId = null;
+    if ($familyId && $subfamilyCode !== '') {
+        $qFindSubfamily->execute([':company_id' => $companyId, ':family_id' => $familyId, ':code' => $subfamilyCode]);
+        $subfamily = $qFindSubfamily->fetch();
+        if (!$subfamily) {
+            $qInsSubfamily->execute([':company_id' => $companyId, ':family_id' => $familyId, ':name' => $subfamilyCode, ':code' => substr($subfamilyCode, 0, 3), ':created_at' => $now, ':updated_at' => $now]);
+            $subfamilyId = (int)$pdo->lastInsertId();
+        } else {
+            $subfamilyId = (int)$subfamily['id'];
+        }
+    }
+
+    $params = [
+        ':company_id' => $companyId,
+        ':family_id' => $familyId,
+        ':subfamily_id' => $subfamilyId,
+        ':supplier_code' => ($data['supplier_code'] ?: null),
+        ':supplier_price' => (float)($data['supplier_price'] !== '' ? $data['supplier_price'] : 0),
+        ':competition_price' => (float)($data['competition_price'] !== '' ? $data['competition_price'] : 0),
+        ':name' => $name,
+        ':sku' => $sku,
+        ':description' => ($data['description'] ?: null),
+        ':price' => (float)($data['price'] !== '' ? $data['price'] : 0),
+        ':cost' => (float)($data['cost'] !== '' ? $data['cost'] : 0),
+        ':stock' => (int)($data['stock'] !== '' ? $data['stock'] : 0),
+        ':stock_min' => (int)($data['stock_min'] !== '' ? $data['stock_min'] : 0),
+        ':status' => ($data['status'] ?: 'activo'),
+        ':created_at' => $now,
+        ':updated_at' => $now,
+    ];
+
+    $qFindProduct->execute([':company_id' => $companyId, ':sku' => $sku]);
+    $existing = $qFindProduct->fetch();
+    if ($existing) {
+        $params[':id'] = $existing['id'];
+        $qUpdProduct->execute($params);
+        $updated++;
+    } else {
+        $qInsProduct->execute($params);
+        $inserted++;
+    }
+}
+
+$pdo->commit();
+echo "Carga finalizada. Insertados: {$inserted}, Actualizados: {$updated}, Errores: {$errors}\n";

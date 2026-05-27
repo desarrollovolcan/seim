@@ -13,7 +13,7 @@ class ProductsModel extends Model
              LEFT JOIN competitor_companies cc ON p.competitor_company_id = cc.id
              LEFT JOIN product_families pf ON p.family_id = pf.id
              LEFT JOIN product_subfamilies ps ON p.subfamily_id = ps.id
-             WHERE p.company_id = :company_id AND p.deleted_at IS NULL
+             WHERE p.company_id = :company_id
              ORDER BY p.name ASC',
             ['company_id' => $companyId]
         );
@@ -22,7 +22,7 @@ class ProductsModel extends Model
     public function findForCompany(int $id, int $companyId): ?array
     {
         return $this->db->fetch(
-            'SELECT * FROM products WHERE id = :id AND company_id = :company_id AND deleted_at IS NULL',
+            'SELECT * FROM products WHERE id = :id AND company_id = :company_id',
             ['id' => $id, 'company_id' => $companyId]
         );
     }
