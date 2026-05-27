@@ -12,8 +12,8 @@ CREATE TEMPORARY TABLE tmp_products_import (
   cost DECIMAL(12,2) NOT NULL DEFAULT 0,
   stock INT NOT NULL DEFAULT 0,
   stock_min INT NOT NULL DEFAULT 0,
-  status VARCHAR(20) NOT NULL DEFAULT "activo"
-) ENGINE=MEMORY;
+  status VARCHAR(20) NOT NULL DEFAULT 'activo'
+) ENGINE=InnoDB;
 
 INSERT INTO tmp_products_import (sku,name,description,supplier_code,supplier_price,competition_price,price,cost,stock,stock_min,status) VALUES
 ('SHRINKMARK-1000-2-9','SHRINKMARK-1000-2-9','ShrinkMark - Manguitos termocontraíbles. manguito 2" largo /embalaje 250 unidades','858589-000',1.53,0,0,1.53,0,0,'activo'),
