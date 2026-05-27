@@ -1210,6 +1210,9 @@ function first_accessible_route(Database $db, array $routes, ?array $user, ?stri
         if (permission_is_edit_route($candidateRoute)) {
             continue;
         }
+        if (permission_key_for_route($candidateRoute) === null) {
+            continue;
+        }
         if (can_access_route($db, $candidateRoute, $user)) {
             return $candidateRoute;
         }
