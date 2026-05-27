@@ -1362,3 +1362,53 @@ html[data-skin] {
     fill: #ffffff !important;
     stroke: #ffffff !important;
 }
+
+.seim-dashboard .seim-panel-card {
+    border: 1px solid #e7ecf4;
+    border-radius: 10px;
+    box-shadow: 0 6px 22px rgba(23, 42, 79, 0.06);
+}
+
+.seim-kpi-title {
+    font-size: 0.76rem;
+    color: #8a94a6;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.seim-kpi-value {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #2f3b52;
+    line-height: 1.2;
+}
+
+.seim-kpi-split {
+    font-size: 0.8rem;
+    color: #7a8497;
+    padding-top: 0.25rem;
+    border-top: 1px solid #edf1f7;
+    margin-top: 0.4rem;
+}
+
+.seim-panel-title {
+    font-size: 0.98rem;
+    font-weight: 700;
+    color: #2f3b52;
+    margin-bottom: 0.1rem;
+}
+
+.seim-panel-subtitle {
+    font-size: 0.75rem;
+    color: #8691a6;
+    margin-bottom: 0.75rem;
+}
+
+.seim-chart-lg { height: 320px; }
+.seim-chart-sm { height: 240px; }
+
+@media (max-width: 767.98px) {
+    .seim-kpi-value { font-size: 1.25rem; }
+    .seim-chart-lg { height: 260px; }
+    .seim-chart-sm { height: 220px; }
+}
