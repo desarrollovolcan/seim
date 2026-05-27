@@ -64,7 +64,7 @@ $companyLogos = $companyLogos ?? [];
                                                 <?php $companyId = (int)$company['id']; ?>
                                                 <option
                                                     value="<?php echo e((string)$companyId); ?>"
-                                                    data-logo="<?php echo e($companyLogos[$companyId] ?? 'assets/images/logo-sm.png'); ?>"
+                                                    data-logo="assets/images/logo-sm.png"
                                                 >
                                                     <?php echo e($company['name']); ?>
                                                 </option>
@@ -179,10 +179,7 @@ $companyLogos = $companyLogos ?? [];
         if (!selectedOption) {
             return;
         }
-        const nextLogo = selectedOption.dataset.logo;
-        if (nextLogo) {
-            loginLogo.src = nextLogo;
-        }
+        loginLogo.src = 'assets/images/logo-sm.png';
     };
     companySelect?.addEventListener('change', updateLoginLogo);
     updateLoginLogo();
