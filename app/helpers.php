@@ -1181,6 +1181,21 @@ function can_access_route(Database $db, string $route, ?array $user): bool
     return $legacyKey ? in_array($legacyKey, $permissions, true) : false;
 }
 
+
+function first_accessible_route(Database $db, array $routes, ?array $user, ?string $excludeRoute = null): ?string
+{
+    foreach (array_keys($routes) as $candidateRoute) {
+        if ($excludeRoute !== null && $candidateRoute === $excludeRoute) {
+            continue;
+        }
+        if (can_access_route($db, $candidateRoute, $user)) {
+            return $candidateRoute;
+        }
+    }
+
+    return null;
+}
+
 function create_notification(Database $db, ?int $companyId, string $title, string $message, string $type = 'info'): void
 {
     if (!$companyId) {
