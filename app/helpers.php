@@ -1204,6 +1204,9 @@ function first_accessible_route(Database $db, array $routes, ?array $user, ?stri
         if ($excludeRoute !== null && $candidateRoute === $excludeRoute) {
             continue;
         }
+        if (str_contains($candidateRoute, '/')) {
+            continue;
+        }
         if (permission_is_edit_route($candidateRoute)) {
             continue;
         }
