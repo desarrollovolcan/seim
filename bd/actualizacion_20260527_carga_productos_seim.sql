@@ -852,14 +852,16 @@ UPDATE products p
 JOIN tmp_products_import t ON p.company_id=1 AND p.sku=t.sku
 LEFT JOIN product_families pf ON pf.company_id=1 AND UPPER(pf.name)=UPPER(t.family_code)
 LEFT JOIN product_subfamilies ps ON ps.company_id=1 AND ps.family_id=pf.id AND UPPER(ps.name)=UPPER(t.subfamily_code)
-SET p.family_id=pf.id, p.subfamily_id=ps.id, p.name=t.name, p.description=t.description, p.supplier_code=t.supplier_code, p.supplier_price=t.supplier_price, p.competition_price=t.competition_price, p.price=t.price, p.cost=t.cost, p.stock=t.stock, p.stock_min=t.stock_min, p.status=t.status, p.updated_at=NOW(), p.deleted_at=NULL;
+LEFT JOIN (SELECT id FROM competitor_companies WHERE company_id=1 ORDER BY id ASC LIMIT 1) cc ON 1=1
+SET p.competitor_company_id=cc.id, p.family_id=pf.id, p.subfamily_id=ps.id, p.name=t.name, p.description=t.description, p.supplier_code=t.supplier_code, p.supplier_price=t.supplier_price, p.competition_price=t.competition_price, p.price=t.price, p.cost=t.cost, p.stock=t.stock, p.stock_min=t.stock_min, p.status=t.status, p.updated_at=NOW(), p.deleted_at=NULL;
 
 INSERT INTO products (company_id,supplier_id,competitor_company_id,family_id,subfamily_id,competition_code,supplier_code,supplier_price,competition_price,name,sku,description,photo_1,photo_2,price,cost,stock,stock_min,status,created_at,updated_at,deleted_at)
-SELECT 1,NULL,NULL,pf.id,ps.id,NULL,t.supplier_code,t.supplier_price,t.competition_price,t.name,t.sku,t.description,NULL,NULL,t.price,t.cost,t.stock,t.stock_min,t.status,NOW(),NOW(),NULL
+SELECT 1,NULL,cc.id,pf.id,ps.id,NULL,t.supplier_code,t.supplier_price,t.competition_price,t.name,t.sku,t.description,NULL,NULL,t.price,t.cost,t.stock,t.stock_min,t.status,NOW(),NOW(),NULL
 FROM tmp_products_import t
 LEFT JOIN product_families pf ON pf.company_id=1 AND UPPER(pf.name)=UPPER(t.family_code)
 LEFT JOIN product_subfamilies ps ON ps.company_id=1 AND ps.family_id=pf.id AND UPPER(ps.name)=UPPER(t.subfamily_code)
 LEFT JOIN products p ON p.company_id=1 AND p.sku=t.sku
+LEFT JOIN (SELECT id FROM competitor_companies WHERE company_id=1 ORDER BY id ASC LIMIT 1) cc ON 1=1
 WHERE p.id IS NULL;
 
 DROP TEMPORARY TABLE tmp_products_import;

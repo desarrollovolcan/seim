@@ -93,14 +93,19 @@ $updated = 0;
 $errors = 0;
 $now = date('Y-m-d H:i:s');
 
+
+$qDefaultCompetitor = $pdo->prepare('SELECT id FROM competitor_companies WHERE company_id = :company_id ORDER BY id ASC LIMIT 1');
+$qDefaultCompetitor->execute([':company_id' => $companyId]);
+$defaultCompetitorId = (int)(($qDefaultCompetitor->fetch()['id'] ?? 0));
+
 $qFindFamily = $pdo->prepare('SELECT id FROM product_families WHERE company_id=:company_id AND UPPER(code)=UPPER(:code) LIMIT 1');
 $qInsFamily = $pdo->prepare('INSERT INTO product_families (company_id, name, code, created_at, updated_at) VALUES (:company_id, :name, :code, :created_at, :updated_at)');
 $qFindSubfamily = $pdo->prepare('SELECT id FROM product_subfamilies WHERE company_id=:company_id AND family_id=:family_id AND UPPER(code)=UPPER(:code) LIMIT 1');
 $qInsSubfamily = $pdo->prepare('INSERT INTO product_subfamilies (company_id, family_id, name, code, created_at, updated_at) VALUES (:company_id, :family_id, :name, :code, :created_at, :updated_at)');
 
 $qFindProduct = $pdo->prepare('SELECT id FROM products WHERE company_id=:company_id AND sku=:sku LIMIT 1');
-$qInsProduct = $pdo->prepare('INSERT INTO products (company_id, supplier_id, competitor_company_id, family_id, subfamily_id, competition_code, supplier_code, supplier_price, competition_price, name, sku, description, price, cost, stock, stock_min, status, created_at, updated_at) VALUES (:company_id, NULL, NULL, :family_id, :subfamily_id, NULL, :supplier_code, :supplier_price, :competition_price, :name, :sku, :description, :price, :cost, :stock, :stock_min, :status, :created_at, :updated_at)');
-$qUpdProduct = $pdo->prepare('UPDATE products SET family_id=:family_id, subfamily_id=:subfamily_id, supplier_code=:supplier_code, supplier_price=:supplier_price, competition_price=:competition_price, name=:name, description=:description, price=:price, cost=:cost, stock=:stock, stock_min=:stock_min, status=:status, updated_at=:updated_at, deleted_at=NULL WHERE id=:id');
+$qInsProduct = $pdo->prepare('INSERT INTO products (company_id, supplier_id, competitor_company_id, family_id, subfamily_id, competition_code, supplier_code, supplier_price, competition_price, name, sku, description, price, cost, stock, stock_min, status, created_at, updated_at) VALUES (:company_id, NULL, :competitor_company_id, :family_id, :subfamily_id, NULL, :supplier_code, :supplier_price, :competition_price, :name, :sku, :description, :price, :cost, :stock, :stock_min, :status, :created_at, :updated_at)');
+$qUpdProduct = $pdo->prepare('UPDATE products SET competitor_company_id=:competitor_company_id, family_id=:family_id, subfamily_id=:subfamily_id, supplier_code=:supplier_code, supplier_price=:supplier_price, competition_price=:competition_price, name=:name, description=:description, price=:price, cost=:cost, stock=:stock, stock_min=:stock_min, status=:status, updated_at=:updated_at, deleted_at=NULL WHERE id=:id');
 
 foreach ($rows as $vals) {
     $data = [];
@@ -144,6 +149,7 @@ foreach ($rows as $vals) {
 
     $params = [
         ':company_id' => $companyId,
+        ':competitor_company_id' => ($defaultCompetitorId > 0 ? $defaultCompetitorId : null),
         ':family_id' => $familyId,
         ':subfamily_id' => $subfamilyId,
         ':supplier_code' => ($data['supplier_code'] ?: null),
