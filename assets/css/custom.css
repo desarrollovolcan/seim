@@ -1231,3 +1231,45 @@ html[data-skin] {
 .side-nav .sub-menu {
     border-left: 1px dashed rgba(255, 255, 255, 0.3) !important;
 }
+
+/* === SEIM brand topbar refresh === */
+.app-topbar,
+.app-topbar .topbar-menu,
+.logo-topbar,
+.logo-topbar .logo-light,
+.logo-topbar .logo-dark {
+    background: linear-gradient(90deg, var(--seim-gray-900) 0%, var(--seim-gray-800) 100%) !important;
+    border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.app-topbar .topbar-menu,
+.app-topbar .topbar-link,
+.app-topbar .topbar-link i,
+.app-topbar .topbar-link span,
+.app-topbar .button-toggle-menu,
+.app-topbar .button-toggle-menu i {
+    color: #f8fafc !important;
+}
+
+.app-topbar .topbar-link:hover,
+.app-topbar .topbar-link:focus,
+.app-topbar .button-toggle-menu:hover,
+.app-topbar .button-toggle-menu:focus {
+    color: #ffffff !important;
+    background-color: var(--seim-red-soft) !important;
+}
+
+.app-topbar .topbar-search {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    color: #f8fafc !important;
+}
+
+.app-topbar .topbar-search::placeholder {
+    color: rgba(248, 250, 252, 0.7) !important;
+}
+
+.app-topbar .text-white-50,
+.app-topbar .topbar-portal .text-white-50 {
+    color: rgba(248, 250, 252, 0.72) !important;
+}
