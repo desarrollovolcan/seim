@@ -8,9 +8,9 @@ return [
     ],
     'db' => [
         'host' => 'localhost',
-        'name' => 'gocreative_ges',
-        'user' => 'root',
-        'pass' => '',
+        'name' => 'gocreative_seim',
+        'user' => 'gocreative_seim',
+        'pass' => 'u-XoV$b+[++].#l{',
         'charset' => 'utf8mb4',
     ],
     'security' => [
