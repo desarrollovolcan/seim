@@ -1,5 +1,5 @@
 <?php
-$loginLogoSrc = login_logo_src($companySettings ?? []);
+$loginLogoSrc = 'assets/images/logo-sm.png';
 $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
 $companyLogos = $companyLogos ?? [];
 ?>
@@ -64,7 +64,7 @@ $companyLogos = $companyLogos ?? [];
                                                 <?php $companyId = (int)$company['id']; ?>
                                                 <option
                                                     value="<?php echo e((string)$companyId); ?>"
-                                                    data-logo="<?php echo e($companyLogos[$companyId] ?? $loginLogoSrc); ?>"
+                                                    data-logo="<?php echo e($companyLogos[$companyId] ?? 'assets/images/logo-sm.png'); ?>"
                                                 >
                                                     <?php echo e($company['name']); ?>
                                                 </option>
