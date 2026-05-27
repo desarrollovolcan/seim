@@ -96,7 +96,15 @@ $companyLogos = $companyLogos ?? [];
             </div>
         </div>
         <div class="col">
-            <div class="h-100 position-relative card-side-img rounded-0 overflow-hidden">
+            <div class="h-100 position-relative card-side-img rounded-0 overflow-hidden" data-login-slider>
+                <div class="login-slider-track" data-slider-track>
+                    <?php for ($image = 1; $image <= 10; $image++): ?>
+                        <div class="login-slide<?php echo $image === 1 ? ' is-active' : ''; ?>" data-login-slide>
+                            <img src="assets/images/<?php echo $image; ?>.png" alt="Vista de plataforma <?php echo $image; ?>" loading="lazy">
+                        </div>
+                    <?php endfor; ?>
+                </div>
+                <div class="login-slider-dots" data-slider-dots></div>
                 <div class="p-4 card-img-overlay auth-overlay d-flex align-items-end justify-content-center">
                     <div class="text-center text-white">
                         <h3 class="mb-2">Panel GoCreative</h3>
@@ -107,6 +115,58 @@ $companyLogos = $companyLogos ?? [];
         </div>
     </div>
 </div>
+
+<style>
+    [data-login-slider] {
+        background: radial-gradient(circle at top right, #3a4ad6, #111a46 60%, #0c112f);
+        min-height: 100vh;
+    }
+    .login-slider-track {
+        position: absolute;
+        inset: 0;
+    }
+    .login-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 700ms ease;
+    }
+    .login-slide img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: saturate(1.15) contrast(1.03);
+    }
+    .login-slide::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, rgba(11, 17, 49, 0.2) 10%, rgba(11, 17, 49, 0.78) 88%);
+    }
+    .login-slide.is-active {
+        opacity: 1;
+    }
+    .login-slider-dots {
+        position: absolute;
+        top: 1.25rem;
+        right: 1.25rem;
+        z-index: 4;
+        display: flex;
+        gap: 0.45rem;
+    }
+    .login-slider-dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background-color: rgba(255, 255, 255, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        transition: all 250ms ease;
+    }
+    .login-slider-dot.is-active {
+        width: 24px;
+        background-color: #fff;
+    }
+</style>
 
 <script>
     const companySelect = document.querySelector('[data-company-select]');
@@ -126,6 +186,36 @@ $companyLogos = $companyLogos ?? [];
     };
     companySelect?.addEventListener('change', updateLoginLogo);
     updateLoginLogo();
+
+    const slides = Array.from(document.querySelectorAll('[data-login-slide]'));
+    const dotsContainer = document.querySelector('[data-slider-dots]');
+    let currentSlide = 0;
+
+    const goToSlide = (index) => {
+        slides.forEach((slide, slideIndex) => {
+            slide.classList.toggle('is-active', slideIndex === index);
+        });
+        dotsContainer?.querySelectorAll('.login-slider-dot').forEach((dot, dotIndex) => {
+            dot.classList.toggle('is-active', dotIndex === index);
+        });
+        currentSlide = index;
+    };
+
+    if (slides.length > 1) {
+        slides.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.type = 'button';
+            dot.className = `login-slider-dot${index === 0 ? ' is-active' : ''}`;
+            dot.setAttribute('aria-label', `Mostrar imagen ${index + 1}`);
+            dot.addEventListener('click', () => goToSlide(index));
+            dotsContainer?.appendChild(dot);
+        });
+
+        setInterval(() => {
+            const nextIndex = (currentSlide + 1) % slides.length;
+            goToSlide(nextIndex);
+        }, 3500);
+    }
 
     document.querySelector('[data-toggle-password]')?.addEventListener('click', (event) => {
         const button = event.currentTarget;
