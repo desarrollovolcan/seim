@@ -12,6 +12,12 @@ if (!isset($routes[$route])) {
 }
 
 if (Auth::check() && !can_access_route($db, $route, Auth::user())) {
+    if ($route === 'dashboard') {
+        http_response_code(403);
+        echo 'No tienes permisos para acceder al dashboard.';
+        exit;
+    }
+
     $_SESSION['error'] = 'No tienes permisos para acceder a esta sección.';
 
     $user = Auth::user();
