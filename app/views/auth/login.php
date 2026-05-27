@@ -37,7 +37,7 @@ $companyLogos = $companyLogos ?? [];
                 <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
                     <div class="auth-brand mb-0 text-center">
                         <a href="index.php" class="logo-login">
-                            <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="28" data-login-logo>
+                            <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="112" data-login-logo>
                         </a>
                     </div>
 
