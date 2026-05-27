@@ -8,11 +8,12 @@
     </div>
     <div class="card-body">
         <div class="table-responsive">
-            <table class="table table-striped align-middle">
+            <table class="table table-striped table-sm align-middle">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Producto</th>
+                        <th>Descripción</th>
                         <th>SKU</th>
                         <th>Familia</th>
                         <th>Subfamilia</th>
@@ -36,6 +37,11 @@
                         <tr>
                             <td class="text-muted"><?php echo render_id_badge($product['id'] ?? null); ?></td>
                             <td><?php echo e($product['name'] ?? ''); ?></td>
+                            <td class="text-muted small" style="max-width: 320px;">
+                                <span class="d-inline-block text-truncate align-middle" style="max-width: 320px;" title="<?php echo e($product['description'] ?? ''); ?>">
+                                    <?php echo e($product['description'] ?? ''); ?>
+                                </span>
+                            </td>
                             <td><?php echo e($product['sku'] ?? ''); ?></td>
                             <td><?php echo e($product['family_name'] ?? ''); ?></td>
                             <td><?php echo e($product['subfamily_name'] ?? ''); ?></td>
@@ -56,7 +62,7 @@
                             </td>
                             <td class="text-end">
                                 <div class="dropdown actions-dropdown">
-                                    <button class="btn btn-soft-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <button class="btn btn-soft-primary btn-sm py-0 px-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
                                         Acciones
                                     </button>
                                     <ul class="dropdown-menu dropdown-menu-end">
