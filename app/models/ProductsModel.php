@@ -15,6 +15,64 @@ class ProductsModel extends Model
         );
     }
 
+    public function filtered(int $companyId, array $filters = []): array
+    {
+        $where = ['p.company_id = :company_id'];
+        $params = ['company_id' => $companyId];
+
+        $search = trim((string)($filters['search'] ?? ''));
+        if ($search !== '') {
+            $where[] = '(p.name LIKE :search OR p.sku LIKE :search OR p.description LIKE :search)';
+            $params['search'] = '%' . $search . '%';
+        }
+
+        $familyId = (int)($filters['family_id'] ?? 0);
+        if ($familyId > 0) {
+            $where[] = 'p.family_id = :family_id';
+            $params['family_id'] = $familyId;
+        }
+
+        $subfamilyId = (int)($filters['subfamily_id'] ?? 0);
+        if ($subfamilyId > 0) {
+            $where[] = 'p.subfamily_id = :subfamily_id';
+            $params['subfamily_id'] = $subfamilyId;
+        }
+
+        $supplierId = (int)($filters['supplier_id'] ?? 0);
+        if ($supplierId > 0) {
+            $where[] = 'p.supplier_id = :supplier_id';
+            $params['supplier_id'] = $supplierId;
+        }
+
+        return $this->db->fetchAll(
+            'SELECT p.*,
+                    f.name AS family_name,
+                    sf.name AS subfamily_name,
+                    s.name AS supplier_name
+             FROM products p
+             LEFT JOIN product_families f ON f.id = p.family_id
+             LEFT JOIN product_subfamilies sf ON sf.id = p.subfamily_id
+             LEFT JOIN suppliers s ON s.id = p.supplier_id
+             WHERE ' . implode(' AND ', $where) . '
+             ORDER BY p.name ASC',
+            $params
+        );
+    }
+
+    public function bulkAssign(int $companyId, array $productIds, ?int $familyId, ?int $subfamilyId, ?int $supplierId): int
+    {
+        if ($productIds === []) {
+            return 0;
+        }
+
+        $placeholders = implode(',', array_fill(0, count($productIds), '?'));
+        $sql = "UPDATE products
+                SET family_id = ?, subfamily_id = ?, supplier_id = ?, updated_at = NOW()
+                WHERE company_id = ? AND id IN ({$placeholders})";
+        $params = [$familyId, $subfamilyId, $supplierId, $companyId, ...$productIds];
+        return $this->db->execute($sql, $params);
+    }
+
     public function findForCompany(int $id, int $companyId): ?array
     {
         return $this->db->fetch(

@@ -40,6 +40,7 @@ return [
     'products/bulk-start' => ['ProductsController', 'bulkStart'],
     'products/bulk-process' => ['ProductsController', 'bulkProcess'],
     'products/bulk-store' => ['ProductsController', 'bulkStore'],
+    'products/bulk-assign' => ['ProductsController', 'bulkAssign'],
     'products/edit' => ['ProductsController', 'edit'],
     'products/update' => ['ProductsController', 'update'],
     'products/delete' => ['ProductsController', 'delete'],
