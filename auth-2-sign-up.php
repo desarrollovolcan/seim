@@ -115,7 +115,7 @@ include('partials/html.php');
 
                         <p class="text-center text-muted mt-auto mb-0">
                             ©
-                            <script>document.write(new Date().getFullYear())</script> UBold — by <span class="fw-semibold">Coderthemes</span>
+                            <script>document.write(new Date().getFullYear())</script> Seim Energia — by <span class="fw-semibold">Coderthemes</span>
                         </p>
                     </div>
                 </div>

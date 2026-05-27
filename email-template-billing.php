@@ -108,10 +108,10 @@
     <div class="email-wrapper">
         <div class="email-content">
             <div class="email-header">
-                <a href="#"><img src="assets/images/logo.png" alt="UBold" /></a>
+                <a href="#"><img src="assets/images/logo.png" alt="Seim Energia" /></a>
             </div>
             <div class="email-body">
-                <h2>Thanks for using UBold</h2>
+                <h2>Thanks for using Seim Energia</h2>
                 <div class="invoice-info">
                     <strong>Coderthemes</strong>
                     <div>Invoice #98765</div>
