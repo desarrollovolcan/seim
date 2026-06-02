@@ -1,10 +1,94 @@
-<div class="card mb-3">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h4 class="card-title mb-0">Registro de boleta</h4>
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-body d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h4 class="card-title mb-1">Registro rápido de caja chica</h4>
+            <p class="text-muted mb-0">Carga varias boletas en formato planilla: fecha, número, detalle, valor y respaldo tributario.</p>
+        </div>
         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickProductModal">Agregar producto rápido</button>
     </div>
     <div class="card-body">
-        <form method="post" action="index.php?route=petty-cash/store" id="pettyCashForm">
+        <form method="post" action="index.php?route=petty-cash/store" id="quickPettyCashForm" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+            <input type="hidden" name="entry_mode" value="quick_table">
+
+            <div class="row g-3 align-items-end mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">Moneda para las filas</label>
+                    <select name="quick_currency" class="form-select">
+                        <option value="CLP">CLP</option>
+                        <option value="USD">USD</option>
+                        <option value="PEN">PEN</option>
+                    </select>
+                </div>
+                <div class="col-md-9">
+                    <label class="form-label">Observación general del lote</label>
+                    <input type="text" name="quick_notes" class="form-control" placeholder="Ej: Rendición mayo, compras operacionales, colaciones, insumos...">
+                </div>
+            </div>
+
+            <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
+                <span class="fw-bold">Tip:</span>
+                <div>Puedes pegar desde Excel/Sheets columnas en este orden: <strong>Fecha, N° Boleta, Detalle, Valor</strong>. Cada fila permite adjuntar foto o PDF de la boleta.</div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered align-middle mb-2" id="quickEntriesTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" style="width:4%">N°</th>
+                            <th style="width:14%">Fecha</th>
+                            <th style="width:14%">N° Boleta</th>
+                            <th>Detalle</th>
+                            <th style="width:16%">Valor</th>
+                            <th style="width:16%">Proveedor</th>
+                            <th style="width:18%">Documento</th>
+                            <th class="text-center" style="width:5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="quickEntriesBody">
+                        <?php for ($i = 1; $i <= 5; $i++): ?>
+                            <tr class="quick-entry-row">
+                                <td class="text-center fw-semibold row-number"><?php echo $i; ?></td>
+                                <td><input type="date" name="quick_receipt_date[]" class="form-control form-control-sm quick-date" value="<?php echo e($today); ?>"></td>
+                                <td><input type="text" name="quick_receipt_number[]" class="form-control form-control-sm" placeholder="136009"></td>
+                                <td><input type="text" name="quick_description[]" class="form-control form-control-sm quick-description" placeholder="Compra de insumos, colación, combustible..."></td>
+                                <td><input type="text" name="quick_amount[]" class="form-control form-control-sm quick-amount text-end" inputmode="decimal" placeholder="8.300"></td>
+                                <td><input type="text" name="quick_supplier_name[]" class="form-control form-control-sm" placeholder="Caja chica"></td>
+                                <td>
+                                    <input type="file" name="quick_document[]" class="form-control form-control-sm quick-document" accept="application/pdf,image/jpeg,image/png,image/webp">
+                                    <div class="form-text small">PDF/JPG/PNG/WEBP · máx. 10 MB</div>
+                                </td>
+                                <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-quick-row" title="Eliminar fila">✕</button></td>
+                            </tr>
+                        <?php endfor; ?>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <th colspan="4" class="text-end">Total lote</th>
+                            <th><input type="text" id="quickBatchTotal" class="form-control form-control-sm fw-bold text-end" value="$ 0" readonly></th>
+                            <th colspan="3"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <div class="d-flex flex-wrap justify-content-between gap-2 mt-3">
+                <button type="button" class="btn btn-outline-secondary" id="addQuickRowsBtn">Agregar 5 filas</button>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-light" id="clearQuickRowsBtn">Limpiar filas vacías</button>
+                    <button type="submit" class="btn btn-success">Guardar registros rápidos</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header">
+        <h4 class="card-title mb-0">Registro detallado de una boleta</h4>
+    </div>
+    <div class="card-body">
+        <form method="post" action="index.php?route=petty-cash/store" id="pettyCashForm" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
 
             <div class="row g-3">
@@ -27,6 +111,13 @@
                         <option value="USD">USD</option>
                         <option value="PEN">PEN</option>
                     </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">Documento tributario</label>
+                    <div class="border rounded-3 p-3 bg-light">
+                        <input type="file" name="document_file" class="form-control" accept="application/pdf,image/jpeg,image/png,image/webp">
+                        <div class="form-text">Adjunta foto o PDF de la boleta/factura. Formatos permitidos: PDF, JPG, PNG y WEBP hasta 10 MB.</div>
+                    </div>
                 </div>
             </div>
 
@@ -130,6 +221,81 @@
 
 <script>
 (function () {
+    const numberFormatter = new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP', maximumFractionDigits: 0 });
+
+    function parseAmount(value) {
+        value = String(value || '').replace(/[^0-9,.-]/g, '');
+        if (value.includes(',') && value.includes('.')) value = value.replace(/\./g, '').replace(',', '.');
+        else if (value.includes(',')) value = value.replace(',', '.');
+        else if (/^\d{1,3}(\.\d{3})+$/.test(value)) value = value.replace(/\./g, '');
+        return Math.max(0, parseFloat(value || '0') || 0);
+    }
+
+    const quickBody = document.getElementById('quickEntriesBody');
+    const quickTotal = document.getElementById('quickBatchTotal');
+    const quickTemplate = quickBody.querySelector('.quick-entry-row').cloneNode(true);
+
+    function refreshQuickRows() {
+        let total = 0;
+        quickBody.querySelectorAll('.quick-entry-row').forEach((row, index) => {
+            row.querySelector('.row-number').textContent = index + 1;
+            total += parseAmount(row.querySelector('.quick-amount').value);
+        });
+        quickTotal.value = numberFormatter.format(total);
+    }
+
+    function bindQuickRow(row) {
+        row.querySelector('.quick-amount').addEventListener('input', refreshQuickRows);
+        row.querySelector('.remove-quick-row').addEventListener('click', () => {
+            if (quickBody.querySelectorAll('.quick-entry-row').length === 1) return;
+            row.remove();
+            refreshQuickRows();
+        });
+        row.querySelector('.quick-description').addEventListener('paste', (event) => {
+            const text = event.clipboardData ? event.clipboardData.getData('text') : '';
+            if (!text.includes('\t') && !text.includes('\n')) return;
+            event.preventDefault();
+            const rows = text.trim().split(/\r?\n/).map((line) => line.split('\t'));
+            let current = row;
+            rows.forEach((cols, offset) => {
+                if (offset > 0) {
+                    current = addQuickRow();
+                }
+                const inputs = current.querySelectorAll('input');
+                if (cols[0]) inputs[0].value = cols[0].match(/^\d{2}\.\d{2}\.\d{4}$/) ? cols[0].split('.').reverse().join('-') : cols[0];
+                if (cols[1]) inputs[1].value = cols[1];
+                if (cols[2]) inputs[2].value = cols[2];
+                if (cols[3]) inputs[3].value = cols[3];
+            });
+            refreshQuickRows();
+        });
+    }
+
+    function addQuickRow() {
+        const clone = quickTemplate.cloneNode(true);
+        clone.querySelectorAll('input').forEach((input) => {
+            if (input.type === 'date') input.value = '<?php echo e($today); ?>';
+            else input.value = '';
+        });
+        quickBody.appendChild(clone);
+        bindQuickRow(clone);
+        refreshQuickRows();
+        return clone;
+    }
+
+    document.getElementById('addQuickRowsBtn').addEventListener('click', () => {
+        for (let i = 0; i < 5; i++) addQuickRow();
+    });
+    document.getElementById('clearQuickRowsBtn').addEventListener('click', () => {
+        quickBody.querySelectorAll('.quick-entry-row').forEach((row) => {
+            const hasData = Array.from(row.querySelectorAll('input')).some((input) => input.type !== 'date' && input.type !== 'file' && input.value.trim() !== '');
+            if (!hasData && quickBody.querySelectorAll('.quick-entry-row').length > 1) row.remove();
+        });
+        refreshQuickRows();
+    });
+    quickBody.querySelectorAll('.quick-entry-row').forEach(bindQuickRow);
+    refreshQuickRows();
+
     const body = document.getElementById('itemsBody');
     const addBtn = document.getElementById('addRowBtn');
     const totalInput = document.getElementById('receiptTotal');
@@ -154,12 +320,8 @@
         productSelect.addEventListener('change', () => {
             const selected = productSelect.options[productSelect.selectedIndex];
             if (selected && selected.value) {
-                if (!description.value.trim()) {
-                    description.value = selected.dataset.name || '';
-                }
-                if (!parseFloat(price.value || '0')) {
-                    price.value = (parseFloat(selected.dataset.price || '0')).toFixed(2);
-                }
+                if (!description.value.trim()) description.value = selected.dataset.name || '';
+                if (!parseFloat(price.value || '0')) price.value = (parseFloat(selected.dataset.price || '0')).toFixed(2);
             }
             recalc();
         });
@@ -186,55 +348,6 @@
         body.appendChild(clone);
         bindRow(clone);
         recalc();
-    });
-
-    const quickProductForm = document.getElementById('quickProductForm');
-    const quickProductModal = document.getElementById('quickProductModal');
-
-    quickProductForm.addEventListener('submit', async (event) => {
-        event.preventDefault();
-
-        const formData = new FormData(quickProductForm);
-        const submitButton = quickProductForm.querySelector('button[type="submit"]');
-        const originalText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.textContent = 'Guardando...';
-
-        try {
-            const response = await fetch(quickProductForm.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: formData
-            });
-
-            const data = await response.json();
-            if (!response.ok || !data.ok) {
-                throw new Error(data.message || 'No se pudo crear el producto.');
-            }
-
-            const product = data.product;
-            const optionHtml = `${product.name} (${product.category || 'General'} · ${product.unit_measure || 'Unidad'})`;
-            document.querySelectorAll('.product-select').forEach((select) => {
-                const option = document.createElement('option');
-                option.value = product.id;
-                option.dataset.name = product.name;
-                option.dataset.price = product.suggested_price;
-                option.dataset.unit = product.unit_measure || 'Unidad';
-                option.textContent = optionHtml;
-                select.appendChild(option);
-            });
-
-            quickProductForm.reset();
-            const instance = bootstrap.Modal.getInstance(quickProductModal);
-            if (instance) instance.hide();
-        } catch (error) {
-            alert(error.message || 'No se pudo crear el producto.');
-        } finally {
-            submitButton.disabled = false;
-            submitButton.textContent = originalText;
-        }
     });
 
     body.querySelectorAll('.item-row').forEach(bindRow);
