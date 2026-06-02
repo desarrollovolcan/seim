@@ -27,7 +27,7 @@
         </form>
 
         <div class="table-responsive">
-            <table class="table table-striped align-middle">
+            <table class="table table-sm table-striped align-middle small">
                 <thead>
                     <tr>
                         <th>N° Boleta</th>
