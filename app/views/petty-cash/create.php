@@ -1,3 +1,24 @@
+<style>
+    .petty-cash-quick-table th,
+    .petty-cash-quick-table td {
+        padding: .35rem .45rem;
+        vertical-align: middle;
+    }
+
+    .petty-cash-quick-table .form-control,
+    .petty-cash-quick-table .btn {
+        min-height: 32px;
+    }
+
+    .petty-cash-upload-control {
+        min-width: 150px;
+    }
+
+    .petty-cash-upload-control .upload-file-name {
+        max-width: 150px;
+    }
+</style>
+
 <div class="card border-0 shadow-sm mb-3">
     <div class="card-header bg-body d-flex flex-wrap justify-content-between align-items-center gap-2">
         <div>
@@ -27,20 +48,20 @@
 
             <div class="alert alert-info d-flex align-items-start gap-2" role="alert">
                 <span class="fw-bold">Tip:</span>
-                <div>Puedes pegar desde Excel/Sheets columnas en este orden: <strong>Fecha, N° Boleta, Detalle, Valor</strong>. Cada fila permite adjuntar foto o PDF de la boleta.</div>
+                <div>Puedes pegar desde Excel/Sheets columnas en este orden: <strong>Fecha, N° Boleta, Detalle, Valor</strong>. Luego adjunta el respaldo con el botón <strong>Subir</strong> de cada fila.</div>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-sm table-bordered align-middle mb-2 small" id="quickEntriesTable">
+                <table class="table table-sm table-bordered align-middle mb-2 small petty-cash-quick-table" id="quickEntriesTable">
                     <thead class="table-light">
                         <tr>
-                            <th class="text-center" style="width:3%">N°</th>
-                            <th style="width:11%">Fecha</th>
-                            <th style="width:11%">N° Boleta</th>
+                            <th class="text-center" style="width:4%">N°</th>
+                            <th style="width:12%">Fecha</th>
+                            <th style="width:12%">N° Boleta</th>
                             <th>Detalle</th>
-                            <th style="width:12%">Valor</th>
+                            <th style="width:13%">Valor</th>
                             <th style="width:13%">Proveedor</th>
-                            <th style="width:15%">Documento</th>
+                            <th style="width:17%">Respaldo</th>
                             <th class="text-center" style="width:4%"></th>
                         </tr>
                     </thead>
@@ -54,8 +75,11 @@
                                 <td><input type="text" name="quick_amount[]" class="form-control form-control-sm py-1 quick-amount text-end" inputmode="decimal" placeholder="8.300"></td>
                                 <td><input type="text" name="quick_supplier_name[]" class="form-control form-control-sm py-1" placeholder="Caja chica"></td>
                                 <td>
-                                    <input type="file" name="quick_document[]" class="form-control form-control-sm py-1 quick-document" accept="application/pdf,image/jpeg,image/png,image/webp">
-                                    <div class="form-text small mb-0">PDF/JPG/PNG/WEBP · máx. 10 MB</div>
+                                    <div class="petty-cash-upload-control d-flex align-items-center gap-2">
+                                        <input type="file" name="quick_document[]" class="d-none quick-document" accept="application/pdf,image/jpeg,image/png,image/webp">
+                                        <button type="button" class="btn btn-sm btn-soft-primary upload-trigger flex-shrink-0">Subir</button>
+                                        <span class="upload-file-name small text-muted text-truncate">Sin archivo</span>
+                                    </div>
                                 </td>
                                 <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger remove-quick-row" title="Eliminar fila">✕</button></td>
                             </tr>
@@ -171,8 +195,20 @@
         return true;
     }
 
+    function updateDocumentName(row) {
+        const fileInput = row.querySelector('.quick-document');
+        const fileName = row.querySelector('.upload-file-name');
+        fileName.textContent = fileInput.files && fileInput.files.length ? fileInput.files[0].name : 'Sin archivo';
+        fileName.classList.toggle('text-muted', !(fileInput.files && fileInput.files.length));
+        fileName.classList.toggle('text-success', !!(fileInput.files && fileInput.files.length));
+    }
+
     function bindQuickRow(row) {
+        const fileInput = row.querySelector('.quick-document');
+
         row.querySelector('.quick-amount').addEventListener('input', refreshQuickRows);
+        row.querySelector('.upload-trigger').addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', () => updateDocumentName(row));
         row.querySelector('.remove-quick-row').addEventListener('click', () => {
             if (quickBody.querySelectorAll('.quick-entry-row').length === 1) return;
             row.remove();
@@ -186,6 +222,9 @@
             if (input.type === 'date') input.value = '<?php echo e($today); ?>';
             else input.value = '';
         });
+        clone.querySelector('.upload-file-name').textContent = 'Sin archivo';
+        clone.querySelector('.upload-file-name').classList.add('text-muted');
+        clone.querySelector('.upload-file-name').classList.remove('text-success');
         quickBody.appendChild(clone);
         bindQuickRow(clone);
         refreshQuickRows();
@@ -216,7 +255,24 @@
         if (!pasteQuickEntries(text, quickBody.querySelector('.quick-entry-row'))) {
             alert('No se detectaron columnas válidas. Usa: Fecha, N° Boleta, Detalle, Valor. También se acepta N°, Fecha, N° Boleta, Detalle, Valor.');
         }
+
+        if (!pasteQuickEntries(text, quickBody.querySelector('.quick-entry-row'))) {
+            alert('No se detectaron columnas válidas. Usa: Fecha, N° Boleta, Detalle, Valor. También se acepta N°, Fecha, N° Boleta, Detalle, Valor.');
+        }
     });
+
+    document.getElementById('addQuickRowsBtn').addEventListener('click', () => {
+        for (let i = 0; i < 5; i++) addQuickRow();
+    });
+    document.getElementById('clearQuickRowsBtn').addEventListener('click', () => {
+        quickBody.querySelectorAll('.quick-entry-row').forEach((row) => {
+            const hasData = Array.from(row.querySelectorAll('input')).some((input) => input.type !== 'date' && input.type !== 'file' && input.value.trim() !== '');
+            if (!hasData && quickBody.querySelectorAll('.quick-entry-row').length > 1) row.remove();
+        });
+        refreshQuickRows();
+    });
+    quickBody.querySelectorAll('.quick-entry-row').forEach(bindQuickRow);
+    refreshQuickRows();
 
     document.getElementById('addQuickRowsBtn').addEventListener('click', () => {
         for (let i = 0; i < 5; i++) addQuickRow();
