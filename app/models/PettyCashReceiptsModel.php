@@ -4,6 +4,14 @@ class PettyCashReceiptsModel extends Model
 {
     protected string $table = 'petty_cash_receipts';
 
+    public function hasDocumentColumns(): bool
+    {
+        return $this->hasColumn('document_path')
+            && $this->hasColumn('document_original_name')
+            && $this->hasColumn('document_mime_type')
+            && $this->hasColumn('document_size');
+    }
+
     public function listWithFilters(int $companyId, array $filters = []): array
     {
         $where = ['r.company_id = :company_id', 'r.deleted_at IS NULL'];
