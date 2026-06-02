@@ -37,12 +37,13 @@
                         <th class="text-end">Items</th>
                         <th class="text-end">Total</th>
                         <th>Detalle</th>
+                        <th>Documento</th>
                         <th class="text-end">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($receipts)): ?>
-                        <tr><td colspan="8" class="text-center text-muted py-3">No hay registros de caja chica.</td></tr>
+                        <tr><td colspan="9" class="text-center text-muted py-3">No hay registros de caja chica.</td></tr>
                     <?php else: ?>
                         <?php foreach ($receipts as $receipt): ?>
                             <tr>
@@ -61,6 +62,13 @@
                                             <?php endif; ?>
                                         </div>
                                     <?php endforeach; ?>
+                                </td>
+                                <td>
+                                    <?php if (!empty($receipt['document_path'])): ?>
+                                        <a href="<?php echo e($receipt['document_path']); ?>" target="_blank" class="btn btn-soft-success btn-sm">Ver respaldo</a>
+                                    <?php else: ?>
+                                        <span class="badge bg-light text-muted">Sin respaldo</span>
+                                    <?php endif; ?>
                                 </td>
                                 <td class="text-end">
                                     <a href="index.php?route=petty-cash/edit&id=<?php echo (int)$receipt['id']; ?>" class="btn btn-soft-primary btn-sm">Editar</a>

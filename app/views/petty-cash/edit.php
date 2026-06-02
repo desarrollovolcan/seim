@@ -4,7 +4,7 @@
         <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#quickProductModal">Agregar producto rápido</button>
     </div>
     <div class="card-body">
-        <form method="post" action="index.php?route=petty-cash/update" id="pettyCashForm">
+        <form method="post" action="index.php?route=petty-cash/update" id="pettyCashForm" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
             <input type="hidden" name="id" value="<?php echo (int)$receipt['id']; ?>">
 
@@ -19,6 +19,22 @@
                             <option value="<?php echo $currency; ?>" <?php echo ($receipt['currency'] ?? 'CLP') === $currency ? 'selected' : ''; ?>><?php echo $currency; ?></option>
                         <?php endforeach; ?>
                     </select>
+                </div>
+            </div>
+
+            <div class="row g-3 mt-1">
+                <div class="col-12">
+                    <label class="form-label">Documento tributario</label>
+                    <div class="border rounded-3 p-3 bg-light">
+                        <?php if (!empty($receipt['document_path'])): ?>
+                            <div class="mb-2">
+                                <a href="<?php echo e($receipt['document_path']); ?>" target="_blank" class="btn btn-sm btn-outline-success">Ver documento actual</a>
+                                <span class="text-muted small ms-2"><?php echo e($receipt['document_original_name'] ?? basename($receipt['document_path'])); ?></span>
+                            </div>
+                        <?php endif; ?>
+                        <input type="file" name="document_file" class="form-control" accept="application/pdf,image/jpeg,image/png,image/webp">
+                        <div class="form-text">Sube un nuevo PDF o foto para reemplazar el respaldo tributario actual. Máximo 10 MB.</div>
+                    </div>
                 </div>
             </div>
 
