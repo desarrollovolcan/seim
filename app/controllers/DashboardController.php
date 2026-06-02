@@ -11,15 +11,11 @@ class DashboardController extends Controller
             $companyFilter = $companyId ? ' AND company_id = :company_id' : '';
             $companyParams = $companyId ? ['company_id' => $companyId] : [];
 
-            $productionCompanyFilter = $companyId ? ' AND o.company_id = :company_id' : '';
-            $producedProducts = $this->db->fetchAll(
-                'SELECT p.id, p.name, p.stock, p.cost, COALESCE(SUM(po.quantity), 0) AS produced_quantity
-                 FROM production_outputs po
-                 JOIN production_orders o ON o.id = po.production_id
-                 JOIN produced_products p ON p.id = po.produced_product_id
-                 WHERE 1=1' . $productionCompanyFilter . '
-                 GROUP BY p.id, p.name, p.stock, p.cost
-                 ORDER BY produced_quantity DESC, p.name ASC
+            $inventoryProducts = $this->db->fetchAll(
+                'SELECT id, name, stock, cost
+                 FROM products
+                 WHERE deleted_at IS NULL' . $companyFilter . '
+                 ORDER BY stock DESC, name ASC
                  LIMIT 8',
                 $companyParams
             );
@@ -70,7 +66,7 @@ class DashboardController extends Controller
             );
         } catch (Throwable $e) {
             log_message('error', 'Failed to load dashboard metrics: ' . $e->getMessage());
-            $producedProducts = [];
+            $inventoryProducts = [];
             $salesByProduct = [];
             $profitByProduct = [];
             $lowStockProducts = [];
@@ -79,7 +75,7 @@ class DashboardController extends Controller
         $this->render('dashboard/index', [
             'title' => 'Dashboard',
             'pageTitle' => 'Dashboard',
-            'producedProducts' => $producedProducts,
+            'inventoryProducts' => $inventoryProducts,
             'salesByProduct' => $salesByProduct,
             'profitByProduct' => $profitByProduct,
             'lowStockProducts' => $lowStockProducts,
