@@ -128,7 +128,6 @@ INSERT INTO `audit_logs` (`id`, `company_id`, `user_id`, `action`, `entity`, `en
 (13, 1, 2, 'update', 'users', 3, '2026-02-05 14:31:37'),
 (14, 1, 2, 'create', 'produced_products', NULL, '2026-02-05 14:36:30'),
 (15, 1, 2, 'update', 'products', 1, '2026-02-05 14:38:12'),
-(16, 1, 2, 'create', 'production_orders', 1, '2026-02-05 14:38:55'),
 (17, 1, 1, 'update', 'role_permissions', 2, '2026-02-05 14:56:54'),
 (18, 1, 1, 'update', 'users', 3, '2026-02-05 14:57:14'),
 (19, 1, 1, 'update', 'users', 3, '2026-02-05 14:58:59'),
@@ -1174,125 +1173,6 @@ CREATE TABLE `produced_products` (
 
 INSERT INTO `produced_products` (`id`, `company_id`, `name`, `sku`, `description`, `price`, `cost`, `stock`, `stock_min`, `status`, `created_at`, `updated_at`, `deleted_at`) VALUES
 (1, 1, 'Bidon 20lts', '12345', '', 2500.00, 2040.00, 1500, 100, 'activo', '2026-02-05 14:36:29', '2026-02-05 14:38:55', NULL);
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `produced_product_materials`
---
-
-CREATE TABLE `produced_product_materials` (
-  `id` int NOT NULL,
-  `produced_product_id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `quantity` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `unit_cost` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `subtotal` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
-
---
--- Volcado de datos para la tabla `produced_product_materials`
---
-
-INSERT INTO `produced_product_materials` (`id`, `produced_product_id`, `product_id`, `quantity`, `unit_cost`, `subtotal`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 1.00, 1000.00, 1000.00, '2026-02-05 14:36:29', '2026-02-05 14:36:29');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `production_expenses`
---
-
-CREATE TABLE `production_expenses` (
-  `id` int NOT NULL,
-  `production_id` int NOT NULL,
-  `description` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
-  `amount` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
-
---
--- Volcado de datos para la tabla `production_expenses`
---
-
-INSERT INTO `production_expenses` (`id`, `production_id`, `description`, `amount`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Agua', 500000.00, '2026-02-05 14:38:55', '2026-02-05 14:38:55'),
-(2, 1, 'Luz', 20000.00, '2026-02-05 14:38:55', '2026-02-05 14:38:55');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `production_inputs`
---
-
-CREATE TABLE `production_inputs` (
-  `id` int NOT NULL,
-  `production_id` int NOT NULL,
-  `product_id` int NOT NULL,
-  `quantity` int NOT NULL DEFAULT '0',
-  `unit_cost` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `subtotal` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
-
---
--- Volcado de datos para la tabla `production_inputs`
---
-
-INSERT INTO `production_inputs` (`id`, `production_id`, `product_id`, `quantity`, `unit_cost`, `subtotal`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 500, 1000.00, 500000.00, '2026-02-05 14:38:55', '2026-02-05 14:38:55');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `production_orders`
---
-
-CREATE TABLE `production_orders` (
-  `id` int NOT NULL,
-  `company_id` int NOT NULL,
-  `production_date` date NOT NULL,
-  `status` varchar(20) COLLATE utf8mb3_unicode_ci NOT NULL DEFAULT 'completada',
-  `total_cost` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `notes` text COLLATE utf8mb3_unicode_ci,
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
-
---
--- Volcado de datos para la tabla `production_orders`
---
-
-INSERT INTO `production_orders` (`id`, `company_id`, `production_date`, `status`, `total_cost`, `notes`, `created_at`, `updated_at`) VALUES
-(1, 1, '2026-02-05', 'completada', 1020000.00, 'Pedido Hospital', '2026-02-05 14:38:55', '2026-02-05 14:38:55');
-
--- --------------------------------------------------------
-
---
--- Estructura de tabla para la tabla `production_outputs`
---
-
-CREATE TABLE `production_outputs` (
-  `id` int NOT NULL,
-  `production_id` int NOT NULL,
-  `produced_product_id` int NOT NULL,
-  `quantity` int NOT NULL DEFAULT '0',
-  `unit_cost` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `subtotal` decimal(12,2) NOT NULL DEFAULT '0.00',
-  `created_at` datetime NOT NULL,
-  `updated_at` datetime NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
-
---
--- Volcado de datos para la tabla `production_outputs`
---
-
-INSERT INTO `production_outputs` (`id`, `production_id`, `produced_product_id`, `quantity`, `unit_cost`, `subtotal`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, 500, 2040.00, 1020000.00, '2026-02-05 14:38:55', '2026-02-05 14:38:55');
 
 -- --------------------------------------------------------
 
@@ -2669,45 +2549,6 @@ ALTER TABLE `produced_products`
   ADD PRIMARY KEY (`id`),
   ADD KEY `company_id` (`company_id`);
 
---
--- Indices de la tabla `produced_product_materials`
---
-ALTER TABLE `produced_product_materials`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `produced_product_id` (`produced_product_id`),
-  ADD KEY `product_id` (`product_id`);
-
---
--- Indices de la tabla `production_expenses`
---
-ALTER TABLE `production_expenses`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_production_expenses_production` (`production_id`);
-
---
--- Indices de la tabla `production_inputs`
---
-ALTER TABLE `production_inputs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `product_id` (`product_id`),
-  ADD KEY `idx_production_inputs_production` (`production_id`);
-
---
--- Indices de la tabla `production_orders`
---
-ALTER TABLE `production_orders`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `idx_production_orders_company` (`company_id`);
-
---
--- Indices de la tabla `production_outputs`
---
-ALTER TABLE `production_outputs`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `produced_product_id` (`produced_product_id`),
-  ADD KEY `idx_production_outputs_production` (`production_id`);
-
---
 -- Indices de la tabla `products`
 --
 ALTER TABLE `products`
@@ -3273,37 +3114,6 @@ ALTER TABLE `pos_session_withdrawals`
 ALTER TABLE `produced_products`
   MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
---
--- AUTO_INCREMENT de la tabla `produced_product_materials`
---
-ALTER TABLE `produced_product_materials`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `production_expenses`
---
-ALTER TABLE `production_expenses`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
-
---
--- AUTO_INCREMENT de la tabla `production_inputs`
---
-ALTER TABLE `production_inputs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `production_orders`
---
-ALTER TABLE `production_orders`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
--- AUTO_INCREMENT de la tabla `production_outputs`
---
-ALTER TABLE `production_outputs`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
-
---
 -- AUTO_INCREMENT de la tabla `products`
 --
 ALTER TABLE `products`
@@ -3824,40 +3634,6 @@ ALTER TABLE `pos_session_withdrawals`
 ALTER TABLE `produced_products`
   ADD CONSTRAINT `produced_products_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`);
 
---
--- Filtros para la tabla `produced_product_materials`
---
-ALTER TABLE `produced_product_materials`
-  ADD CONSTRAINT `produced_product_materials_ibfk_1` FOREIGN KEY (`produced_product_id`) REFERENCES `produced_products` (`id`),
-  ADD CONSTRAINT `produced_product_materials_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
-
---
--- Filtros para la tabla `production_expenses`
---
-ALTER TABLE `production_expenses`
-  ADD CONSTRAINT `production_expenses_ibfk_1` FOREIGN KEY (`production_id`) REFERENCES `production_orders` (`id`);
-
---
--- Filtros para la tabla `production_inputs`
---
-ALTER TABLE `production_inputs`
-  ADD CONSTRAINT `production_inputs_ibfk_1` FOREIGN KEY (`production_id`) REFERENCES `production_orders` (`id`),
-  ADD CONSTRAINT `production_inputs_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`);
-
---
--- Filtros para la tabla `production_orders`
---
-ALTER TABLE `production_orders`
-  ADD CONSTRAINT `production_orders_ibfk_1` FOREIGN KEY (`company_id`) REFERENCES `companies` (`id`);
-
---
--- Filtros para la tabla `production_outputs`
---
-ALTER TABLE `production_outputs`
-  ADD CONSTRAINT `production_outputs_ibfk_1` FOREIGN KEY (`production_id`) REFERENCES `production_orders` (`id`),
-  ADD CONSTRAINT `production_outputs_ibfk_2` FOREIGN KEY (`produced_product_id`) REFERENCES `produced_products` (`id`);
-
---
 -- Filtros para la tabla `products`
 --
 ALTER TABLE `products`

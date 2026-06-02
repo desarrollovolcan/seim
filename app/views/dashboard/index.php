@@ -1,13 +1,9 @@
 <?php
-$totalProduced = 0;
 $totalSales = 0.0;
 $totalProfit = 0.0;
 $lowStockCount = 0;
-$totalProducts = max(1, count($producedProducts ?? []));
+$totalProducts = max(1, count($inventoryProducts ?? []));
 
-foreach (($producedProducts ?? []) as $item) {
-    $totalProduced += (int)($item['produced_quantity'] ?? 0);
-}
 foreach (($salesByProduct ?? []) as $item) {
     $totalSales += (float)($item['total'] ?? 0);
 }
@@ -28,10 +24,10 @@ $productLabels = [];
 $productCosts = [];
 $productUnits = [];
 $productStocks = [];
-foreach (($producedProducts ?? []) as $item) {
+foreach (($inventoryProducts ?? []) as $item) {
     $productLabels[] = $item['name'] ?? '';
     $productCosts[] = (float)($item['cost'] ?? 0);
-    $productUnits[] = (int)($item['produced_quantity'] ?? 0);
+    $productUnits[] = (int)($item['stock'] ?? 0);
     $productStocks[] = (int)($item['stock'] ?? 0);
 }
 
@@ -66,9 +62,9 @@ foreach (($lowStockProducts ?? []) as $item) {
         <div class="card-body py-3">
             <div class="row g-3">
                 <div class="col-6 col-xl-3">
-                    <div class="seim-kpi-title">Clientes</div>
+                    <div class="seim-kpi-title">Productos</div>
                     <div class="seim-kpi-value"><?php echo (int)$totalProducts; ?></div>
-                    <div class="seim-kpi-split">Producción: <strong><?php echo (int)$totalProduced; ?></strong></div>
+                    <div class="seim-kpi-split">Catálogo activo</div>
                 </div>
                 <div class="col-6 col-xl-3">
                     <div class="seim-kpi-title">Ingreso promedio</div>
@@ -102,8 +98,8 @@ foreach (($lowStockProducts ?? []) as $item) {
         <div class="col-xl-4">
             <div class="card seim-panel-card h-100">
                 <div class="card-body">
-                    <h5 class="seim-panel-title">Canal de producción</h5>
-                    <p class="seim-panel-subtitle">Unidades y participación</p>
+                    <h5 class="seim-panel-title">Stock por producto</h5>
+                    <p class="seim-panel-subtitle">Unidades disponibles</p>
                     <div class="seim-chart-sm"><canvas id="seimDonutOne"></canvas></div>
                 </div>
             </div>
