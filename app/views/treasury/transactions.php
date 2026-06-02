@@ -85,6 +85,14 @@
                                                 <li>
                                                     <a class="dropdown-item" href="index.php?route=treasury/transactions/edit&id=<?php echo (int)$transaction['id']; ?>">Editar</a>
                                                 </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <form method="post" action="index.php?route=treasury/transactions/delete" onsubmit="return confirm('¿Eliminar este movimiento bancario? Esta acción actualizará el saldo de la cuenta.');">
+                                                        <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                        <input type="hidden" name="id" value="<?php echo (int)$transaction['id']; ?>">
+                                                        <button type="submit" class="dropdown-item text-danger">Eliminar</button>
+                                                    </form>
+                                                </li>
                                             </ul>
                                         </div>
                                     </td>

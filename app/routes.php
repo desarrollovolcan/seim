@@ -168,6 +168,7 @@ return [
     'treasury/transactions/store' => ['TreasuryController', 'storeTransaction'],
     'treasury/transactions/edit' => ['TreasuryController', 'editTransaction'],
     'treasury/transactions/update' => ['TreasuryController', 'updateTransaction'],
+    'treasury/transactions/delete' => ['TreasuryController', 'deleteTransaction'],
     'inventory/movements' => ['InventoryController', 'movements'],
     'inventory/movements/show' => ['InventoryController', 'showMovement'],
     'inventory/movements/store' => ['InventoryController', 'storeMovement'],
