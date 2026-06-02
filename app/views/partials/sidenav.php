@@ -181,8 +181,8 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </a>
                     <div class="collapse" id="sidebarCosts">
                         <ul class="sub-menu">
-                            <li class="menu-group-label">1. Facturas compras</li>
                             <?php if ($canAccessAny(['purchases_view', 'purchase_orders_view', 'suppliers_view'])): ?>
+                                <li class="menu-group-label">1. Resumen y análisis</li>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=costs" class="side-nav-link">
                                         <span class="menu-text">Panel de costos</span>
@@ -194,6 +194,10 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                                     </a>
                                 </li>
                             <?php endif; ?>
+
+                            <?php if ($canAccessAny(['purchase_orders_view', 'invoice_register_view', 'invoice_register_edit'])): ?>
+                                <li class="menu-group-label">2. Compras y facturas</li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('purchase_orders_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=purchase-orders" class="side-nav-link">
@@ -201,38 +205,41 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                                     </a>
                                 </li>
                             <?php endif; ?>
-                            <li class="menu-group-label">2. Caja y activos</li>
+                            <?php if ($canAccessAny(['invoice_register_view', 'invoice_register_edit'])): ?>
+                                <li class="side-nav-item">
+                                    <a href="index.php?route=invoice-register" class="side-nav-link">
+                                        <span class="menu-text">Facturas registradas</span>
+                                    </a>
+                                </li>
+                                <?php if ($hasPermission('invoice_register_edit')): ?>
+                                    <li class="side-nav-item">
+                                        <a href="index.php?route=invoice-register/create" class="side-nav-link">
+                                            <span class="menu-text">Nueva factura</span>
+                                        </a>
+                                    </li>
+                                <?php endif; ?>
+                            <?php endif; ?>
+
+                            <?php if ($canAccessAny(['treasury_view', 'petty_cash_view', 'petty_cash_edit'])): ?>
+                                <li class="menu-group-label">3. Caja y tesorería</li>
+                            <?php endif; ?>
                             <?php if ($hasPermission('treasury_view')): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=treasury/transactions" class="side-nav-link">
-                                        <span class="menu-text">Movimientos tesorería</span>
+                                        <span class="menu-text">Movimientos de tesorería</span>
                                     </a>
                                 </li>
                             <?php endif; ?>
                             <?php if ($canAccessAny(['petty_cash_view', 'petty_cash_edit'])): ?>
                                 <li class="side-nav-item">
                                     <a href="index.php?route=petty-cash" class="side-nav-link">
-                                        <span class="menu-text">Caja chica (listado)</span>
+                                        <span class="menu-text">Caja chica</span>
                                     </a>
                                 </li>
                                 <?php if ($hasPermission('petty_cash_edit')): ?>
                                     <li class="side-nav-item">
                                         <a href="index.php?route=petty-cash/create" class="side-nav-link">
-                                            <span class="menu-text">Caja chica (registrar boleta)</span>
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                            <?php endif; ?>
-                            <?php if ($canAccessAny(['invoice_register_view', 'invoice_register_edit'])): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=invoice-register" class="side-nav-link">
-                                        <span class="menu-text">Registro facturas (listado)</span>
-                                    </a>
-                                </li>
-                                <?php if ($hasPermission('invoice_register_edit')): ?>
-                                    <li class="side-nav-item">
-                                        <a href="index.php?route=invoice-register/create" class="side-nav-link">
-                                            <span class="menu-text">Registro facturas (nueva)</span>
+                                            <span class="menu-text">Registrar caja chica</span>
                                         </a>
                                     </li>
                                 <?php endif; ?>
