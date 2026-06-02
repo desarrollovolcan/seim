@@ -168,47 +168,6 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </div>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['production_view', 'production_edit'])): ?>
-                <li class="side-nav-item">
-                    <a data-bs-toggle="collapse" href="#sidebarProduction" aria-expanded="false" aria-controls="sidebarProduction" class="side-nav-link">
-                        <span class="menu-icon"><i data-lucide="factory"></i></span>
-                        <span class="menu-label">
-                            <span class="menu-text">Producción</span>
-                            <span class="menu-caption">Costos y stock final</span>
-                        </span>
-                        <span class="menu-arrow"></span>
-                    </a>
-                    <div class="collapse" id="sidebarProduction">
-                        <ul class="sub-menu">
-                            <li class="menu-group-label">2. Producción</li>
-                            <?php if ($hasPermission('production_view')): ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production" class="side-nav-link">
-                                        <span class="menu-text">Órdenes de producción</span>
-                                    </a>
-                                </li>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production/inputs" class="side-nav-link">
-                                        <span class="menu-text">Consumos para producción</span>
-                                    </a>
-                                </li>
-                                <?php if ($hasPermission('produced_products_view')): ?>
-                                    <li class="side-nav-item">
-                                        <a href="index.php?route=produced-products" class="side-nav-link">
-                                            <span class="menu-text">Productos fabricados</span>
-                                        </a>
-                                    </li>
-                                <?php endif; ?>
-                                <li class="side-nav-item">
-                                    <a href="index.php?route=production/stock" class="side-nav-link">
-                                        <span class="menu-text">Stock producido</span>
-                                    </a>
-                                </li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
-                </li>
-            <?php endif; ?>
             <?php if ($hasCompany && $canAccessAny(['purchase_orders_view', 'purchase_orders_edit', 'purchases_view', 'purchases_edit', 'suppliers_view', 'suppliers_edit', 'honorarios_view', 'fixed_assets_view', 'treasury_view', 'petty_cash_view', 'petty_cash_edit', 'invoice_register_view', 'invoice_register_edit'])): ?>
                 <li class="side-nav-title">Flujo Financiero</li>
                 <li class="side-nav-item">

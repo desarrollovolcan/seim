@@ -289,18 +289,6 @@ CREATE TABLE IF NOT EXISTS produced_products (
     FOREIGN KEY (company_id) REFERENCES companies(id)
 );
 
-CREATE TABLE IF NOT EXISTS produced_product_materials (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    produced_product_id INT NOT NULL,
-    product_id INT NOT NULL,
-    quantity DECIMAL(12,2) NOT NULL DEFAULT 0,
-    unit_cost DECIMAL(12,2) NOT NULL DEFAULT 0,
-    subtotal DECIMAL(12,2) NOT NULL DEFAULT 0,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME NOT NULL,
-    FOREIGN KEY (produced_product_id) REFERENCES produced_products(id),
-    FOREIGN KEY (product_id) REFERENCES products(id)
-);
 
 CREATE TABLE IF NOT EXISTS purchases (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -530,23 +518,7 @@ PREPARE stmt FROM @sql;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-SET @production_outputs_produced_col := (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'production_outputs' AND COLUMN_NAME = 'produced_product_id'
-);
-SET @sql := IF(@production_outputs_produced_col = 0, 'ALTER TABLE production_outputs ADD COLUMN produced_product_id INT NULL AFTER production_id, ADD CONSTRAINT fk_production_outputs_produced FOREIGN KEY (produced_product_id) REFERENCES produced_products(id);', 'SELECT 1;');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
 
-SET @production_outputs_product_col := (
-    SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS
-    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'production_outputs' AND COLUMN_NAME = 'product_id'
-);
-SET @sql := IF(@production_outputs_product_col = 1, 'ALTER TABLE production_outputs MODIFY product_id INT NULL;', 'SELECT 1;');
-PREPARE stmt FROM @sql;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS hr_departments (
     id INT AUTO_INCREMENT PRIMARY KEY,

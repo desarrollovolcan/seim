@@ -22,6 +22,37 @@ class TreasuryController extends Controller
         return (int)$companyId;
     }
 
+    private function signedTransactionAmount(array $transaction): float
+    {
+        $amount = (float)($transaction['amount'] ?? 0);
+        return ($transaction['type'] ?? '') === 'retiro' ? -$amount : $amount;
+    }
+
+    private function recalculateAccountBalances(int $accountId, int $companyId, float $currentBalance): void
+    {
+        $transactions = $this->db->fetchAll(
+            'SELECT id, type, amount
+             FROM bank_transactions
+             WHERE bank_account_id = :account_id AND company_id = :company_id
+             ORDER BY transaction_date ASC, id ASC',
+            ['account_id' => $accountId, 'company_id' => $companyId]
+        );
+
+        $totalMovement = 0.0;
+        foreach ($transactions as $transaction) {
+            $totalMovement += $this->signedTransactionAmount($transaction);
+        }
+
+        $runningBalance = $currentBalance - $totalMovement;
+        foreach ($transactions as $transaction) {
+            $runningBalance += $this->signedTransactionAmount($transaction);
+            $this->transactions->update((int)$transaction['id'], [
+                'balance' => $runningBalance,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+    }
+
     public function accounts(): void
     {
         $this->requireLogin();
@@ -182,7 +213,10 @@ class TreasuryController extends Controller
         $type = $_POST['type'] ?? 'deposito';
         $amount = (float)($_POST['amount'] ?? 0);
         $currentBalance = (float)($account['current_balance'] ?? 0);
-        $newBalance = $type === 'retiro' ? $currentBalance - $amount : $currentBalance + $amount;
+        $newBalance = $currentBalance + $this->signedTransactionAmount([
+            'type' => $type,
+            'amount' => $amount,
+        ]);
         $this->transactions->create([
             'company_id' => $companyId,
             'bank_account_id' => $accountId,
@@ -246,6 +280,55 @@ class TreasuryController extends Controller
             'updated_at' => date('Y-m-d H:i:s'),
         ]);
         flash('success', 'Movimiento bancario actualizado.');
+        $this->redirect('index.php?route=treasury/transactions');
+    }
+
+    public function deleteTransaction(): void
+    {
+        $this->requireLogin();
+        verify_csrf();
+        $companyId = $this->requireCompany();
+        $transactionId = (int)($_POST['id'] ?? 0);
+
+        $transaction = $this->db->fetch(
+            'SELECT bt.*, ba.current_balance
+             FROM bank_transactions bt
+             JOIN bank_accounts ba ON ba.id = bt.bank_account_id
+             WHERE bt.id = :id AND bt.company_id = :company_id AND ba.company_id = :account_company_id',
+            ['id' => $transactionId, 'company_id' => $companyId, 'account_company_id' => $companyId]
+        );
+        if (!$transaction) {
+            flash('error', 'Movimiento bancario no encontrado.');
+            $this->redirect('index.php?route=treasury/transactions');
+        }
+
+        $accountId = (int)$transaction['bank_account_id'];
+        $newBalance = (float)($transaction['current_balance'] ?? 0) - $this->signedTransactionAmount($transaction);
+        $pdo = $this->db->pdo();
+
+        try {
+            $pdo->beginTransaction();
+            $this->db->execute(
+                'DELETE FROM bank_transactions WHERE id = :id AND company_id = :company_id',
+                ['id' => $transactionId, 'company_id' => $companyId]
+            );
+            $this->accounts->update($accountId, [
+                'current_balance' => $newBalance,
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            $this->recalculateAccountBalances($accountId, $companyId, $newBalance);
+            $pdo->commit();
+
+            audit($this->db, Auth::user()['id'], 'delete', 'bank_transactions', $transactionId);
+            flash('success', 'Movimiento bancario eliminado y saldo actualizado.');
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            log_message('error', 'Error al eliminar movimiento bancario: ' . $e->getMessage());
+            flash('error', 'No pudimos eliminar el movimiento bancario. Inténtalo nuevamente.');
+        }
+
         $this->redirect('index.php?route=treasury/transactions');
     }
 }
