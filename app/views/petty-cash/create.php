@@ -255,24 +255,7 @@
         if (!pasteQuickEntries(text, quickBody.querySelector('.quick-entry-row'))) {
             alert('No se detectaron columnas válidas. Usa: Fecha, N° Boleta, Detalle, Valor. También se acepta N°, Fecha, N° Boleta, Detalle, Valor.');
         }
-
-        if (!pasteQuickEntries(text, quickBody.querySelector('.quick-entry-row'))) {
-            alert('No se detectaron columnas válidas. Usa: Fecha, N° Boleta, Detalle, Valor. También se acepta N°, Fecha, N° Boleta, Detalle, Valor.');
-        }
     });
-
-    document.getElementById('addQuickRowsBtn').addEventListener('click', () => {
-        for (let i = 0; i < 5; i++) addQuickRow();
-    });
-    document.getElementById('clearQuickRowsBtn').addEventListener('click', () => {
-        quickBody.querySelectorAll('.quick-entry-row').forEach((row) => {
-            const hasData = Array.from(row.querySelectorAll('input')).some((input) => input.type !== 'date' && input.type !== 'file' && input.value.trim() !== '');
-            if (!hasData && quickBody.querySelectorAll('.quick-entry-row').length > 1) row.remove();
-        });
-        refreshQuickRows();
-    });
-    quickBody.querySelectorAll('.quick-entry-row').forEach(bindQuickRow);
-    refreshQuickRows();
 
     document.getElementById('addQuickRowsBtn').addEventListener('click', () => {
         for (let i = 0; i < 5; i++) addQuickRow();
