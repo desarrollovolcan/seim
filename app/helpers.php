@@ -170,9 +170,23 @@ function render_id_badge(null|int|string $id, string $label = 'ID'): string
 
 function log_message(string $level, string $message): void
 {
-    $logFile = __DIR__ . '/../storage/logs/app.log';
+    $logDir = __DIR__ . '/../storage/logs';
+    $logFile = $logDir . '/app.log';
     $entry = sprintf("[%s] %s: %s\n", date('Y-m-d H:i:s'), strtoupper($level), $message);
-    file_put_contents($logFile, $entry, FILE_APPEND);
+
+    if (!is_dir($logDir) && !@mkdir($logDir, 0775, true) && !is_dir($logDir)) {
+        error_log($entry);
+        return;
+    }
+
+    if ((file_exists($logFile) && !is_writable($logFile)) || (!file_exists($logFile) && !is_writable($logDir))) {
+        error_log($entry);
+        return;
+    }
+
+    if (@file_put_contents($logFile, $entry, FILE_APPEND | LOCK_EX) === false) {
+        error_log($entry);
+    }
 }
 
 function current_company_id(): ?int
