@@ -23,8 +23,9 @@ if (Auth::check() && !can_access_route($db, $route, Auth::user())) {
         exit;
     }
 
-    http_response_code(403);
-    echo 'No tienes permisos para acceder a esta cuenta. Contacta al administrador.';
+    Auth::logout();
+    $_SESSION['error'] = 'No tienes permisos para acceder a esta cuenta. Contacta al administrador.';
+    header('Location: login.php');
     exit;
 }
 
