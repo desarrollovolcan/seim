@@ -50,12 +50,28 @@
 
         <form method="post" action="index.php?route=products/bulk-assign">
             <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+            <input type="hidden" name="filter_search" value="<?php echo e($filters['search'] ?? ''); ?>">
+            <input type="hidden" name="filter_family_id" value="<?php echo (int)($filters['family_id'] ?? 0); ?>">
+            <input type="hidden" name="filter_subfamily_id" value="<?php echo (int)($filters['subfamily_id'] ?? 0); ?>">
+            <input type="hidden" name="filter_supplier_id" value="<?php echo (int)($filters['supplier_id'] ?? 0); ?>">
             <div class="card border mb-3">
                 <div class="card-body py-2">
+                    <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 mb-2">
+                        <div>
+                            <div class="fw-semibold small">Asignación por lotes</div>
+                            <div class="text-muted small">Asocia categorías (familias), subcategorías y proveedores a varios productos en una sola acción.</div>
+                        </div>
+                        <div class="btn-group btn-group-sm" role="group" aria-label="Alcance de asignación por lote">
+                            <input type="radio" class="btn-check" name="bulk_scope" id="bulkScopeSelected" value="selected" checked>
+                            <label class="btn btn-outline-secondary" for="bulkScopeSelected">Seleccionados</label>
+                            <input type="radio" class="btn-check" name="bulk_scope" id="bulkScopeFiltered" value="filtered">
+                            <label class="btn btn-outline-secondary" for="bulkScopeFiltered">Todos los filtrados (<?php echo count($products ?? []); ?>)</label>
+                        </div>
+                    </div>
                     <div class="row g-2 align-items-center">
                         <div class="col-md-3">
                             <select name="bulk_family_id" class="form-select form-select-sm">
-                                <option value="0">Asignar familia...</option>
+                                <option value="0">Asignar categoría/familia...</option>
                                 <?php foreach (($families ?? []) as $family): ?>
                                     <option value="<?php echo (int)$family['id']; ?>"><?php echo e($family['name'] ?? ''); ?></option>
                                 <?php endforeach; ?>
@@ -63,7 +79,7 @@
                         </div>
                         <div class="col-md-3">
                             <select name="bulk_subfamily_id" class="form-select form-select-sm">
-                                <option value="0">Asignar subfamilia...</option>
+                                <option value="0">Asignar subcategoría/subfamilia...</option>
                                 <?php foreach (($subfamilies ?? []) as $subfamily): ?>
                                     <option value="<?php echo (int)$subfamily['id']; ?>"><?php echo e($subfamily['name'] ?? ''); ?></option>
                                 <?php endforeach; ?>
@@ -78,7 +94,7 @@
                             </select>
                         </div>
                         <div class="col-md-3 d-flex gap-2">
-                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Aplicar a seleccionados</button>
+                            <button type="submit" class="btn btn-sm btn-outline-primary w-100">Aplicar por lote</button>
                         </div>
                     </div>
                 </div>
