@@ -59,19 +59,33 @@ class ProductsController extends Controller
         verify_csrf();
         $companyId = $this->requireCompany();
 
-        $rawIds = $_POST['product_ids'] ?? [];
-        $productIds = array_values(array_filter(array_map('intval', is_array($rawIds) ? $rawIds : []), static fn(int $id): bool => $id > 0));
+        $filters = [
+            'search' => trim((string)($_POST['filter_search'] ?? '')),
+            'family_id' => (int)($_POST['filter_family_id'] ?? 0),
+            'subfamily_id' => (int)($_POST['filter_subfamily_id'] ?? 0),
+            'supplier_id' => (int)($_POST['filter_supplier_id'] ?? 0),
+        ];
+        $redirectUrl = $this->productsIndexUrl($filters);
+
+        $scope = (string)($_POST['bulk_scope'] ?? 'selected');
+        if ($scope === 'filtered') {
+            $productIds = $this->products->filteredIds($companyId, $filters);
+        } else {
+            $rawIds = $_POST['product_ids'] ?? [];
+            $productIds = array_values(array_filter(array_map('intval', is_array($rawIds) ? $rawIds : []), static fn(int $id): bool => $id > 0));
+        }
+
         if ($productIds === []) {
-            flash('error', 'Debes seleccionar al menos un producto.');
-            $this->redirect('index.php?route=products');
+            flash('error', $scope === 'filtered' ? 'No hay productos que coincidan con los filtros actuales.' : 'Debes seleccionar al menos un producto.');
+            $this->redirect($redirectUrl);
         }
 
         $familyId = (int)($_POST['bulk_family_id'] ?? 0);
         $subfamilyId = (int)($_POST['bulk_subfamily_id'] ?? 0);
         $supplierId = (int)($_POST['bulk_supplier_id'] ?? 0);
         if ($familyId <= 0 && $subfamilyId <= 0 && $supplierId <= 0) {
-            flash('error', 'Selecciona al menos un dato para asignación masiva.');
-            $this->redirect('index.php?route=products');
+            flash('error', 'Selecciona al menos una categoría, subcategoría o proveedor para asignar por lote.');
+            $this->redirect($redirectUrl);
         }
 
         $updated = $this->products->bulkAssign(
@@ -82,8 +96,23 @@ class ProductsController extends Controller
             $supplierId > 0 ? $supplierId : null
         );
 
-        flash('success', 'Asignación masiva aplicada a ' . (int)$updated . ' productos.');
-        $this->redirect('index.php?route=products');
+        $scopeLabel = $scope === 'filtered' ? 'productos filtrados' : 'productos seleccionados';
+        flash('success', 'Asignación por lote aplicada a ' . (int)$updated . ' ' . $scopeLabel . '.');
+        $this->redirect($redirectUrl);
+    }
+
+
+    private function productsIndexUrl(array $filters = []): string
+    {
+        $params = ['route' => 'products'];
+        foreach (['search', 'family_id', 'subfamily_id', 'supplier_id'] as $key) {
+            $value = $filters[$key] ?? null;
+            if ($value !== null && $value !== '' && (string)$value !== '0') {
+                $params[$key] = $value;
+            }
+        }
+
+        return 'index.php?' . http_build_query($params);
     }
 
     public function create(): void

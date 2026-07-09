@@ -65,12 +65,39 @@ class ProductsModel extends Model
             return 0;
         }
 
+        $updates = [];
+        $params = [];
+        if ($familyId !== null) {
+            $updates[] = 'family_id = ?';
+            $params[] = $familyId;
+        }
+        if ($subfamilyId !== null) {
+            $updates[] = 'subfamily_id = ?';
+            $params[] = $subfamilyId;
+        }
+        if ($supplierId !== null) {
+            $updates[] = 'supplier_id = ?';
+            $params[] = $supplierId;
+        }
+        if ($updates === []) {
+            return 0;
+        }
+
+        $updates[] = 'updated_at = NOW()';
         $placeholders = implode(',', array_fill(0, count($productIds), '?'));
-        $sql = "UPDATE products
-                SET family_id = ?, subfamily_id = ?, supplier_id = ?, updated_at = NOW()
+        $sql = 'UPDATE products
+                SET ' . implode(', ', $updates) . "
                 WHERE company_id = ? AND id IN ({$placeholders})";
-        $params = [$familyId, $subfamilyId, $supplierId, $companyId, ...$productIds];
+        $params = [...$params, $companyId, ...$productIds];
         return $this->db->execute($sql, $params);
+    }
+
+    public function filteredIds(int $companyId, array $filters = []): array
+    {
+        return array_map(
+            static fn(array $product): int => (int)$product['id'],
+            $this->filtered($companyId, $filters)
+        );
     }
 
     public function findForCompany(int $id, int $companyId): ?array
