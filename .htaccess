@@ -1,18 +1,19 @@
 # Public storefront canonical URLs for tulista.cl
 #
-# This file lets Apache show the store from /pagina while keeping public URLs clean:
-#   https://tulista.cl/pagina/index.php  -> https://tulista.cl/
+# Install this file in the domain document root (public_html). It makes Apache
+# show the storefront from /pagina while keeping public URLs clean:
+#   https://tulista.cl/pagina/index.php    -> https://tulista.cl/
 #   https://tulista.cl/pagina/nosotros.php -> https://tulista.cl/nosotros
-#   https://tulista.cl/nosotros -> internally serves /pagina/nosotros.php
-#   https://tulista.cl/contacto -> internally serves /pagina/contacto.php
+#   https://tulista.cl/nosotros            -> internally serves /pagina/nosotros.php
+#   https://tulista.cl/contacto            -> internally serves /pagina/contacto.php
 
 Options -MultiViews
-DirectoryIndex index.php
+DirectoryIndex pagina/index.php index.php
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # Canonicalize the old store home URL.
+    # Canonicalize the old store home URL even when links still point there.
     RewriteCond %{THE_REQUEST} \s/+pagina/index\.php[\s?] [NC]
     RewriteRule ^pagina/index\.php$ / [R=301,L]
 
@@ -23,9 +24,10 @@ DirectoryIndex index.php
 
     # Serve the storefront at the domain root when /pagina/index.php exists.
     RewriteCond %{DOCUMENT_ROOT}/pagina/index.php -f
-    RewriteRule ^$ /pagina/index.php [L]
+    RewriteRule ^$ /pagina/index.php [L,QSA]
 
-    # Keep real files and directories available as-is.
+    # Keep real files and directories available as-is, except legacy /pagina/*.php
+    # requests already canonicalized above.
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
