@@ -112,7 +112,10 @@ class ProductsController extends Controller
             }
         }
 
-        return 'index.php?' . http_build_query($params);
+        unset($params['route']);
+        $query = http_build_query($params);
+
+        return 'apps-productos.php' . ($query !== '' ? '?' . $query : '');
     }
 
     public function create(): void

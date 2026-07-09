@@ -7,8 +7,7 @@
         </div>
     </div>
     <div class="card-body">
-        <form method="get" action="index.php" class="row g-2 mb-3">
-            <input type="hidden" name="route" value="products">
+        <form method="get" action="apps-productos.php" class="row g-2 mb-3">
             <div class="col-md-4">
                 <input type="text" name="search" class="form-control form-control-sm" placeholder="Buscar por nombre, SKU o descripción" value="<?php echo e($filters['search'] ?? ''); ?>">
             </div>
@@ -44,7 +43,7 @@
             </div>
             <div class="col-md-2 d-flex gap-2">
                 <button type="submit" class="btn btn-sm btn-primary w-100">Filtrar</button>
-                <a href="index.php?route=products" class="btn btn-sm btn-light w-100">Limpiar</a>
+                <a href="apps-productos.php" class="btn btn-sm btn-light w-100">Limpiar</a>
             </div>
         </form>
 
