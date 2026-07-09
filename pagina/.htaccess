@@ -1,0 +1,19 @@
+# Fallback rules if the hosting account points Apache directly at /pagina.
+# The main .htaccess in the domain root is preferred; this file makes old links
+# generated inside the storefront canonicalize to the same clean public URLs.
+
+Options -MultiViews
+DirectoryIndex index.php
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # https://tulista.cl/pagina/index.php -> https://tulista.cl/
+    RewriteCond %{THE_REQUEST} \s/+pagina/index\.php[\s?] [NC]
+    RewriteRule ^index\.php$ / [R=301,L]
+
+    # https://tulista.cl/pagina/nosotros.php -> https://tulista.cl/nosotros
+    RewriteCond %{THE_REQUEST} \s/+pagina/([^\s?]+)\.php[\s?] [NC]
+    RewriteCond %1 !^index$ [NC]
+    RewriteRule ^([^/]+)\.php$ /$1 [R=301,L]
+</IfModule>
