@@ -117,7 +117,7 @@ $companyDisplayName = $currentCompany['name'] ?? ($companySettings['name'] ?? 'S
                             <li class="menu-group-label">1. Catálogo</li>
                             <?php if ($hasPermission('products_view')): ?>
                                 <li class="side-nav-item">
-                                    <a href="index.php?route=products" class="side-nav-link">
+                                    <a href="apps-productos.php" class="side-nav-link">
                                         <span class="menu-text">Listado productos</span>
                                     </a>
                                 </li>
