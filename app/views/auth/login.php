@@ -1,14 +1,14 @@
 <?php
-$loginLogoSrc = 'assets/images/logo-sm.png';
+$loginLogoSrc = 'assets/images/seim-logo.png';
 $hasCompanies = !empty($hasCompanies ?? $companies ?? []);
 $companyLogos = $companyLogos ?? [];
 ?>
 
 <div class="auth-box p-0 w-100">
     <div class="row w-100 g-0">
-        <div class="col-xxl-4 col-xl-6">
+        <div class="col-12 col-xl-6 col-xxl-4">
             <div class="card border-0 mb-0">
-                <div class="position-absolute top-0 end-0" style="width: 180px;">
+                <div class="position-absolute top-0 end-0" style="width: 180px; pointer-events: none;">
                     <svg style="opacity: 0.08; width: 100%; height: auto;" width="600" height="560" viewBox="0 0 600 560" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clip-path="url(#clip0_948_1464)">
                             <mask id="mask0_948_1464" style="mask-type:luminance" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="1200">
@@ -35,9 +35,9 @@ $companyLogos = $companyLogos ?? [];
                     </svg>
                 </div>
                 <div class="card-body min-vh-100 d-flex flex-column justify-content-center">
-                    <div class="auth-brand mb-0 text-center">
+                    <div class="auth-brand mb-3 text-center">
                         <a href="index.php" class="logo-login">
-                            <img src="<?php echo e($loginLogoSrc); ?>" alt="logo" height="112" data-login-logo>
+                            <img src="<?php echo e($loginLogoSrc); ?>" alt="SEIM Logo" style="max-height: 72px; max-width: 250px; object-fit: contain;" data-login-logo>
                         </a>
                     </div>
 
@@ -54,35 +54,48 @@ $companyLogos = $companyLogos ?? [];
                                 <div class="alert alert-warning text-start mt-3">No hay empresas activas configuradas. Contacta al administrador para continuar.</div>
                             <?php endif; ?>
 
-                            <form class="mt-4" method="post" action="login.php">
+                            <form class="mt-4 text-start" method="post" action="login.php">
                                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
                                 <fieldset <?php echo $hasCompanies ? '' : 'disabled'; ?>>
-                                    <div class="app-search w-100 input-group rounded-pill mb-3">
-                                        <select name="company_id" class="form-select py-2" required data-company-select>
-                                            <option value="">Selecciona empresa</option>
-                                            <?php foreach (($companies ?? []) as $company): ?>
-                                                <?php $companyId = (int)$company['id']; ?>
-                                                <option
-                                                    value="<?php echo e((string)$companyId); ?>"
-                                                    data-logo="assets/images/logo-sm.png"
-                                                >
-                                                    <?php echo e($company['name']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                    <div class="mb-3">
+                                        <label class="form-label fs-13 fw-medium text-dark mb-1">Empresa</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted"><i class="ti ti-building fs-16"></i></span>
+                                            <select name="company_id" class="form-select py-2" required data-company-select>
+                                                <option value="">Selecciona empresa</option>
+                                                <?php foreach (($companies ?? []) as $company): ?>
+                                                    <?php $companyId = (int)$company['id']; ?>
+                                                    <option
+                                                        value="<?php echo e((string)$companyId); ?>"
+                                                        data-logo="assets/images/logo-sm.png"
+                                                    >
+                                                        <?php echo e($company['name']); ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                        <div class="text-muted fs-12 mt-1">Selecciona la empresa donde administrarás la cuenta.</div>
                                     </div>
-                                    <div class="text-muted small text-start mb-3">Selecciona la empresa donde administrarás la cuenta.</div>
-                                    <div class="app-search w-100 input-group rounded-pill mb-3">
-                                        <input type="email" name="email" class="form-control py-2" placeholder="Correo administrador" autocomplete="username" required>
-                                        <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fs-13 fw-medium text-dark mb-1">Correo Administrador</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted"><i class="ti ti-mail fs-16"></i></span>
+                                            <input type="email" name="email" class="form-control py-2" placeholder="ejemplo@seim.cl" autocomplete="username" required>
+                                        </div>
                                     </div>
-                                    <div class="app-search w-100 input-group rounded-pill mb-2">
-                                        <input type="password" name="password" class="form-control py-2" placeholder="Contraseña" autocomplete="current-password" required data-password-field>
-                                        <button class="btn btn-outline-secondary" type="button" data-toggle-password>Mostrar</button>
-                                        <i data-lucide="key-round" class="app-search-icon text-muted"></i>
+
+                                    <div class="mb-3">
+                                        <label class="form-label fs-13 fw-medium text-dark mb-1">Contraseña</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted"><i class="ti ti-lock fs-16"></i></span>
+                                            <input type="password" name="password" class="form-control py-2" placeholder="••••••••" autocomplete="current-password" required data-password-field>
+                                            <button class="btn btn-outline-secondary" type="button" data-toggle-password>Mostrar</button>
+                                        </div>
                                     </div>
-                                    <div class="d-grid gap-2 mt-3">
-                                        <button type="submit" class="btn btn-primary fw-semibold">Ingresar</button>
+
+                                    <div class="d-grid gap-2 mt-4">
+                                        <button type="submit" class="btn btn-primary py-2 fw-semibold">Ingresar</button>
                                     </div>
                                 </fieldset>
                             </form>
@@ -95,7 +108,7 @@ $companyLogos = $companyLogos ?? [];
                 </div>
             </div>
         </div>
-        <div class="col">
+        <div class="d-none d-xl-block col-xl-6 col-xxl-8">
             <div class="h-100 position-relative card-side-img rounded-0 overflow-hidden" data-login-slider>
                 <div class="login-slider-track" data-slider-track>
                     <?php for ($image = 1; $image <= 10; $image++): ?>
@@ -179,7 +192,7 @@ $companyLogos = $companyLogos ?? [];
         if (!selectedOption) {
             return;
         }
-        loginLogo.src = 'assets/images/logo-sm.png';
+        loginLogo.src = selectedOption.dataset?.logo || 'assets/images/seim-logo.png';
     };
     companySelect?.addEventListener('change', updateLoginLogo);
     updateLoginLogo();

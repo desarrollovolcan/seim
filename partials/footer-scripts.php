@@ -1,8 +1,11 @@
-<!-- Vendor js -->
-<script src="assets/js/vendors.min.js"></script>
+<!-- Bootstrap 5.3.x Bundle JS (with Popper, Local) -->
+<script src="assets/plugins/bootstrap/bootstrap.bundle.min.js"></script>
 
-<!-- App js -->
-<script src="assets/js/app.js"></script>
+<!-- Lucide Icons -->
+<script src="assets/plugins/lucide/lucide.min.js"></script>
+
+<!-- SEIM Clean App JS -->
+<script src="assets/js/seim-app.js"></script>
 
 <?php $baseUrl = function_exists('base_url') ? rtrim(base_url(), '/') : ''; ?>
 <script>

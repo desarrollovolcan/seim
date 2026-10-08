@@ -18,7 +18,7 @@ class Controller
         $db = $this->db;
         $currentUser = Auth::user();
         $permissions = [];
-        if ($currentUser && ($currentUser['role'] ?? '') !== 'admin') {
+        if ($currentUser && !$this->isAdmin($currentUser)) {
             $roleId = (int)($currentUser['role_id'] ?? 0);
             if ($roleId === 0 && !empty($currentUser['role'])) {
                 $roleRow = $this->db->fetch('SELECT id FROM roles WHERE name = :name', ['name' => $currentUser['role']]);
@@ -97,11 +97,71 @@ class Controller
         }
     }
 
+    public function isAdmin(?array $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+        if (!$user) {
+            return false;
+        }
+        $roleId = (int)($user['role_id'] ?? 0);
+        if ($roleId === 1) {
+            return true;
+        }
+        $role = strtolower(rtrim(trim((string)($user['role'] ?? '')), '.'));
+        return in_array($role, ['admin', 'administrador', 'superadmin'], true);
+    }
+
     protected function requireRole(string $role): void
     {
+        $this->requireLogin();
         $user = Auth::user();
-        if (!$user || $user['role'] !== $role) {
-            $this->redirect('index.php?route=dashboard');
+        if (!$user) {
+            $this->redirect('login.php');
         }
+        $normalizedExpected = strtolower(rtrim(trim($role), '.'));
+        if ($normalizedExpected === 'admin') {
+            if ($this->isAdmin($user)) {
+                return;
+            }
+        } else {
+            $userRole = strtolower(rtrim(trim((string)($user['role'] ?? '')), '.'));
+            if ($userRole === $normalizedExpected) {
+                return;
+            }
+        }
+        flash('error', 'No tienes permisos para acceder a esta sección.');
+        $this->redirect('index.php?route=dashboard');
+    }
+
+    protected function requirePermission(string $permissionOrRoute): void
+    {
+        $this->requireLogin();
+        $user = Auth::user();
+        if (!$user) {
+            $this->redirect('login.php');
+        }
+        if ($this->isAdmin($user)) {
+            return;
+        }
+        if (can_user_access_route($this->db, $permissionOrRoute, $user)) {
+            return;
+        }
+        $roleId = (int)($user['role_id'] ?? 0);
+        if ($roleId) {
+            $perms = role_permissions($this->db, $roleId);
+            if (in_array($permissionOrRoute, $perms, true)) {
+                return;
+            }
+            $editKey = permission_edit_key_for_view($permissionOrRoute);
+            if ($editKey && in_array($editKey, $perms, true)) {
+                return;
+            }
+            $legacyKey = permission_legacy_key_for($permissionOrRoute);
+            if ($legacyKey && in_array($legacyKey, $perms, true)) {
+                return;
+            }
+        }
+        flash('error', 'No tienes permisos para acceder a esta sección.');
+        $this->redirect('index.php?route=dashboard');
     }
 }

@@ -1,39 +1,33 @@
 <?php
-$logoColor = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? 'assets/images/logo.png';
-$logoBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'] ?? 'assets/images/logo-black.png';
-$logoSmallColor = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? 'assets/images/logo-sm.png';
-$logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'] ?? 'assets/images/logo-sm.png';
+$rawLogoColor = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? '';
+$logoColor = (!empty($rawLogoColor) && is_file(__DIR__ . '/../../../' . ltrim($rawLogoColor, '/'))) 
+    ? $rawLogoColor 
+    : 'assets/images/seim-logo.png';
+
+$rawLogoSm = $currentCompany['logo_color'] ?? $companySettings['logo_color'] ?? '';
+$logoSmallColor = (!empty($rawLogoSm) && is_file(__DIR__ . '/../../../' . ltrim($rawLogoSm, '/')))
+    ? $rawLogoSm
+    : 'assets/images/seim-logo.png';
+
+$companyDisplayName = $currentCompany['name'] ?? ($companySettings['name'] ?? 'SEIM Energía');
 ?>
 
 <div class="sidenav-menu">
-    <a href="index.php" class="logo">
-        <span class="logo logo-light">
-            <span class="logo-lg"><img src="<?php echo e($logoColor); ?>" alt="logo"></span>
-            <span class="logo-sm"><img src="<?php echo e($logoSmallColor); ?>" alt="small logo"></span>
-        </span>
-        <span class="logo logo-dark">
-            <span class="logo-lg"><img src="<?php echo e($logoBlack); ?>" alt="dark logo"></span>
-            <span class="logo-sm"><img src="<?php echo e($logoSmallBlack); ?>" alt="small logo"></span>
-        </span>
-    </a>
-    <button class="button-on-hover">
-        <i class="ti ti-menu-4 fs-22 align-middle"></i>
-    </button>
-    <button class="button-close-offcanvas">
-        <i class="ti ti-x align-middle"></i>
-    </button>
-    <div class="scrollbar" data-simplebar>
-        <div class="sidenav-user">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <span class="sidenav-user-name fw-bold"><?php echo e($currentUser['name'] ?? 'Usuario'); ?></span>
-                    <span class="fs-12 fw-semibold"><?php echo e($currentUser['role'] ?? ''); ?></span>
-                </div>
-            </div>
-        </div>
+    <div class="sidenav-brand">
+        <a href="index.php" class="brand-link">
+            <img src="<?php echo e($logoColor); ?>" alt="<?php echo e($companyDisplayName); ?>" class="brand-logo logo-lg" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <span class="brand-text fw-bold text-white fs-5" style="display: none;"><?php echo e($companyDisplayName); ?></span>
+            <img src="<?php echo e($logoSmallColor); ?>" alt="<?php echo e($companyDisplayName); ?>" class="brand-logo logo-sm" style="display: none;">
+        </a>
+        <button class="button-close-offcanvas d-lg-none" type="button" aria-label="Cerrar menú">
+            <i class="ti ti-x"></i>
+        </button>
+    </div>
+
+    <div class="scrollbar">
         <?php
-        $isAdmin = ($currentUser['role'] ?? '') === 'admin';
-        $hasCompany = !empty($currentCompany['id']);
+        $isAdmin = is_admin_user($currentUser);
+        $hasCompany = !empty($currentCompany['id']) || $isAdmin;
         $hasPermission = static function (string $key) use ($permissions, $isAdmin): bool {
             if ($isAdmin) {
                 return true;
@@ -66,7 +60,7 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </a>
                 </li>
             <?php endif; ?>
-            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit', 'quotes_view', 'quotes_edit', 'services_view', 'services_edit', 'projects_view', 'projects_edit', 'invoices_view', 'invoices_edit', 'sales_dispatches_view', 'sales_dispatches_edit'])): ?>
+            <?php if ($hasCompany && $canAccessAny(['sales_view', 'sales_edit', 'clients_view', 'clients_edit', 'quotes_view', 'quotes_edit', 'invoices_view', 'invoices_edit'])): ?>
                 <li class="side-nav-title">Flujo Comercial</li>
                 <li class="side-nav-item">
                     <a data-bs-toggle="collapse" href="#sidebarSales" aria-expanded="false" aria-controls="sidebarSales" class="side-nav-link">
@@ -79,7 +73,7 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                     </a>
                     <div class="collapse" id="sidebarSales">
                         <ul class="sub-menu">
-                            <?php if ($canAccessAny(['clients_view', 'quotes_view', 'quotes_edit', 'services_view', 'projects_view'])): ?>
+                            <?php if ($canAccessAny(['clients_view', 'quotes_view', 'quotes_edit'])): ?>
                                 <li class="menu-group-label">1. Prospección y cartera</li>
                                 <?php if ($hasPermission('clients_view')): ?>
                                     <li class="side-nav-item"><a href="index.php?route=clients" class="side-nav-link"><span class="menu-text">Clientes</span></a></li>
@@ -87,12 +81,6 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
                                 <?php if ($canAccessAny(['quotes_view', 'quotes_edit'])): ?>
                                     <li class="side-nav-item"><a href="index.php?route=quotes" class="side-nav-link"><span class="menu-text">Cotizaciones</span></a></li>
                                     <li class="side-nav-item"><a href="index.php?route=quotes/management" class="side-nav-link"><span class="menu-text">Gestión cotizaciones</span></a></li>
-                                <?php endif; ?>
-                                <?php if ($hasPermission('services_view')): ?>
-                                    <li class="side-nav-item"><a href="index.php?route=services" class="side-nav-link"><span class="menu-text">Servicios</span></a></li>
-                                <?php endif; ?>
-                                <?php if ($hasPermission('projects_view')): ?>
-                                    <li class="side-nav-item"><a href="index.php?route=projects" class="side-nav-link"><span class="menu-text">Proyectos</span></a></li>
                                 <?php endif; ?>
                             <?php endif; ?>
 
@@ -107,15 +95,6 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
 
                                 <li class="menu-group-label">3. Seguimiento</li>
                                 <li class="side-nav-item"><a href="index.php?route=sales/profit-analysis" class="side-nav-link"><span class="menu-text">Análisis ganancias</span></a></li>
-                            <?php endif; ?>
-                            <?php if ($canAccessAny(['sales_dispatches_view', 'sales_dispatches_edit'])): ?>
-                                <li class="menu-group-label">4. Despacho</li>
-                                <?php if ($hasPermission('sales_dispatches_edit')): ?>
-                                    <li class="side-nav-item"><a href="index.php?route=sales/dispatches/create" class="side-nav-link"><span class="menu-text">Despachar camión vendedor</span></a></li>
-                                <?php endif; ?>
-                                <?php if ($hasPermission('sales_dispatches_view')): ?>
-                                    <li class="side-nav-item"><a href="index.php?route=sales/dispatches/reception" class="side-nav-link"><span class="menu-text">Recepcionar camión vendedor</span></a></li>
-                                <?php endif; ?>
                             <?php endif; ?>
                         </ul>
                     </div>
@@ -464,14 +443,19 @@ $logoSmallBlack = $currentCompany['logo_black'] ?? $companySettings['logo_black'
             }
             link.classList.add('active');
             link.closest('.side-nav-item')?.classList.add('active');
-            const collapse = link.closest('.collapse');
-            if (collapse) {
-                collapse.classList.add('show');
-                const toggle = collapse.previousElementSibling;
-                if (toggle && toggle.classList.contains('side-nav-link')) {
-                    toggle.classList.add('active');
-                    toggle.setAttribute('aria-expanded', 'true');
+            
+            // Recursively open all ancestor collapse containers
+            let parent = link.parentElement;
+            while (parent && !parent.classList.contains('side-nav')) {
+                if (parent.classList.contains('collapse')) {
+                    parent.classList.add('show');
+                    const toggle = parent.previousElementSibling;
+                    if (toggle && toggle.classList.contains('side-nav-link')) {
+                        toggle.classList.add('active');
+                        toggle.setAttribute('aria-expanded', 'true');
+                    }
                 }
+                parent = parent.parentElement;
             }
         });
     })();

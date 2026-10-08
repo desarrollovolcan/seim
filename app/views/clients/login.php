@@ -48,29 +48,39 @@ $loginLogoSrc = login_logo_src($companySettings ?? []);
                                 <div class="alert alert-danger text-start mt-3"><?php echo e($error); ?></div>
                             <?php endif; ?>
 
-                            <form class="mt-4" method="post" action="index.php?route=clients/login">
+                            <form class="mt-4 text-start" method="post" action="index.php?route=clients/login">
                                 <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                                <div class="app-search w-100 input-group rounded-pill mb-3">
-                                    <select name="company_id" class="form-select py-2" required>
-                                        <option value="">Selecciona empresa</option>
-                                        <?php foreach (($companies ?? []) as $company): ?>
-                                            <option value="<?php echo e((string)$company['id']); ?>" <?php echo ((int)($companyId ?? 0) === (int)$company['id']) ? 'selected' : ''; ?>>
-                                                <?php echo e($company['name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                <div class="mb-3">
+                                    <label class="form-label fs-13 fw-medium text-dark mb-1">Empresa</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="ti ti-building fs-16"></i></span>
+                                        <select name="company_id" class="form-select py-2" required>
+                                            <option value="">Selecciona empresa</option>
+                                            <?php foreach (($companies ?? []) as $company): ?>
+                                                <option value="<?php echo e((string)$company['id']); ?>" <?php echo ((int)($companyId ?? 0) === (int)$company['id']) ? 'selected' : ''; ?>>
+                                                    <?php echo e($company['name']); ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
                                 </div>
-                                <div class="app-search w-100 input-group rounded-pill mb-3">
-                                    <input type="email" name="email" class="form-control py-2" value="<?php echo e($email ?? ''); ?>" placeholder="Correo del cliente" required>
-                                    <i data-lucide="circle-user" class="app-search-icon text-muted"></i>
+                                <div class="mb-3">
+                                    <label class="form-label fs-13 fw-medium text-dark mb-1">Correo Electrónico</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="ti ti-mail fs-16"></i></span>
+                                        <input type="email" name="email" class="form-control py-2" value="<?php echo e($email ?? ''); ?>" placeholder="ejemplo@cliente.cl" required>
+                                    </div>
                                 </div>
-                                <div class="app-search w-100 input-group rounded-pill mb-2">
-                                    <input type="password" name="password" class="form-control py-2" placeholder="Contraseña de acceso" required>
-                                    <i data-lucide="lock" class="app-search-icon text-muted"></i>
+                                <div class="mb-3">
+                                    <label class="form-label fs-13 fw-medium text-dark mb-1">Contraseña</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted"><i class="ti ti-lock fs-16"></i></span>
+                                        <input type="password" name="password" class="form-control py-2" placeholder="••••••••" required>
+                                    </div>
                                 </div>
                                 <p class="text-muted fs-xs mb-3">Si no cuentas con tus credenciales, solicita el acceso a tu ejecutivo.</p>
                                 <div class="d-grid gap-2">
-                                    <button type="submit" class="btn btn-primary fw-semibold">Ingresar al portal</button>
+                                    <button type="submit" class="btn btn-primary py-2 fw-semibold">Ingresar al portal</button>
                                 </div>
                             </form>
                         </div>

@@ -285,8 +285,8 @@ class ClientsController extends Controller
             $this->redirect('index.php?route=clients');
         }
         $companyId = current_company_id();
-        $services = $this->db->fetchAll('SELECT * FROM services WHERE client_id = :id AND company_id = :company_id AND deleted_at IS NULL', ['id' => $id, 'company_id' => $companyId]);
-        $projects = $this->db->fetchAll('SELECT * FROM projects WHERE client_id = :id AND company_id = :company_id AND deleted_at IS NULL', ['id' => $id, 'company_id' => $companyId]);
+        $services = [];
+        $projects = [];
         $invoices = $this->db->fetchAll('SELECT * FROM invoices WHERE client_id = :id AND company_id = :company_id AND deleted_at IS NULL', ['id' => $id, 'company_id' => $companyId]);
         $emails = $this->db->fetchAll('SELECT * FROM email_logs WHERE client_id = :id AND company_id = :company_id ORDER BY created_at DESC', ['id' => $id, 'company_id' => $companyId]);
         $payments = $this->db->fetchAll(
@@ -335,55 +335,6 @@ class ClientsController extends Controller
         $activities = [];
         if ($client) {
             $sources = [
-                [
-                    'table' => 'projects',
-                    'sql' => 'SELECT projects.id, projects.name, projects.status, projects.created_at, projects.updated_at, clients.name as client_name
-                     FROM projects
-                     JOIN clients ON projects.client_id = clients.id
-                     WHERE projects.company_id = :company_id AND projects.deleted_at IS NULL' . $filterClause . '
-                     ORDER BY projects.id DESC
-                     LIMIT 50',
-                    'map' => static function (array $row): array {
-                        $projectId = (int)($row['id'] ?? 0);
-                        return [
-                            'type' => 'Proyecto',
-                            'title' => $row['name'] ?? '',
-                            'status' => $row['status'] ?? '',
-                            'client' => $row['client_name'] ?? '',
-                            'date' => $row['updated_at'] ?? $row['created_at'] ?? '',
-                            'url' => 'index.php?route=projects/show&id=' . $projectId,
-                            'actions' => [
-                                ['label' => 'Ver', 'url' => 'index.php?route=projects/show&id=' . $projectId],
-                                ['label' => 'Editar', 'url' => 'index.php?route=projects/edit&id=' . $projectId],
-                            ],
-                        ];
-                    },
-                ],
-                [
-                    'table' => 'services',
-                    'sql' => 'SELECT services.id, services.name, services.service_type, services.status, services.created_at, services.updated_at, clients.name as client_name
-                     FROM services
-                     JOIN clients ON services.client_id = clients.id
-                     WHERE services.company_id = :company_id AND services.deleted_at IS NULL' . $filterClause . '
-                     ORDER BY services.id DESC
-                     LIMIT 50',
-                    'map' => static function (array $row): array {
-                        $serviceId = (int)($row['id'] ?? 0);
-                        return [
-                            'type' => 'Servicio',
-                            'title' => $row['name'] ?? '',
-                            'status' => $row['status'] ?? '',
-                            'client' => $row['client_name'] ?? '',
-                            'date' => $row['updated_at'] ?? $row['created_at'] ?? '',
-                            'url' => 'index.php?route=services/show&id=' . $serviceId,
-                            'meta' => $row['service_type'] ?? '',
-                            'actions' => [
-                                ['label' => 'Ver', 'url' => 'index.php?route=services/show&id=' . $serviceId],
-                                ['label' => 'Editar', 'url' => 'index.php?route=services/edit&id=' . $serviceId],
-                            ],
-                        ];
-                    },
-                ],
                 [
                     'table' => 'support_tickets',
                     'sql' => 'SELECT support_tickets.id, support_tickets.subject, support_tickets.status, support_tickets.priority, support_tickets.created_at, support_tickets.updated_at, clients.name as client_name
@@ -602,14 +553,7 @@ class ClientsController extends Controller
             $this->redirect('index.php?route=clients/login');
         }
 
-        $activities = $this->db->fetchAll(
-            'SELECT project_tasks.*, projects.name as project_name
-             FROM project_tasks
-             JOIN projects ON project_tasks.project_id = projects.id
-             WHERE projects.client_id = :id AND projects.deleted_at IS NULL
-             ORDER BY project_tasks.created_at DESC',
-            ['id' => $client['id']]
-        );
+        $activities = [];
         $payments = $this->db->fetchAll(
             'SELECT payments.*, invoices.numero as invoice_number, invoices.estado as invoice_status, invoices.total as invoice_total
              FROM payments
@@ -624,27 +568,8 @@ class ClientsController extends Controller
         );
         $pendingTotal = array_sum(array_map(static fn(array $invoice) => (float)$invoice['total'], $pendingInvoices));
         $paidTotal = array_sum(array_map(static fn(array $payment) => (float)$payment['monto'], $payments));
-        $projectsOverview = $this->db->fetchAll(
-            'SELECT projects.*,
-                COUNT(project_tasks.id) as tasks_total,
-                COALESCE(SUM(CASE WHEN project_tasks.progress_percent >= 100 THEN 1 ELSE 0 END), 0) as tasks_completed,
-                COALESCE(SUM(project_tasks.progress_percent), 0) as tasks_progress,
-                MAX(project_tasks.created_at) as last_activity
-             FROM projects
-             LEFT JOIN project_tasks ON project_tasks.project_id = projects.id
-             WHERE projects.client_id = :id AND projects.deleted_at IS NULL
-             GROUP BY projects.id
-             ORDER BY projects.created_at DESC',
-            ['id' => $client['id']]
-        );
-        $projectTasks = $this->db->fetchAll(
-            'SELECT project_tasks.*, projects.name as project_name
-             FROM project_tasks
-             JOIN projects ON project_tasks.project_id = projects.id
-             WHERE projects.client_id = :id AND projects.deleted_at IS NULL
-             ORDER BY COALESCE(project_tasks.start_date, project_tasks.created_at) ASC',
-            ['id' => $client['id']]
-        );
+        $projectsOverview = [];
+        $projectTasks = [];
 
         $ticketModel = new SupportTicketsModel($this->db);
         $ticketMessageModel = new SupportTicketMessagesModel($this->db);
@@ -1011,8 +936,6 @@ class ClientsController extends Controller
         }
         $linkedCounts = [
             'facturas' => $this->db->fetch('SELECT COUNT(*) as total FROM invoices WHERE client_id = :id AND deleted_at IS NULL', ['id' => $id]),
-            'proyectos' => $this->db->fetch('SELECT COUNT(*) as total FROM projects WHERE client_id = :id AND deleted_at IS NULL', ['id' => $id]),
-            'servicios' => $this->db->fetch('SELECT COUNT(*) as total FROM services WHERE client_id = :id AND deleted_at IS NULL', ['id' => $id]),
             'cotizaciones' => $this->db->fetch('SELECT COUNT(*) as total FROM quotes WHERE client_id = :id', ['id' => $id]),
             'tickets' => $this->db->fetch('SELECT COUNT(*) as total FROM support_tickets WHERE client_id = :id', ['id' => $id]),
             'pagos' => $this->db->fetch(

@@ -120,7 +120,11 @@ class QuotesController extends Controller
         $client = null;
         if ($quickQuote) {
             $clientId = 0;
+        } elseif ($clientId <= 0) {
+            flash('error', 'Selecciona un cliente para la cotización.');
+            $this->redirect('index.php?route=quotes/create');
         }
+
         if ($clientId > 0) {
             $client = $this->db->fetch(
                 'SELECT id, rut, name, giro, address, commune FROM clients WHERE id = :id AND company_id = :company_id',
@@ -132,7 +136,7 @@ class QuotesController extends Controller
             }
         }
         $siiData = sii_document_payload($_POST, $client ? sii_receiver_payload($client) : []);
-        if (!$quickQuote || $clientId > 0) {
+        if (!$quickQuote && $clientId > 0) {
             $siiErrors = validate_sii_document_payload($siiData);
             if ($siiErrors) {
                 flash('error', implode(' ', $siiErrors));
@@ -194,49 +198,71 @@ class QuotesController extends Controller
         $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
         $total = $taxableBase + $impuestos;
 
-        $quoteId = $this->quotes->create(array_merge([
-            'company_id' => $companyId,
-            'client_id' => $clientId > 0 ? $clientId : null,
-            'system_service_id' => $serviceId !== '' ? $serviceId : null,
-            'project_id' => $projectId !== '' ? $projectId : null,
-            'numero' => $numero,
-            'fecha_emision' => $issueDate !== '' ? $issueDate : date('Y-m-d'),
-            'estado' => $this->normalizeStatus($_POST['estado'] ?? 'creada'),
-            'subtotal' => $subtotal,
-            'discount_total' => $discountTotal,
-            'discount_total_type' => $discountTotalType,
-            'impuestos' => $impuestos,
-            'total' => $total,
-            'notas' => trim($_POST['notas'] ?? ''),
-            'created_at' => date('Y-m-d H:i:s'),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ], $siiData));
-
-        $itemsModel = new QuoteItemsModel($this->db);
-        foreach ($normalizedItems as $item) {
-            $itemsModel->create([
-                'quote_id' => $quoteId,
-                'descripcion' => $item['descripcion'],
-                'cantidad' => $item['cantidad'],
-                'precio_unitario' => $item['precio_unitario'],
-                'descuento' => $item['descuento'],
-                'discount_type' => $item['discount_type'],
-                'total' => $item['total'],
-                'created_at' => date('Y-m-d H:i:s'),
-                'updated_at' => date('Y-m-d H:i:s'),
-            ]);
+        $clientIdValue = $clientId > 0 ? $clientId : null;
+        if ($clientIdValue === null && !$this->quotes->isColumnNullable('client_id')) {
+            $clientIdValue = 0;
         }
 
-        create_notification(
-            $this->db,
-            $companyId,
-            'Nueva cotización',
-            'Se creó la cotización ' . ($numero !== '' ? $numero : '#' . $quoteId) . '.',
-            'success'
-        );
-        audit($this->db, Auth::user()['id'], 'create', 'quotes', $quoteId);
-        flash('success', 'Cotización creada correctamente.');
-        $this->redirect('index.php?route=quotes');
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+
+            $quoteId = $this->quotes->create(array_merge([
+                'company_id' => $companyId,
+                'client_id' => $clientIdValue,
+                'system_service_id' => $serviceId !== '' ? $serviceId : null,
+                'project_id' => $projectId !== '' ? $projectId : null,
+                'numero' => $numero,
+                'fecha_emision' => $issueDate !== '' ? $issueDate : date('Y-m-d'),
+                'estado' => $this->normalizeStatus($_POST['estado'] ?? 'creada'),
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'discount_total_type' => $discountTotalType,
+                'impuestos' => $impuestos,
+                'total' => $total,
+                'notas' => trim($_POST['notas'] ?? ''),
+                'created_at' => date('Y-m-d H:i:s'),
+                'updated_at' => date('Y-m-d H:i:s'),
+            ], $siiData));
+
+            $itemsModel = new QuoteItemsModel($this->db);
+            foreach ($normalizedItems as $item) {
+                $itemsModel->create([
+                    'quote_id' => $quoteId,
+                    'descripcion' => $item['descripcion'],
+                    'cantidad' => $item['cantidad'],
+                    'precio_unitario' => $item['precio_unitario'],
+                    'descuento' => $item['descuento'],
+                    'discount_type' => $item['discount_type'],
+                    'total' => $item['total'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            $pdo->commit();
+
+            create_notification(
+                $this->db,
+                $companyId,
+                'Nueva cotización',
+                'Se creó la cotización ' . ($numero !== '' ? $numero : '#' . $quoteId) . '.',
+                'success'
+            );
+            $userId = (int)(Auth::user()['id'] ?? 0);
+            if ($userId > 0) {
+                audit($this->db, $userId, 'create', 'quotes', $quoteId);
+            }
+            flash('success', 'Cotización creada correctamente.');
+            $this->redirect('index.php?route=quotes');
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            log_message('error', sprintf('Error al guardar cotización: %s', $e->getMessage()));
+            flash('error', 'Ocurrió un error al guardar la cotización: ' . $e->getMessage());
+            $this->redirect('index.php?route=quotes/create');
+        }
     }
 
     public function show(): void
@@ -413,41 +439,58 @@ class QuotesController extends Controller
         $impuestos = $applyTax ? round($taxableBase * ($taxRate / 100), 2) : 0.0;
         $total = $taxableBase + $impuestos;
 
-        $this->quotes->update($id, array_merge([
-            'client_id' => $clientId,
-            'system_service_id' => $serviceId !== '' ? $serviceId : null,
-            'project_id' => $projectId !== '' ? $projectId : null,
-            'numero' => trim($_POST['numero'] ?? ''),
-            'fecha_emision' => $issueDate !== '' ? $issueDate : $quote['fecha_emision'],
-            'estado' => $this->normalizeStatus($_POST['estado'] ?? ($quote['estado'] ?? 'creada')),
-            'subtotal' => $subtotal,
-            'discount_total' => $discountTotal,
-            'discount_total_type' => $discountTotalType,
-            'impuestos' => $impuestos,
-            'total' => $total,
-            'notas' => trim($_POST['notas'] ?? ''),
-            'updated_at' => date('Y-m-d H:i:s'),
-        ], $siiData));
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
 
-        $this->db->execute('DELETE FROM quote_items WHERE quote_id = :quote_id', ['quote_id' => $id]);
-        $itemsModel = new QuoteItemsModel($this->db);
-        foreach ($normalizedItems as $item) {
-            $itemsModel->create([
-                'quote_id' => $id,
-                'descripcion' => $item['descripcion'],
-                'cantidad' => $item['cantidad'],
-                'precio_unitario' => $item['precio_unitario'],
-                'descuento' => $item['descuento'],
-                'discount_type' => $item['discount_type'],
-                'total' => $item['total'],
-                'created_at' => date('Y-m-d H:i:s'),
+            $this->quotes->update($id, array_merge([
+                'client_id' => $clientId,
+                'system_service_id' => $serviceId !== '' ? $serviceId : null,
+                'project_id' => $projectId !== '' ? $projectId : null,
+                'numero' => trim($_POST['numero'] ?? ''),
+                'fecha_emision' => $issueDate !== '' ? $issueDate : $quote['fecha_emision'],
+                'estado' => $this->normalizeStatus($_POST['estado'] ?? ($quote['estado'] ?? 'creada')),
+                'subtotal' => $subtotal,
+                'discount_total' => $discountTotal,
+                'discount_total_type' => $discountTotalType,
+                'impuestos' => $impuestos,
+                'total' => $total,
+                'notas' => trim($_POST['notas'] ?? ''),
                 'updated_at' => date('Y-m-d H:i:s'),
-            ]);
-        }
+            ], $siiData));
 
-        audit($this->db, Auth::user()['id'], 'update', 'quotes', $id);
-        flash('success', 'Cotización actualizada correctamente.');
-        $this->redirect('index.php?route=quotes/show&id=' . $id);
+            $this->db->execute('DELETE FROM quote_items WHERE quote_id = :quote_id', ['quote_id' => $id]);
+            $itemsModel = new QuoteItemsModel($this->db);
+            foreach ($normalizedItems as $item) {
+                $itemsModel->create([
+                    'quote_id' => $id,
+                    'descripcion' => $item['descripcion'],
+                    'cantidad' => $item['cantidad'],
+                    'precio_unitario' => $item['precio_unitario'],
+                    'descuento' => $item['descuento'],
+                    'discount_type' => $item['discount_type'],
+                    'total' => $item['total'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                    'updated_at' => date('Y-m-d H:i:s'),
+                ]);
+            }
+
+            $pdo->commit();
+
+            $userId = (int)(Auth::user()['id'] ?? 0);
+            if ($userId > 0) {
+                audit($this->db, $userId, 'update', 'quotes', $id);
+            }
+            flash('success', 'Cotización actualizada correctamente.');
+            $this->redirect('index.php?route=quotes/show&id=' . $id);
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            log_message('error', sprintf('Error al actualizar cotización #%d: %s', $id, $e->getMessage()));
+            flash('error', 'Ocurrió un error al actualizar la cotización: ' . $e->getMessage());
+            $this->redirect('index.php?route=quotes/edit&id=' . $id);
+        }
     }
 
     public function delete(): void
@@ -468,10 +511,25 @@ class QuotesController extends Controller
             flash('error', 'Cotización no encontrada para esta empresa.');
             $this->redirect('index.php?route=quotes');
         }
-        $this->db->execute('DELETE FROM quote_items WHERE quote_id = :quote_id', ['quote_id' => $id]);
-        $this->db->execute('DELETE FROM quotes WHERE id = :id', ['id' => $id]);
-        audit($this->db, Auth::user()['id'], 'delete', 'quotes', $id);
-        flash('success', 'Cotización eliminada correctamente.');
+        $pdo = $this->db->pdo();
+        try {
+            $pdo->beginTransaction();
+            $this->db->execute('DELETE FROM quote_items WHERE quote_id = :quote_id', ['quote_id' => $id]);
+            $this->db->execute('DELETE FROM quotes WHERE id = :id', ['id' => $id]);
+            $pdo->commit();
+
+            $userId = (int)(Auth::user()['id'] ?? 0);
+            if ($userId > 0) {
+                audit($this->db, $userId, 'delete', 'quotes', $id);
+            }
+            flash('success', 'Cotización eliminada correctamente.');
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            log_message('error', sprintf('Error al eliminar cotización #%d: %s', $id, $e->getMessage()));
+            flash('error', 'No se pudo eliminar la cotización.');
+        }
         $this->redirect('index.php?route=quotes');
     }
 
@@ -574,9 +632,17 @@ class QuotesController extends Controller
             $payload['closed_at'] = null;
         }
 
-        $this->quotes->update($id, $payload);
-        audit($this->db, Auth::user()['id'], 'update', 'quotes', $id);
-        flash('success', 'Gestión de cotización actualizada.');
+        try {
+            $this->quotes->update($id, $payload);
+            $userId = (int)(Auth::user()['id'] ?? 0);
+            if ($userId > 0) {
+                audit($this->db, $userId, 'update', 'quotes', $id);
+            }
+            flash('success', 'Gestión de cotización actualizada.');
+        } catch (Throwable $e) {
+            log_message('error', sprintf('Error al actualizar gestión de cotización #%d: %s', $id, $e->getMessage()));
+            flash('error', 'No se pudo actualizar la gestión de la cotización.');
+        }
         $this->redirect('index.php?route=quotes/management&quote_id=' . $id);
     }
 

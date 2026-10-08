@@ -183,13 +183,12 @@
             <div class="d-flex justify-content-end gap-2 mt-3">
                 <a href="index.php?route=clients" class="btn btn-light">Cancelar</a>
                 <button type="submit" class="btn btn-primary">Actualizar</button>
+                <?php
+                $reportTemplate = 'informeIcargaEspanol.php';
+                $reportSource = 'clients/edit';
+                include __DIR__ . '/../partials/report-download.php';
+                ?>
             </div>
-
-            <?php
-            $reportTemplate = 'informeIcargaEspanol.php';
-            $reportSource = 'clients/edit';
-            include __DIR__ . '/../partials/report-download.php';
-            ?>
         </form>
     </div>
 </div>

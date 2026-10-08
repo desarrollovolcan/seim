@@ -69,75 +69,8 @@
         });
     };
 
-    const shouldSkipForm = (form) => {
-        const action = form.getAttribute('action') || '';
-        const searchable = form.querySelectorAll('input,select,textarea').length < 4;
-        return action.includes('delete') || action.includes('status') || searchable;
-    };
-
-    const attachFormPrintButtons = () => {
-        const forms = Array.from(document.querySelectorAll('form[method="post"], form[method="POST"]'));
-        forms.forEach((form) => {
-            if (form.dataset.reportReady === '1' || shouldSkipForm(form)) {
-                return;
-            }
-            form.dataset.reportReady = '1';
-
-            if (!form.querySelector('input[name="report_source"]')) {
-                const sourceInput = document.createElement('input');
-                sourceInput.type = 'hidden';
-                sourceInput.name = 'report_source';
-                sourceInput.value = 'formulario';
-                form.appendChild(sourceInput);
-            }
-
-            if (!form.querySelector('input[name="report_template"]')) {
-                const templateInput = document.createElement('input');
-                templateInput.type = 'hidden';
-                templateInput.name = 'report_template';
-                templateInput.value = currentRoute.includes('quotes') || currentRoute.includes('invoices')
-                    ? 'informeIcargaInvoice.php'
-                    : 'informeIcargaEspanol.php';
-                form.appendChild(templateInput);
-            }
-
-            let csrf = form.querySelector('input[name="csrf_token"]');
-            if (!csrf) {
-                csrf = document.createElement('input');
-                csrf.type = 'hidden';
-                csrf.name = 'csrf_token';
-                csrf.value = '<?php echo e(csrf_token()); ?>';
-                form.appendChild(csrf);
-            }
-
-            const actions = document.createElement('div');
-            actions.className = 'd-flex flex-wrap gap-2 mt-3 report-actions-auto';
-
-            const printBtn = document.createElement('button');
-            printBtn.type = 'submit';
-            printBtn.className = 'btn btn-primary';
-            printBtn.setAttribute('formtarget', '_blank');
-            printBtn.setAttribute('formmethod', 'post');
-            printBtn.setAttribute('formaction', 'index.php?route=reports/print-form');
-            printBtn.textContent = 'Imprimir informe';
-
-            const pdfBtn = document.createElement('button');
-            pdfBtn.type = 'submit';
-            pdfBtn.className = 'btn btn-outline-primary';
-            pdfBtn.setAttribute('formtarget', '_blank');
-            pdfBtn.setAttribute('formmethod', 'post');
-            pdfBtn.setAttribute('formaction', 'index.php?route=reports/download');
-            pdfBtn.textContent = 'Descargar PDF';
-
-            actions.appendChild(pdfBtn);
-            actions.appendChild(printBtn);
-            form.appendChild(actions);
-        });
-    };
-
     document.addEventListener('DOMContentLoaded', () => {
         attachExportButtons();
-        attachFormPrintButtons();
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
             window.lucide.createIcons();
         }

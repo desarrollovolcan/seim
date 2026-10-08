@@ -4,7 +4,6 @@ class InvoicesController extends Controller
 {
     private InvoicesModel $invoices;
     private ClientsModel $clients;
-    private ServicesModel $services;
     private SystemServicesModel $systemServices;
 
     public function __construct(array $config, Database $db)
@@ -12,7 +11,6 @@ class InvoicesController extends Controller
         parent::__construct($config, $db);
         $this->invoices = new InvoicesModel($db);
         $this->clients = new ClientsModel($db);
-        $this->services = new ServicesModel($db);
         $this->systemServices = new SystemServicesModel($db);
     }
 
@@ -33,63 +31,18 @@ class InvoicesController extends Controller
         $companyId = current_company_id();
         $clients = $this->clients->active($companyId);
         $catalogServices = $this->systemServices->allWithType($companyId);
-        $projects = $this->db->fetchAll(
-            'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
-            ['company_id' => $companyId]
-        );
+        $projects = [];
         $settings = new SettingsModel($this->db);
         $prefix = $settings->get('invoice_prefix', 'FAC-');
         $number = $this->invoices->nextNumber($prefix, $companyId);
         $invoiceDefaults = $settings->get('invoice_defaults', []);
         $selectedClientId = (int)($_GET['client_id'] ?? 0);
-        $selectedProjectId = (int)($_GET['project_id'] ?? 0);
-        $selectedServiceId = (int)($_GET['service_id'] ?? 0);
+        $selectedProjectId = 0;
+        $selectedServiceId = 0;
         $prefillService = null;
-        if ($selectedServiceId > 0) {
-            $prefillService = $this->db->fetch(
-                'SELECT services.*, clients.name as client_name FROM services JOIN clients ON services.client_id = clients.id WHERE services.id = :id AND services.company_id = :company_id AND services.deleted_at IS NULL',
-                ['id' => $selectedServiceId, 'company_id' => $companyId]
-            );
-            if ($prefillService) {
-                $selectedClientId = (int)($prefillService['client_id'] ?? 0);
-            }
-        }
-        $billableServices = $this->db->fetchAll(
-            'SELECT services.id, services.name, services.cost, services.currency, services.due_date, services.client_id, clients.name as client_name
-             FROM services
-             JOIN clients ON services.client_id = clients.id
-             WHERE services.company_id = :company_id AND services.deleted_at IS NULL
-               AND NOT EXISTS (
-                   SELECT 1 FROM invoices WHERE invoices.service_id = services.id AND invoices.company_id = :company_id AND invoices.deleted_at IS NULL
-               )
-             ORDER BY services.id DESC',
-            ['company_id' => $companyId]
-        );
-        if ($prefillService && !array_filter($billableServices, fn ($service) => (int)($service['id'] ?? 0) === (int)$prefillService['id'])) {
-            $billableServices[] = $prefillService;
-        }
-        $billableRenewals = $this->db->fetchAll(
-            'SELECT service_renewals.*, clients.name as client_name, services.name as service_name
-             FROM service_renewals
-             JOIN clients ON service_renewals.client_id = clients.id
-             LEFT JOIN services ON service_renewals.service_id = services.id
-             WHERE service_renewals.company_id = :company_id
-               AND service_renewals.deleted_at IS NULL
-               AND service_renewals.status = "pendiente"
-             ORDER BY service_renewals.renewal_date DESC, service_renewals.id DESC',
-            ['company_id' => $companyId]
-        );
-        $billableProjects = $this->db->fetchAll(
-            'SELECT projects.id, projects.name, projects.value, projects.delivery_date, projects.client_id, projects.status, clients.name as client_name
-             FROM projects
-             JOIN clients ON projects.client_id = clients.id
-             WHERE projects.company_id = :company_id AND projects.deleted_at IS NULL AND projects.status = "finalizado"
-               AND NOT EXISTS (
-                   SELECT 1 FROM invoices WHERE invoices.project_id = projects.id AND invoices.company_id = :company_id AND invoices.deleted_at IS NULL
-               )
-             ORDER BY projects.id DESC',
-            ['company_id' => $companyId]
-        );
+        $billableServices = [];
+        $billableRenewals = [];
+        $billableProjects = [];
         $billableQuotes = $this->db->fetchAll(
             'SELECT quotes.id, quotes.numero, quotes.total, quotes.fecha_emision, quotes.client_id, quotes.project_id, quotes.service_id, quotes.estado, clients.name as client_name
              FROM quotes
@@ -273,12 +226,15 @@ class InvoicesController extends Controller
         $pdf->SetDrawColor($borderColor[0], $borderColor[1], $borderColor[2]);
         $pdf->SetLineWidth(0.3);
 
-        $logoPath = __DIR__ . '/../../logos/Logo Go color t.png';
+        $logoPath = __DIR__ . '/../../assets/images/seim-logo.png';
+        if (!is_file($logoPath)) {
+            $logoPath = __DIR__ . '/../../logos/Logo Go color t.png';
+        }
         if (!is_file($logoPath)) {
             $logoPath = __DIR__ . '/../../assets/images/logo-black.png';
         }
         if (is_file($logoPath)) {
-            $pdf->Image($logoPath, 12, 12, 26);
+            $pdf->Image($logoPath, 12, 12, 42);
         }
 
         $statusLabel = strtoupper(trim((string)($data['status'] ?? '')));
@@ -422,26 +378,8 @@ class InvoicesController extends Controller
         $this->requireLogin();
         verify_csrf();
         $companyId = current_company_id();
-        $serviceId = (int)($_POST['service_id'] ?? 0);
-        $projectId = (int)($_POST['project_id'] ?? 0);
-        if ($serviceId > 0) {
-            $serviceExists = $this->db->fetch(
-                'SELECT id FROM services WHERE id = :id AND company_id = :company_id',
-                ['id' => $serviceId, 'company_id' => $companyId]
-            );
-            if (!$serviceExists) {
-                $serviceId = 0;
-            }
-        }
-        if ($projectId > 0) {
-            $projectExists = $this->db->fetch(
-                'SELECT id FROM projects WHERE id = :id AND company_id = :company_id',
-                ['id' => $projectId, 'company_id' => $companyId]
-            );
-            if (!$projectExists) {
-                $projectId = 0;
-            }
-        }
+        $serviceId = 0;
+        $projectId = 0;
         $issueDate = trim($_POST['fecha_emision'] ?? '');
         $dueDate = trim($_POST['fecha_vencimiento'] ?? '');
         $subtotal = trim($_POST['subtotal'] ?? '');
@@ -534,10 +472,7 @@ class InvoicesController extends Controller
         $items = $itemsModel->byInvoice($id);
         $clients = $this->clients->active($companyId);
         $catalogServices = $this->systemServices->allWithType($companyId);
-        $projects = $this->db->fetchAll(
-            'SELECT projects.*, clients.name as client_name FROM projects JOIN clients ON projects.client_id = clients.id WHERE projects.deleted_at IS NULL AND projects.company_id = :company_id ORDER BY projects.id DESC',
-            ['company_id' => $companyId]
-        );
+        $projects = [];
         $settings = new SettingsModel($this->db);
         $invoiceDefaults = $settings->get('invoice_defaults', []);
         $this->render('invoices/edit', [

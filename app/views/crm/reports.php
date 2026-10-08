@@ -126,7 +126,7 @@
             <div class="card-body">
                 <h5 class="card-title mb-3">Accesos rápidos</h5>
                 <div class="d-grid gap-2">
-                    <a href="index.php?route=projects" class="btn btn-outline-primary">Proyectos</a>
+                    <a href="index.php?route=quotes" class="btn btn-outline-primary">Cotizaciones</a>
                     <a href="index.php?route=notifications" class="btn btn-outline-info">Actividad</a>
                     <a href="index.php?route=tickets" class="btn btn-outline-warning">Service Desk</a>
                     <a href="index.php?route=invoices" class="btn btn-outline-success">Facturación</a>

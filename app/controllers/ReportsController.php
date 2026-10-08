@@ -28,8 +28,6 @@ class ReportsController
             'roles/edit' => 'informeIcargaEspanol.php',
             'companies/create' => 'informeIcargaEspanol.php',
             'companies/edit' => 'informeIcargaEspanol.php',
-            'services/create' => 'informeIcargaEspanol.php',
-            'services/edit' => 'informeIcargaEspanol.php',
             'sales/create' => 'informeIcargaEspanol.php',
             'fixed-assets/create' => 'informeIcargaEspanol.php',
             'fixed-assets/edit' => 'informeIcargaEspanol.php',

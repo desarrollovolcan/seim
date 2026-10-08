@@ -16,7 +16,7 @@
                 <p class="mb-1"><strong>Asunto:</strong> <?php echo e($ticket['subject'] ?? ''); ?></p>
                 <p class="mb-3"><strong>Prioridad:</strong> <?php echo e(ucfirst($ticket['priority'] ?? 'media')); ?></p>
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <a href="index.php?route=projects&client_id=<?php echo (int)($ticket['client_id'] ?? 0); ?>" class="btn btn-outline-primary btn-sm">Ver proyectos</a>
+                    <a href="index.php?route=quotes&client_id=<?php echo (int)($ticket['client_id'] ?? 0); ?>" class="btn btn-outline-primary btn-sm">Ver cotizaciones</a>
                     <a href="index.php?route=invoices&client_id=<?php echo (int)($ticket['client_id'] ?? 0); ?>" class="btn btn-outline-success btn-sm">Ver facturas</a>
                 </div>
 

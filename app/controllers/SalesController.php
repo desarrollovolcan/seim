@@ -8,7 +8,6 @@ class SalesController extends Controller
     private ClientsModel $clients;
     private PosSessionsModel $posSessions;
     private SalePaymentsModel $salePayments;
-    private ServicesModel $services;
     private SettingsModel $settings;
     private ProducedProductsModel $producedProducts;
     private PosSessionWithdrawalsModel $posWithdrawals;
@@ -22,7 +21,6 @@ class SalesController extends Controller
         $this->clients = new ClientsModel($db);
         $this->posSessions = new PosSessionsModel($db);
         $this->salePayments = new SalePaymentsModel($db);
-        $this->services = new ServicesModel($db);
         $this->settings = new SettingsModel($db);
         $this->producedProducts = new ProducedProductsModel($db);
         $this->posWithdrawals = new PosSessionWithdrawalsModel($db);
@@ -101,7 +99,7 @@ class SalesController extends Controller
         $products = $this->products->active($companyId);
         $producedProducts = $this->producedProducts->active($companyId);
         $clients = $this->clients->active($companyId);
-        $services = $this->services->active($companyId);
+        $services = [];
         $invoiceDefaults = $this->settings->get('invoice_defaults', []);
         $applyTaxDefault = $isPos ? true : !empty($invoiceDefaults['apply_tax']);
         $taxRate = (float)($invoiceDefaults['tax_rate'] ?? 19);

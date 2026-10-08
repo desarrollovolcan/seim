@@ -5,14 +5,13 @@
                 <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
                     <div>
                         <h4 class="card-title mb-1">Panel Comercial Unificado</h4>
-                        <p class="text-muted mb-0">Conecta oportunidades, proyectos, servicios y facturación desde un solo lugar.</p>
+                        <p class="text-muted mb-0">Conecta oportunidades, cotizaciones, tickets y facturación desde un solo lugar.</p>
                     </div>
                     <div class="d-flex flex-wrap gap-2">
-                        <a href="index.php?route=projects/create" class="btn btn-primary">Nuevo Proyecto</a>
+                        <a href="index.php?route=quotes/create" class="btn btn-primary">Nueva Cotización</a>
                         <a href="index.php?route=tickets/create" class="btn btn-info">Nuevo Ticket</a>
-                        <a href="index.php?route=invoices/create" class="btn btn-success">Nueva Factura</a>
-                        <a href="#crm-quick-project" class="btn btn-outline-primary">Registro rápido</a>
-                        <a href="#crm-quick-service" class="btn btn-outline-warning">Solicitud servicio</a>
+                        <a href="index.php?route=sales/create" class="btn btn-success">Nueva Venta</a>
+                        <a href="index.php?route=invoices" class="btn btn-outline-secondary">Facturación</a>
                     </div>
                 </div>
                 <div class="row g-3">
@@ -22,8 +21,8 @@
                                 <h5 class="mb-2">Pipeline &amp; Oportunidades</h5>
                                 <p class="text-muted">Convierte leads en acuerdos y mantiene la visibilidad del equipo.</p>
                                 <div class="d-flex flex-wrap gap-2">
-                                    <a href="index.php?route=projects" class="btn btn-sm btn-primary">Ver proyectos</a>
-                                    <a href="index.php?route=quotes" class="btn btn-sm btn-outline-primary">Cotizaciones</a>
+                                    <a href="index.php?route=quotes" class="btn btn-sm btn-primary">Cotizaciones</a>
+                                    <a href="index.php?route=sales" class="btn btn-sm btn-outline-primary">Ventas</a>
                                 </div>
                             </div>
                         </div>
@@ -43,11 +42,11 @@
                     <div class="col-md-6 col-xl-4">
                         <div class="card h-100 border">
                             <div class="card-body">
-                                <h5 class="mb-2">Servicios &amp; Soporte</h5>
-                                <p class="text-muted">Gestiona tickets, SLA y renovación de servicios.</p>
+                                <h5 class="mb-2">Soporte &amp; Service Desk</h5>
+                                <p class="text-muted">Gestiona tickets de soporte, SLA y requerimientos técnicos.</p>
                                 <div class="d-flex flex-wrap gap-2">
                                     <a href="index.php?route=tickets" class="btn btn-sm btn-warning">Service Desk</a>
-                                    <a href="index.php?route=services" class="btn btn-sm btn-outline-warning">Servicios</a>
+                                    <a href="index.php?route=tickets/create" class="btn btn-sm btn-outline-warning">Nuevo Ticket</a>
                                 </div>
                             </div>
                         </div>
@@ -95,153 +94,34 @@
 </div>
 
 <div class="row g-4">
-    <div class="col-lg-6" id="crm-quick-project">
+    <div class="col-lg-6" id="crm-quick-quote">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="card-title mb-1">Registro rápido de proyecto</h5>
-                <p class="text-muted mb-0">Estandariza el ingreso de proyectos ligados a clientes y servicios.</p>
+                <h5 class="card-title mb-1">Acceso a Nueva Cotización</h5>
+                <p class="text-muted mb-0">Crea propuestas comerciales detalladas para tus clientes.</p>
             </div>
-            <div class="card-body">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-name">Nombre del proyecto</label>
-                            <input type="text" class="form-control" id="crm-project-name" placeholder="Ej: Renovación sitio web">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-client">Cliente</label>
-                            <select class="form-select" id="crm-project-client" data-client-select>
-                                <option value="">Selecciona cliente</option>
-                                <?php foreach ($clients as $client): ?>
-                                    <?php $contactName = $client['contact'] ?: $client['name']; ?>
-                                    <option value="<?php echo (int)$client['id']; ?>"
-                                        data-contact-name="<?php echo e($contactName); ?>"
-                                        data-contact-email="<?php echo e($client['email'] ?? ''); ?>"
-                                        data-contact-phone="<?php echo e($client['phone'] ?? ''); ?>"
-                                        data-address="<?php echo e($client['address'] ?? ''); ?>">
-                                        <?php echo e($client['name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-contact">Contacto</label>
-                            <input type="text" class="form-control" id="crm-project-contact" data-client-field="contact_name" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-contact-email">Correo contacto</label>
-                            <input type="email" class="form-control" id="crm-project-contact-email" data-client-field="contact_email" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-stage">Estado comercial</label>
-                            <select class="form-select" id="crm-project-stage">
-                                <option selected>Selecciona estado</option>
-                                <option>Descubrimiento</option>
-                                <option>Propuesta enviada</option>
-                                <option>Negociación</option>
-                                <option>Ganada</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-start">Inicio</label>
-                            <input type="date" class="form-control" id="crm-project-start">
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-project-end">Entrega estimada</label>
-                            <input type="date" class="form-control" id="crm-project-end">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="crm-project-scope">Resumen de alcance</label>
-                            <textarea class="form-control" id="crm-project-scope" placeholder="Describe entregables, tiempos y responsables"></textarea>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
-                        <button type="reset" class="btn btn-light w-100 w-sm-auto">Limpiar</button>
-                        <button type="submit" class="btn btn-primary w-100 w-sm-auto">Guardar proyecto</button>
-                    </div>
-                    <?php
-                    $reportTemplate = 'informeIcargaEspanol.php';
-                    $reportSource = 'crm/hub/project';
-                    include __DIR__ . '/../partials/report-download.php';
-                    ?>
-                </form>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <p class="text-secondary fs-13">El módulo de cotizaciones te permite armar propuestas personalizadas con productos del catálogo, cálculo automático de IVA y control de estados (Borrador, Enviada, Aprobada, Rechazada).</p>
+                <div class="pt-3 border-top d-flex gap-2">
+                    <a href="index.php?route=quotes/create" class="btn btn-primary"><i class="ti ti-plus"></i> Crear Cotización</a>
+                    <a href="index.php?route=quotes" class="btn btn-outline-secondary">Ver Cotizaciones</a>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-lg-6" id="crm-quick-service">
+    <div class="col-lg-6" id="crm-quick-ticket">
         <div class="card h-100">
             <div class="card-header">
-                <h5 class="card-title mb-1">Solicitud de servicio</h5>
-                <p class="text-muted mb-0">Captura solicitudes de soporte para clientes activos.</p>
+                <h5 class="card-title mb-1">Service Desk / Tickets</h5>
+                <p class="text-muted mb-0">Captura y resuelve incidencias o solicitudes de clientes activos.</p>
             </div>
-            <div class="card-body">
-                <form method="post">
-                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-client">Cliente</label>
-                            <select class="form-select" id="crm-service-client" data-client-select>
-                                <option value="">Selecciona cliente</option>
-                                <?php foreach ($clients as $client): ?>
-                                    <?php $contactName = $client['contact'] ?: $client['name']; ?>
-                                    <option value="<?php echo (int)$client['id']; ?>"
-                                        data-contact-name="<?php echo e($contactName); ?>"
-                                        data-contact-email="<?php echo e($client['email'] ?? ''); ?>"
-                                        data-contact-phone="<?php echo e($client['phone'] ?? ''); ?>">
-                                        <?php echo e($client['name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-type">Tipo de servicio</label>
-                            <select class="form-select" id="crm-service-type">
-                                <option selected>Selecciona servicio</option>
-                                <option>Implementación</option>
-                                <option>Mantenimiento</option>
-                                <option>Consultoría</option>
-                                <option>Soporte urgente</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-contact">Contacto</label>
-                            <input type="text" class="form-control" id="crm-service-contact" data-client-field="contact_name" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-contact-email">Correo contacto</label>
-                            <input type="email" class="form-control" id="crm-service-contact-email" data-client-field="contact_email" readonly>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-priority">Prioridad</label>
-                            <select class="form-select" id="crm-service-priority">
-                                <option selected>Normal</option>
-                                <option>Alta</option>
-                                <option>Crítica</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label" for="crm-service-owner">Responsable</label>
-                            <input type="text" class="form-control" id="crm-service-owner" placeholder="Equipo o consultor">
-                        </div>
-                        <div class="col-12">
-                            <label class="form-label" for="crm-service-notes">Detalle de solicitud</label>
-                            <textarea class="form-control" id="crm-service-notes" placeholder="Describe el servicio solicitado"></textarea>
-                        </div>
-                    </div>
-                    <div class="d-flex flex-column flex-sm-row gap-2 mt-4">
-                        <button type="reset" class="btn btn-light w-100 w-sm-auto">Limpiar</button>
-                        <button type="submit" class="btn btn-warning w-100 w-sm-auto">Crear ticket</button>
-                    </div>
-                    <?php
-                    $reportTemplate = 'informeIcargaEspanol.php';
-                    $reportSource = 'crm/hub/service';
-                    include __DIR__ . '/../partials/report-download.php';
-                    ?>
-                </form>
+            <div class="card-body d-flex flex-column justify-content-between">
+                <p class="text-secondary fs-13">Centraliza la atención al cliente con seguimiento de prioridades, responsables asignados, tiempos de resolución y estados en tiempo real.</p>
+                <div class="pt-3 border-top d-flex gap-2">
+                    <a href="index.php?route=tickets/create" class="btn btn-warning"><i class="ti ti-plus"></i> Crear Nuevo Ticket</a>
+                    <a href="index.php?route=tickets" class="btn btn-outline-secondary">Ir al Service Desk</a>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
-<script src="assets/js/pages/crm-modal-forms.js"></script>

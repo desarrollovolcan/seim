@@ -84,79 +84,105 @@
                 </div>
             </div>
         <div class="table-responsive">
-            <table class="table table-striped table-sm align-middle small">
+            <table class="table table-hover table-sm align-middle mb-0">
                 <thead>
                     <tr>
-                        <th style="width:1%;"><input type="checkbox" id="selectAllProducts"></th>
-                        <th>ID</th>
-                        <th>Producto</th>
-                        <th>Descripción</th>
-                        <th>SKU</th>
-                        <th>Familia</th>
-                        <th>Subfamilia</th>
-                        <th>Proveedor</th>
-                        <th class="text-end">Precio</th>
-                        <th class="text-end">Stock</th>
-                        <th>Estado</th>
-                        <th class="text-end">Acciones</th>
+                        <th style="width: 32px;"><input type="checkbox" id="selectAllProducts" class="form-check-input"></th>
+                        <th style="width: 65px;">ID</th>
+                        <th style="min-width: 140px; max-width: 200px;">Producto</th>
+                        <th style="max-width: 180px;">Descripción</th>
+                        <th style="width: 95px;">SKU</th>
+                        <th style="max-width: 130px;">Familia</th>
+                        <th style="max-width: 140px;">Subfamilia</th>
+                        <th style="max-width: 130px;">Proveedor</th>
+                        <th class="text-end" style="width: 85px;">Precio</th>
+                        <th class="text-end" style="width: 70px;">Stock</th>
+                        <th style="width: 75px;">Estado</th>
+                        <th class="text-end" style="width: 80px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($products as $product): ?>
-                        <?php
-                        $status = $product['status'] ?? 'activo';
-                        $statusColor = match ($status) {
-                            'activo' => 'success',
-                            'inactivo' => 'secondary',
-                            default => 'info',
-                        };
-                        ?>
+                    <?php if (empty($products)): ?>
                         <tr>
-                            <td><input class="product-checkbox" type="checkbox" name="product_ids[]" value="<?php echo (int)($product['id'] ?? 0); ?>"></td>
-                            <td class="text-muted"><?php echo render_id_badge($product['id'] ?? null); ?></td>
-                            <td><?php echo e($product['name'] ?? ''); ?></td>
-                            <td class="text-muted" style="max-width: 320px;">
-                                <span class="d-inline-block text-truncate align-middle" style="max-width: 320px;" title="<?php echo e($product['description'] ?? ''); ?>">
-                                    <?php echo e($product['description'] ?? ''); ?>
-                                </span>
-                            </td>
-                            <td><?php echo e($product['sku'] ?? ''); ?></td>
-                            <td><?php echo e($product['family_name'] ?? ''); ?></td>
-                            <td><?php echo e($product['subfamily_name'] ?? ''); ?></td>
-                            <td><?php echo e($product['supplier_name'] ?? ''); ?></td>
-                            <td class="text-end"><?php echo e(format_currency((float)($product['price'] ?? 0), 0)); ?></td>
-                            <td class="text-end">
-                                <span class="badge bg-light text-body fw-semibold">
-                                    <?php echo (int)($product['stock'] ?? 0); ?>
-                                    <?php if (!empty($product['stock_min']) && (int)$product['stock'] <= (int)$product['stock_min']): ?>
-                                        <span class="text-danger ms-1">(Bajo)</span>
-                                    <?php endif; ?>
-                                </span>
-                            </td>
-                            <td>
-                                <span class="badge bg-<?php echo $statusColor; ?>-subtle text-<?php echo $statusColor; ?>">
-                                    <?php echo e($status); ?>
-                                </span>
-                            </td>
-                            <td class="text-end">
-                                <div class="dropdown actions-dropdown">
-                                    <button class="btn btn-soft-primary btn-sm py-0 px-2 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Acciones
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end">
-                                        <li><a class="dropdown-item" href="index.php?route=products/edit&id=<?php echo (int)$product['id']; ?>">Editar</a></li>
-                                        <li>
-                                            <form method="post" action="index.php?route=products/delete" onsubmit="return confirm('¿Eliminar este producto?');">
-                                                <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
-                                                <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
-                                                <button type="submit" class="dropdown-item dropdown-item-button text-danger">Eliminar</button>
-                                            </form>
-                                        </li>
-                                    </ul>
-                                </div>
-                            </td>
+                            <td colspan="12" class="text-center py-4 text-muted">No se encontraron productos.</td>
                         </tr>
-                    <?php endforeach; ?>
+                    <?php else: ?>
+                        <?php foreach ($products as $product): ?>
+                            <?php
+                            $status = $product['status'] ?? 'activo';
+                            $statusColor = match ($status) {
+                                'activo' => 'success',
+                                'inactivo' => 'secondary',
+                                default => 'info',
+                            };
+                            ?>
+                            <tr>
+                                <td><input class="product-checkbox form-check-input" type="checkbox" name="product_ids[]" value="<?php echo (int)($product['id'] ?? 0); ?>"></td>
+                                <td><?php echo render_id_badge($product['id'] ?? null); ?></td>
+                                <td>
+                                    <span class="fw-medium text-body d-inline-block text-truncate align-middle" style="max-width: 200px;" title="<?php echo e($product['name'] ?? ''); ?>">
+                                        <?php echo e($product['name'] ?? ''); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate text-muted fs-12 align-middle" style="max-width: 180px;" title="<?php echo e($product['description'] ?? ''); ?>">
+                                        <?php echo e($product['description'] ?? '—'); ?>
+                                    </span>
+                                </td>
+                                <td class="nowrap">
+                                    <span class="font-monospace text-secondary fs-12"><?php echo e($product['sku'] ?? '—'); ?></span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate text-secondary fs-12 align-middle" style="max-width: 130px;" title="<?php echo e($product['family_name'] ?? ''); ?>">
+                                        <?php echo e($product['family_name'] ?? '—'); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate text-secondary fs-12 align-middle" style="max-width: 140px;" title="<?php echo e($product['subfamily_name'] ?? ''); ?>">
+                                        <?php echo e($product['subfamily_name'] ?? '—'); ?>
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="d-inline-block text-truncate text-secondary fs-12 align-middle" style="max-width: 130px;" title="<?php echo e($product['supplier_name'] ?? ''); ?>">
+                                        <?php echo e($product['supplier_name'] ?? '—'); ?>
+                                    </span>
+                                </td>
+                                <td class="text-end nowrap">
+                                    <span class="fw-semibold text-body fs-12"><?php echo e(format_currency((float)($product['price'] ?? 0), 0)); ?></span>
+                                </td>
+                                <td class="text-end nowrap">
+                                    <span class="badge bg-light text-body fw-semibold fs-11">
+                                        <?php echo (int)($product['stock'] ?? 0); ?>
+                                        <?php if (!empty($product['stock_min']) && (int)$product['stock'] <= (int)$product['stock_min']): ?>
+                                            <span class="text-danger ms-1" title="Stock bajo">●</span>
+                                        <?php endif; ?>
+                                    </span>
+                                </td>
+                                <td class="nowrap">
+                                    <span class="badge bg-<?php echo $statusColor; ?>-subtle text-<?php echo $statusColor; ?> fs-11">
+                                        <?php echo e(ucfirst($status)); ?>
+                                    </span>
+                                </td>
+                                <td class="text-end nowrap">
+                                    <div class="dropdown actions-dropdown">
+                                        <button class="btn btn-soft-primary btn-sm py-0 px-2 dropdown-toggle fs-12" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Acciones
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+                                            <li><a class="dropdown-item" href="index.php?route=products/edit&id=<?php echo (int)$product['id']; ?>"><i class="ti ti-edit me-1"></i>Editar</a></li>
+                                            <li>
+                                                <form method="post" action="index.php?route=products/delete" onsubmit="return confirm('¿Eliminar este producto?');">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                                                    <input type="hidden" name="id" value="<?php echo (int)$product['id']; ?>">
+                                                    <button type="submit" class="dropdown-item dropdown-item-button text-danger"><i class="ti ti-trash me-1"></i>Eliminar</button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>

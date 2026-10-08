@@ -723,13 +723,6 @@ function permission_catalog(): array
             'view_key' => 'tickets_view',
             'edit_key' => 'tickets_edit',
         ],
-        'projects' => [
-            'label' => 'Proyectos',
-            'routes' => ['projects'],
-            'legacy_key' => 'projects',
-            'view_key' => 'projects_view',
-            'edit_key' => 'projects_edit',
-        ],
         'documents' => [
             'label' => 'Documentos',
             'routes' => ['documents'],
@@ -771,13 +764,6 @@ function permission_catalog(): array
             'legacy_key' => 'sales',
             'view_key' => 'sales_view',
             'edit_key' => 'sales_edit',
-        ],
-        'sales_dispatches' => [
-            'label' => 'Despachos de camiones',
-            'routes' => ['sales/dispatches'],
-            'legacy_key' => 'sales',
-            'view_key' => 'sales_dispatches_view',
-            'edit_key' => 'sales_dispatches_edit',
         ],
         'product_families' => [
             'label' => 'Familias de producto',
@@ -1149,12 +1135,24 @@ function role_permissions(Database $db, int $roleId): array
     return $permissions;
 }
 
+function is_admin_user(?array $user): bool
+{
+    if (!$user) {
+        return false;
+    }
+    if ((int)($user['role_id'] ?? 0) === 1) {
+        return true;
+    }
+    $role = strtolower(rtrim(trim((string)($user['role'] ?? '')), '.'));
+    return in_array($role, ['admin', 'administrador', 'superadmin'], true);
+}
+
 function can_access_route(Database $db, string $route, ?array $user): bool
 {
     if (!$user) {
         return false;
     }
-    if (($user['role'] ?? '') === 'admin') {
+    if (is_admin_user($user)) {
         return true;
     }
     $key = permission_key_for_route($route);

@@ -8,7 +8,6 @@ class CrmController extends Controller
     private SalesOrderItemsModel $orderItems;
     private ProductsModel $products;
     private ServiceRenewalsModel $renewals;
-    private ServicesModel $services;
     private EmailQueueModel $queue;
 
     public function __construct(array $config, Database $db)
@@ -21,7 +20,6 @@ class CrmController extends Controller
         $this->orderItems = new SalesOrderItemsModel($db);
         $this->products = new ProductsModel($db);
         $this->renewals = new ServiceRenewalsModel($db);
-        $this->services = new ServicesModel($db);
         $this->queue = new EmailQueueModel($db);
     }
 
@@ -76,7 +74,7 @@ class CrmController extends Controller
         $startParam = $startDate->format('Y-m-d');
         $endParam = $endDate->format('Y-m-d');
 
-        $isAdmin = (Auth::user()['role'] ?? '') === 'admin';
+        $isAdmin = is_admin_user(Auth::user());
         $companyId = $isAdmin ? null : current_company_id();
         $companyFilter = $companyId ? ' AND company_id = :company_id' : '';
         $companyParams = $companyId ? ['company_id' => $companyId] : [];
@@ -591,7 +589,7 @@ class CrmController extends Controller
             ['company_id' => $companyId]
         );
         $clients = $this->clients->active($companyId);
-        $services = $this->services->active($companyId);
+        $services = [];
         $this->render('crm/renewals', [
             'title' => 'Renovaciones',
             'pageTitle' => 'Renovaciones',

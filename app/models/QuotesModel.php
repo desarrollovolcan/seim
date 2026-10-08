@@ -11,11 +11,11 @@ class QuotesModel extends Model
             return [];
         }
         return $this->db->fetchAll(
-            'SELECT quotes.*, COALESCE(clients.name, "Sin cliente") as client_name
+            "SELECT quotes.*, COALESCE(clients.name, 'Sin cliente') as client_name
              FROM quotes
              LEFT JOIN clients ON quotes.client_id = clients.id
              WHERE quotes.company_id = :company_id
-             ORDER BY quotes.id DESC',
+             ORDER BY quotes.id DESC",
             ['company_id' => $companyId]
         );
     }
@@ -23,6 +23,9 @@ class QuotesModel extends Model
     public function nextNumber(string $prefix, ?int $companyId = null): string
     {
         $companyId = $companyId ?? current_company_id();
+        if (!$companyId) {
+            return $prefix . '000001';
+        }
         $row = $this->db->fetch('SELECT MAX(id) as max_id FROM quotes WHERE company_id = :company_id', [
             'company_id' => $companyId,
         ]);

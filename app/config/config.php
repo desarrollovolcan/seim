@@ -9,8 +9,8 @@ return [
     'db' => [
         'host' => 'localhost',
         'name' => 'gocreative_seim',
-        'user' => 'gocreative_seim',
-        'pass' => 'u-XoV$b+[++].#l{',
+        'user' => 'root',
+        'pass' => '',
         'charset' => 'utf8mb4',
     ],
     'security' => [
